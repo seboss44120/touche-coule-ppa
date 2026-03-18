@@ -70,8 +70,9 @@
     .toggle::after{content:'';position:absolute;width:16px;height:16px;background:white;border-radius:50%;top:2px;left:2px;transition:left .2s}
     .toggle.on::after{left:18px}
     .inp{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.86rem;font-weight:600;padding:6px 8px;border-radius:4px;margin-bottom:5px}
-    .inp.sm{font-weight:400;font-size:.78rem;color:var(--text2)}
+    .inp.sm{font-weight:500;font-size:.78rem;color:var(--text)}
     .inp:focus{outline:none;border-color:var(--cyan)}
+    .inp::placeholder{color:rgba(176,216,240,.35);font-weight:400}
     .inp:disabled{opacity:.4;cursor:not-allowed}
     .tc-status{font-size:.72rem;margin-top:6px;text-align:center;color:var(--text2)}
     .tc-status.full{color:var(--green)}
@@ -97,6 +98,7 @@
     .sync-row{display:flex;gap:7px;align-items:stretch;margin-bottom:8px}
     .sync-inp{flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.78rem;padding:7px 10px;border-radius:4px}
     .sync-inp:focus{outline:none;border-color:var(--cyan)}
+    .sync-inp::placeholder{color:rgba(176,216,240,.35)}
     .sync-btn{padding:7px 13px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;white-space:nowrap;transition:all .15s}
     .sync-btn:hover{background:rgba(0,212,255,.1)}
     .sync-btn:disabled{opacity:.35;cursor:not-allowed}
@@ -143,7 +145,7 @@
 
     /* Palette */
     .palette{flex:1;min-width:185px}
-    .pal-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:4px;border:1px solid var(--border);cursor:pointer;margin-bottom:4px;transition:all .15s;background:var(--bg2);font-size:.8rem;font-weight:600}
+    .pal-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:4px;border:1px solid var(--border);cursor:pointer;margin-bottom:4px;transition:all .15s;background:var(--bg2);font-size:.82rem;font-weight:700;color:#d0eeff}
     .pal-item:hover{border-color:var(--cyan)}
     .pal-item.sel{border-color:var(--cyan);background:rgba(0,212,255,.09)}
     .pal-item.done{opacity:.55}
@@ -182,6 +184,7 @@
     .shots-row{display:flex;gap:6px;margin-bottom:10px}
     .shot-inp{flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:.95rem;text-align:center;padding:9px 3px;border-radius:4px;text-transform:uppercase;min-width:0}
     .shot-inp:focus{outline:none;border-color:var(--cyan)}
+    .shot-inp::placeholder{color:rgba(0,212,255,.3)}
     .shot-inp:disabled{opacity:.4;cursor:not-allowed}
     .waiting-box{text-align:center;padding:20px;color:var(--gold)}
     .waiting-box .wi{font-size:2rem;display:block;margin-bottom:8px}
@@ -238,7 +241,7 @@
     .fc-title{font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;color:var(--cyan);letter-spacing:2px;margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid var(--border)}
     .ship-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border2)}
     .ship-row:last-child{border-bottom:none}
-    .sr-name{font-size:.78rem;min-width:108px}
+    .sr-name{font-size:.8rem;font-weight:600;color:#d0eeff;min-width:108px}
     .sr-name.sunk{text-decoration:line-through;color:var(--muted)}
     .sr-cells{display:flex;gap:3px;flex:1}
     .sr-cell{width:14px;height:14px;border-radius:2px;border:1px solid}
@@ -377,15 +380,94 @@ function loadLocal() {
   } catch(e){}
 }
 
-async function saveToCloud() {
+/* ════════════════════════════════════════
+   MERGE-WRITE QUEUE
+   Chaque écriture cloud fait : lire → fusionner → écrire
+   Une seule écriture à la fois pour éviter les conflits
+════════════════════════════════════════ */
+let _writeQueue = Promise.resolve();  // file d'attente sérialisée
+let _pendingWrite = false;            // debounce : on ne cumule pas les doublons
+
+async function fetchCloudRaw() {
+  const headers = {'Content-Type':'application/json'};
+  if (SYNC.apiKey) headers['X-Master-Key'] = SYNC.apiKey;
+  const res = await fetch(`https://api.jsonbin.io/v3/b/${SYNC.binId}/latest`, {headers});
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const json = await res.json();
+  return json.record;
+}
+
+async function writeCloudRaw(payload) {
+  const res = await fetch(`https://api.jsonbin.io/v3/b/${SYNC.binId}`, {
+    method:'PUT',
+    headers:{'Content-Type':'application/json','X-Master-Key':SYNC.apiKey,'X-Bin-Versioning':'false'},
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+}
+
+/* Merge : on ne remplace que les champs propres au rôle courant.
+   Capitaine : uniquement la case teams[myIdx] (grid, shipCells, bonusCells, malusCells).
+   Admin     : tout l'état (started, turn, pendingShots, scores…). */
+function mergeMyData(cloudRecord) {
+  const merged = JSON.parse(JSON.stringify(cloudRecord)); // deep copy
+  if (ROLE.type === 'captain') {
+    // Trouver l'index de mon équipe dans le record cloud
+    const myIdx = (merged.teams||[]).findIndex(t => t.id === ROLE.teamId);
+    const localTeam = S.teams.find(t => t.id === ROLE.teamId);
+    if (myIdx >= 0 && localTeam) {
+      // On fusionne uniquement les données de grille (pas hitGrid ni score, contrôlés par admin)
+      merged.teams[myIdx].name       = localTeam.name;
+      merged.teams[myIdx].captain    = localTeam.captain;
+      merged.teams[myIdx].email      = localTeam.email;
+      merged.teams[myIdx].grid       = localTeam.grid;
+      merged.teams[myIdx].shipCells  = localTeam.shipCells;
+      merged.teams[myIdx].bonusCells = localTeam.bonusCells;
+      merged.teams[myIdx].malusCells = localTeam.malusCells;
+      // Tirs soumis par ce capitaine
+      if (S.pendingShots[ROLE.teamId]) {
+        merged.pendingShots = merged.pendingShots || {};
+        merged.pendingShots[ROLE.teamId] = S.pendingShots[ROLE.teamId];
+      }
+    }
+  } else {
+    // Admin : état complet
+    Object.assign(merged, gamePayload());
+  }
+  return merged;
+}
+
+async function _doMergeWrite() {
   if (!SYNC.binId || !SYNC.apiKey) return;
-  try {
-    await fetch(`https://api.jsonbin.io/v3/b/${SYNC.binId}`, {
-      method:'PUT',
-      headers:{'Content-Type':'application/json','X-Master-Key':SYNC.apiKey,'X-Bin-Versioning':'false'},
-      body: JSON.stringify(gamePayload())
+  // Retry jusqu'à 3 fois en cas de conflit
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const cloud = await fetchCloudRaw();
+      const merged = mergeMyData(cloud);
+      await writeCloudRaw(merged);
+      // Réappliquer le record fusionné localement pour rester cohérent
+      applyPayload(merged);
+      saveLocal();
+      return; // succès
+    } catch(e) {
+      if (attempt === 3) throw e;
+      // Attente exponentielle avant retry (500ms, 1000ms)
+      await new Promise(r => setTimeout(r, attempt * 500));
+    }
+  }
+}
+
+function saveToCloud() {
+  if (!SYNC.binId || !SYNC.apiKey) return;
+  if (_pendingWrite) return; // une écriture est déjà planifiée
+  _pendingWrite = true;
+  // Debounce 300ms : regroupe les appels rapides (ex: placement case par case)
+  setTimeout(() => {
+    _pendingWrite = false;
+    _writeQueue = _writeQueue.then(() => _doMergeWrite()).catch(e => {
+      console.warn('Cloud write failed:', e);
     });
-  } catch(e){}
+  }, 300);
 }
 
 async function loadFromCloud() {
@@ -393,12 +475,8 @@ async function loadFromCloud() {
   syncStatus={state:'loading',msg:'Synchronisation…'};
   renderSyncBar();
   try {
-    const headers = {'Content-Type':'application/json'};
-    if (SYNC.apiKey) headers['X-Master-Key'] = SYNC.apiKey;
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${SYNC.binId}/latest`, {headers});
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const json = await res.json();
-    applyPayload(json.record);
+    const record = await fetchCloudRaw();
+    applyPayload(record);
     saveLocal();
     const now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     syncStatus={state:'ok', msg:`Synchronisé à ${now}`};
