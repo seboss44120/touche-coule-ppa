@@ -84,7 +84,7 @@
     .gs-wait .gs-label{color:var(--gold)}
     .gs-detail{font-size:.7rem;color:var(--text2);white-space:nowrap}
     .link-row{display:flex;gap:5px;margin-top:8px;align-items:center}
-    .link-url{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.65rem;padding:5px 7px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .link-url{flex:1;min-width:0;background:var(--bg);border:1px solid var(--border);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.65rem;padding:5px 7px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .icon-btn{padding:5px 9px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;cursor:pointer;font-size:.75rem;transition:all .15s;white-space:nowrap}
     .icon-btn:hover{border-color:var(--cyan);color:var(--cyan)}
     .send-btn{width:100%;margin-top:7px;padding:7px 10px;background:transparent;border:1px solid rgba(0,212,255,.35);color:var(--cyan);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.5px;transition:all .15s}
@@ -759,8 +759,8 @@ function renderAdminConfig() {
         ${full?`<span class="gs-detail">${cnt}/5 · ⭐${team.bonusCells.length} 💣${team.malusCells.length}</span>`:`<span class="gs-detail">${cnt}/5 navires placés</span>`}
       </div>
       <div class="link-row">
-        <div class="link-url" title="${url}">${url}</div>
-        <button class="icon-btn" onclick="copyUrl('${url}')" title="Copier le lien">📋</button>
+        <div class="link-url" title="${url}">${baseUrl()}?team=${team.id}</div>
+        <button class="icon-btn" onclick="copyUrl('${url}')" title="Copier le lien complet">📋</button>
       </div>
       <button class="send-btn" onclick="sendEmail(${i})" ${team.email?'':'disabled'} title="${team.email?'Envoyer par email':'Email du capitaine requis'}">
         📧 Envoyer le lien au capitaine
