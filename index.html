@@ -75,6 +75,14 @@
     .inp:disabled{opacity:.4;cursor:not-allowed}
     .tc-status{font-size:.72rem;margin-top:6px;text-align:center;color:var(--text2)}
     .tc-status.full{color:var(--green)}
+    .grid-status{display:flex;align-items:center;gap:7px;margin-top:9px;padding:8px 10px;border-radius:5px;border:1px solid}
+    .grid-status.gs-ok{background:rgba(0,232,120,.07);border-color:rgba(0,232,120,.3)}
+    .grid-status.gs-wait{background:rgba(240,192,64,.06);border-color:rgba(240,192,64,.25)}
+    .gs-icon{font-size:.9rem;flex-shrink:0}
+    .gs-label{font-weight:700;font-size:.8rem;flex:1}
+    .gs-ok .gs-label{color:var(--green)}
+    .gs-wait .gs-label{color:var(--gold)}
+    .gs-detail{font-size:.7rem;color:var(--text2);white-space:nowrap}
     .link-row{display:flex;gap:5px;margin-top:8px;align-items:center}
     .link-url{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.65rem;padding:5px 7px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .icon-btn{padding:5px 9px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;cursor:pointer;font-size:.75rem;transition:all .15s;white-space:nowrap}
@@ -548,9 +556,10 @@ function renderAdminConfig() {
         ${locked?'disabled':''} onchange="setCap(${i},this.value)">
       <input class="inp sm" type="email" value="${esc(team.email)}" placeholder="Email du capitaine"
         ${locked?'disabled':''} onchange="setEmail(${i},this.value)">
-      <div class="tc-status ${full?'full':''}">
-        ${full?'✅ Grille complète':`🚧 ${cnt}/5 navires placés`}
-        ${(team.bonusCells.length||team.malusCells.length)?` · ⭐${team.bonusCells.length} 💣${team.malusCells.length}`:''}
+      <div class="grid-status ${full?'gs-ok':'gs-wait'}">
+        <span class="gs-icon">${full?'✅':'⏳'}</span>
+        <span class="gs-label">${full?'Grille complète':'En attente de la grille'}</span>
+        ${full?`<span class="gs-detail">${cnt}/5 · ⭐${team.bonusCells.length} 💣${team.malusCells.length}</span>`:`<span class="gs-detail">${cnt}/5 navires placés</span>`}
       </div>
       <div class="link-row">
         <div class="link-url" title="${url}">${url}</div>
