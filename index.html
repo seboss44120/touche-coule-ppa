@@ -450,7 +450,7 @@ async function createBin() {
 async function saveBinId() {
   const key = document.getElementById('sync-key-inp')?.value?.trim();
   const bid = document.getElementById('sync-bin-inp')?.value?.trim();
-  if (!key || !bid) { alert('Renseignez la clé API et l'ID du Bin'); return; }
+  if (!key || !bid) { alert('Renseignez la clé API et l\'ID du Bin'); return; }
   SYNC.apiKey=key; SYNC.binId=bid;
   saveSyncConfig();
   await loadFromCloud();
@@ -1305,4 +1305,3 @@ init();
 </script>
 </body>
 </html>
-
