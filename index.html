@@ -59,8 +59,8 @@
     .a-err{background:rgba(255,68,85,.08);border:1px solid rgba(255,68,85,.3);color:var(--red)}
 
     /* ── TEAM CARDS (Admin Config) ── */
-    .teams-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
-    @media(max-width:680px){.teams-grid{grid-template-columns:repeat(2,1fr)}}
+    .teams-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+    @media(min-width:900px){.teams-grid{grid-template-columns:repeat(3,1fr)}}
     .team-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:13px;transition:border-color .2s}
     .team-card.inactive{opacity:.5}
     .tc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
@@ -762,7 +762,7 @@ function renderAdminConfig() {
         <div class="link-url" title="${url}">${url}</div>
         <button class="icon-btn" onclick="copyUrl('${url}')" title="Copier le lien">📋</button>
       </div>
-      <button class="send-btn" onclick="sendEmail(${i})" ${team.email?'':'disabled'} title="${team.email?'Envoyer le lien par email':'Renseignez l\'email du capitaine'}">
+      <button class="send-btn" onclick="sendEmail(${i})" ${team.email?'':'disabled'} title="${team.email?'Envoyer par email':'Email du capitaine requis'}">
         📧 Envoyer le lien au capitaine
       </button>
     </div>`;
