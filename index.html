@@ -91,6 +91,24 @@
     .send-btn:hover:not(:disabled){background:rgba(0,212,255,.1);border-color:var(--cyan)}
     .send-btn:disabled{opacity:.3;cursor:not-allowed;color:var(--muted);border-color:var(--muted)}
 
+    /* ── SYNC PANEL ── */
+    .sync-panel{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:18px}
+    .sync-title{font-family:'Orbitron',monospace;font-size:.68rem;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .sync-row{display:flex;gap:7px;align-items:stretch;margin-bottom:8px}
+    .sync-inp{flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.78rem;padding:7px 10px;border-radius:4px}
+    .sync-inp:focus{outline:none;border-color:var(--cyan)}
+    .sync-btn{padding:7px 13px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;white-space:nowrap;transition:all .15s}
+    .sync-btn:hover{background:rgba(0,212,255,.1)}
+    .sync-btn:disabled{opacity:.35;cursor:not-allowed}
+    .sync-status{font-size:.78rem;padding:6px 10px;border-radius:4px;display:flex;align-items:center;gap:7px;margin-bottom:8px}
+    .ss-ok{background:rgba(0,232,120,.07);border:1px solid rgba(0,232,120,.25);color:var(--green)}
+    .ss-warn{background:rgba(240,192,64,.07);border:1px solid rgba(240,192,64,.25);color:var(--gold)}
+    .ss-err{background:rgba(255,68,85,.07);border:1px solid rgba(255,68,85,.25);color:var(--red)}
+    .ss-spin{animation:spin .8s linear infinite;display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .clear-data-btn{padding:6px 13px;background:transparent;border:1px solid rgba(255,68,85,.4);color:var(--red);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.76rem;transition:all .15s;opacity:.7}
+    .clear-data-btn:hover{opacity:1;background:rgba(255,68,85,.08)}
+
     /* ── START / ACTION BUTTONS ── */
     .primary-btn{padding:11px 26px;background:var(--cyan);color:var(--bg);border:none;border-radius:5px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.92rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:background .15s}
     .primary-btn:hover{background:var(--cyan2)}
@@ -270,17 +288,23 @@ const PAIRS = [[1,2],[3,4],[5,6]];
 /* ════════════════════════════════════════
    ROLE DETECTION
 ════════════════════════════════════════ */
+const _urlParams = new URLSearchParams(location.search);
 const ROLE = (() => {
-  const p = new URLSearchParams(location.search);
-  if (p.has('team')) {
-    const tid = parseInt(p.get('team'));
+  if (_urlParams.has('team')) {
+    const tid = parseInt(_urlParams.get('team'));
     if (tid >= 1 && tid <= 6) return {type:'captain', teamId:tid};
   }
   return {type:'admin'};
 })();
 
 function baseUrl() { return location.origin + location.pathname; }
-function captainUrl(teamId) { return baseUrl() + '?team=' + teamId; }
+function captainUrl(teamId) {
+  const binId = SYNC.binId, key = SYNC.apiKey;
+  let url = baseUrl() + '?team=' + teamId;
+  if (binId) url += '&bin=' + encodeURIComponent(binId);
+  if (key)   url += '&key=' + encodeURIComponent(key);
+  return url;
+}
 
 /* ════════════════════════════════════════
    STATE
@@ -303,29 +327,144 @@ let S = {
 };
 
 /* ════════════════════════════════════════
-   PERSISTENCE
+   SYNC CONFIG (JSONBin.io)
 ════════════════════════════════════════ */
-function save() {
+let SYNC = { apiKey:'', binId:'' };
+let syncStatus = { state:'idle', msg:'' }; // idle | loading | ok | error
+
+function loadSyncConfig() {
   try {
-    localStorage.setItem('tc4', JSON.stringify({
-      started:S.started, turn:S.turn, winner:S.winner,
-      teams:S.teams, pendingShots:S.pendingShots, shotHistory:S.shotHistory,
-    }));
+    const d = localStorage.getItem('tc4_sync');
+    if (d) { const p=JSON.parse(d); SYNC.apiKey=p.apiKey||''; SYNC.binId=p.binId||''; }
+    // Captain: read bin/key from URL
+    if (ROLE.type==='captain') {
+      const b=_urlParams.get('bin'), k=_urlParams.get('key');
+      if (b) SYNC.binId=b;
+      if (k) SYNC.apiKey=k;
+    }
   } catch(e){}
 }
 
-function load() {
+function saveSyncConfig() {
+  try { localStorage.setItem('tc4_sync', JSON.stringify({apiKey:SYNC.apiKey, binId:SYNC.binId})); } catch(e){}
+}
+
+function gamePayload() {
+  return { started:S.started, turn:S.turn, winner:S.winner,
+    teams:S.teams, pendingShots:S.pendingShots, shotHistory:S.shotHistory };
+}
+
+function applyPayload(sv) {
+  Object.assign(S, {
+    started: sv.started||false, turn: sv.turn||1, winner: sv.winner||null,
+    teams: sv.teams||S.teams,
+    pendingShots: sv.pendingShots||{},
+    shotHistory: sv.shotHistory||{},
+  });
+}
+
+/* ════════════════════════════════════════
+   PERSISTENCE
+════════════════════════════════════════ */
+function saveLocal() {
+  try { localStorage.setItem('tc4', JSON.stringify(gamePayload())); } catch(e){}
+}
+
+function loadLocal() {
   try {
     const d = localStorage.getItem('tc4');
-    if (!d) return;
-    const sv = JSON.parse(d);
-    Object.assign(S, {
-      started: sv.started||false, turn: sv.turn||1, winner: sv.winner||null,
-      teams: sv.teams||S.teams,
-      pendingShots: sv.pendingShots||{},
-      shotHistory: sv.shotHistory||{},
+    if (d) applyPayload(JSON.parse(d));
+  } catch(e){}
+}
+
+async function saveToCloud() {
+  if (!SYNC.binId || !SYNC.apiKey) return;
+  try {
+    await fetch(`https://api.jsonbin.io/v3/b/${SYNC.binId}`, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':SYNC.apiKey,'X-Bin-Versioning':'false'},
+      body: JSON.stringify(gamePayload())
     });
   } catch(e){}
+}
+
+async function loadFromCloud() {
+  if (!SYNC.binId) return false;
+  syncStatus={state:'loading',msg:'Synchronisation…'};
+  renderSyncBar();
+  try {
+    const headers = {'Content-Type':'application/json'};
+    if (SYNC.apiKey) headers['X-Master-Key'] = SYNC.apiKey;
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${SYNC.binId}/latest`, {headers});
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    applyPayload(json.record);
+    saveLocal();
+    const now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    syncStatus={state:'ok', msg:`Synchronisé à ${now}`};
+    renderSyncBar();
+    return true;
+  } catch(e) {
+    syncStatus={state:'error', msg:`Erreur sync : ${e.message}`};
+    renderSyncBar();
+    return false;
+  }
+}
+
+function renderSyncBar() {
+  const el = document.getElementById('sync-bar');
+  if (!el) return;
+  const {state,msg} = syncStatus;
+  if (state==='idle') { el.innerHTML=''; return; }
+  const cls = state==='ok'?'ss-ok':state==='loading'?'ss-warn':'ss-err';
+  const icon = state==='loading'?'<span class="ss-spin">↻</span>':state==='ok'?'✅':'⚠️';
+  el.innerHTML=`<div class="sync-status ${cls}">${icon} ${msg}</div>`;
+}
+
+function save() { saveLocal(); saveToCloud(); }
+function load() { loadLocal(); }
+
+async function createBin() {
+  const key = document.getElementById('sync-key-inp')?.value?.trim();
+  if (!key) { alert('Entrez votre clé API JSONBin.io'); return; }
+  const btn = document.getElementById('create-bin-btn');
+  if (btn) { btn.disabled=true; btn.textContent='Création…'; }
+  try {
+    const res = await fetch('https://api.jsonbin.io/v3/b', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Master-Key':key,'X-Bin-Name':'TC-PPA'},
+      body: JSON.stringify(gamePayload())
+    });
+    if (!res.ok) throw new Error('Clé API invalide ou erreur réseau (HTTP ' + res.status + ')');
+    const json = await res.json();
+    SYNC.apiKey = key; SYNC.binId = json.metadata.id;
+    saveSyncConfig();
+    syncStatus={state:'ok',msg:`Bin créé — ID : ${SYNC.binId}`};
+    renderTab('config');
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+    if (btn) { btn.disabled=false; btn.textContent='Créer le Bin'; }
+  }
+}
+
+async function saveBinId() {
+  const key = document.getElementById('sync-key-inp')?.value?.trim();
+  const bid = document.getElementById('sync-bin-inp')?.value?.trim();
+  if (!key || !bid) { alert('Renseignez la clé API et l'ID du Bin'); return; }
+  SYNC.apiKey=key; SYNC.binId=bid;
+  saveSyncConfig();
+  await loadFromCloud();
+  renderTab('config');
+}
+
+async function clearAllData() {
+  if (!confirm('Effacer toutes les données (équipes, grilles, scores) ? Cette action est irréversible.')) return;
+  localStorage.removeItem('tc4');
+  S.started=false; S.turn=1; S.winner=null; S.pendingShots={}; S.shotHistory={};
+  S.teams=Array.from({length:6},(_,i)=>mkTeam(i+1));
+  saveLocal();
+  if (SYNC.binId && SYNC.apiKey) await saveToCloud();
+  renderTab(S.currentTab);
 }
 
 /* ════════════════════════════════════════
@@ -530,13 +669,71 @@ function renderTab(t) {
   }
 }
 
-function refresh() { load(); renderTab(S.currentTab); }
+async function refresh() {
+  if (SYNC.binId) {
+    const ok = await loadFromCloud();
+    if (ok) renderTab(S.currentTab);
+    else { loadLocal(); renderTab(S.currentTab); }
+  } else {
+    loadLocal(); renderTab(S.currentTab);
+  }
+}
+
+/* ════════════════════════════════════════
+   ██  ADMIN — SYNC PANEL
+════════════════════════════════════════ */
+function renderSyncPanel() {
+  const configured = !!(SYNC.binId && SYNC.apiKey);
+  const {state,msg} = syncStatus;
+  let statusHtml = '';
+  if (state!=='idle') {
+    const cls=state==='ok'?'ss-ok':state==='loading'?'ss-warn':'ss-err';
+    const icon=state==='loading'?'<span class="ss-spin">↻</span>':state==='ok'?'✅':'⚠️';
+    statusHtml=`<div class="sync-status ${cls}">${icon} ${msg}</div>`;
+  }
+
+  if (configured) {
+    return `<div class="sync-panel">
+      <div class="sync-title">📡 Synchronisation JSONBin.io
+        <span style="color:var(--green);font-size:.75rem;font-family:monospace;font-weight:400">✅ Connecté — Bin : ${esc(SYNC.binId)}</span>
+      </div>
+      ${statusHtml}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="sync-btn" onclick="refresh()">↻ Actualiser depuis le cloud</button>
+        <button class="clear-data-btn" onclick="clearAllData()">🗑 Effacer toutes les données</button>
+        <button class="clear-data-btn" style="border-color:var(--muted);color:var(--muted)" onclick="disconnectSync()">⊘ Déconnecter</button>
+      </div>
+    </div>`;
+  }
+
+  return `<div class="sync-panel">
+    <div class="sync-title">📡 Synchronisation multi-appareils (JSONBin.io)
+      <span style="color:var(--gold);font-size:.75rem;font-weight:400">⚠️ Non configuré — chaque appareil a ses propres données</span>
+    </div>
+    <div class="alert a-info" style="margin-bottom:10px;font-size:.8rem">
+      Pour que les capitaines sur d'autres appareils partagent les mêmes données, créez un compte gratuit sur
+      <strong>jsonbin.io</strong>, copiez votre <strong>Master Key</strong> depuis le tableau de bord, puis cliquez "Créer le Bin".
+    </div>
+    <div class="sync-row">
+      <input class="sync-inp" id="sync-key-inp" type="password" placeholder="Clé API (Master Key) JSONBin.io" value="${esc(SYNC.apiKey)}">
+      <input class="sync-inp" id="sync-bin-inp" type="text" placeholder="ID Bin existant (optionnel)" style="max-width:160px">
+      <button class="sync-btn" id="create-bin-btn" onclick="createBin()">Créer le Bin</button>
+      <button class="sync-btn" onclick="saveBinId()" style="border-color:var(--muted);color:var(--muted)">Utiliser existant</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px">
+      <button class="clear-data-btn" onclick="clearAllData()">🗑 Effacer les données locales</button>
+    </div>
+    ${statusHtml}
+  </div>`;
+}
 
 /* ════════════════════════════════════════
    ██  ADMIN — CONFIG
 ════════════════════════════════════════ */
 function renderAdminConfig() {
   const el = document.getElementById('tab-config');
+  // Sync panel
+  let syncHtml = renderSyncPanel();
   let h = `<p class="stitle">Équipes participantes</p><div class="teams-grid">`;
 
   S.teams.forEach((team,i) => {
@@ -584,7 +781,7 @@ function renderAdminConfig() {
     h += `<div class="alert a-warn mt">⚠️ Partie en cours — les équipes et configurations sont verrouillées.</div>`;
   }
 
-  el.innerHTML = h;
+  el.innerHTML = syncHtml + h;
 }
 
 /* Admin config actions */
@@ -620,6 +817,12 @@ function resetGame() {
   S.started=false; S.turn=1; S.winner=null; S.pendingShots={}; S.shotHistory={};
   S.teams.forEach(t=>{ t.hitGrid={}; t.score=0; });
   save(); renderTab(S.currentTab);
+}
+
+function disconnectSync() {
+  if(!confirm('Déconnecter la synchronisation ? Les données locales sont conservées.')) return;
+  SYNC={apiKey:'',binId:''}; syncStatus={state:'idle',msg:''};
+  saveSyncConfig(); renderTab('config');
 }
 
 /* ════════════════════════════════════════
@@ -1067,8 +1270,14 @@ function renderFlottes() {
 /* ════════════════════════════════════════
    INIT
 ════════════════════════════════════════ */
-function init() {
-  load();
+async function init() {
+  loadSyncConfig();
+  if (SYNC.binId) {
+    const ok = await loadFromCloud();
+    if (!ok) loadLocal();
+  } else {
+    loadLocal();
+  }
 
   // Role badge
   const badge = document.getElementById('role-badge');
@@ -1096,3 +1305,4 @@ init();
 </script>
 </body>
 </html>
+
