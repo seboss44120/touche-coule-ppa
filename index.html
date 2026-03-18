@@ -1076,7 +1076,7 @@ function renderCaptainSaisie() {
       tot+=r.points||0;
       h+=`<div class="res-line">
         <span class="res-coord">${r.coord}</span>
-        <span class="${cls}">${fmtResult(r)}</span>
+        <span class="${cls}">${fmtResult(r, false)}</span>
         ${r.points?`<span class="res-pts" style="color:${r.points>0?'var(--green)':'var(--red)'}">${r.points>0?'+':''}${r.points}</span>`:''}
       </div>`;
     });
@@ -1104,10 +1104,10 @@ function doSubmitShots() {
   renderCaptainSaisie();
 }
 
-function fmtResult(r) {
+function fmtResult(r, showShip=true) {
   if(r.result==='water') return '🌊 Coup dans l\'eau';
-  if(r.result==='hit')   return `💥 Touché ! (${SHIPS[r.shipKey]?.name||r.shipKey})`;
-  if(r.result==='sunk')  return `💀 Coulé ! ${SHIPS[r.shipKey]?.name||r.shipKey}`;
+  if(r.result==='hit')   return showShip ? `💥 Touché ! (${SHIPS[r.shipKey]?.name||r.shipKey})` : '💥 Touché !';
+  if(r.result==='sunk')  return showShip ? `💀 Coulé ! ${SHIPS[r.shipKey]?.name||r.shipKey}`    : '💀 Navire coulé !';
   if(r.result==='bonus') return '⭐ Case Bonus !';
   if(r.result==='malus') return '💣 Case Malus !';
   return r.result;
@@ -1176,7 +1176,7 @@ function renderCaptainSuivi() {
       h+=`<div class="res-line">
         <span style="color:var(--muted);font-size:.7rem;min-width:45px">T${r.turn}</span>
         <span class="res-coord">${r.coord}</span>
-        <span class="${cls}">${fmtResult(r)}</span>
+        <span class="${cls}">${fmtResult(r, false)}</span>
         ${r.points?`<span class="res-pts" style="color:${r.points>0?'var(--green)':'var(--red)'}">${r.points>0?'+':''}${r.points}</span>`:''}
       </div>`;
     });
@@ -1196,7 +1196,7 @@ function renderClassement() {
 
   let h = `<p class="stitle">Classement général</p>
     <div class="ranking-wrap"><table><thead><tr>
-      <th>#</th><th>Équipe</th><th>Capitaine</th><th>Score</th><th>Coulés</th><th>Perdus</th>
+      <th>#</th><th>Équipe</th><th>Capitaine</th><th>Score</th><th>Coulés</th><th>Perdus</th><th style="color:var(--purple)">Bonus</th><th style="color:var(--red)">Malus</th>
     </tr></thead><tbody>`;
 
   active.forEach((team,i)=>{
@@ -1205,6 +1205,10 @@ function renderClassement() {
     const sunkBy=opp?SHIP_KEYS.filter(k=>isShipSunk(opp,k)).length:0;
     const sunkOf=SHIP_KEYS.filter(k=>isShipSunk(team,k)).length;
     const isMe=ROLE.type==='captain'&&team.id===ROLE.teamId;
+    // Bonus/malus touchés par cette équipe (dans l'hist des tirs de cette équipe)
+    const myHistory = S.shotHistory[team.id]||[];
+    const bonusTouches = myHistory.filter(h=>h.result==='bonus').length;
+    const malusTouches = myHistory.filter(h=>h.result==='malus').length;
     h+=`<tr ${isMe?'style="background:rgba(0,212,255,.05)"':''}>
       <td><span class="rk-num ${rk}">${rank}</span></td>
       <td><strong>${esc(team.name)}</strong>${isMe?` <span style="font-size:.7rem;color:var(--cyan)">(moi)</span>`:''}</td>
@@ -1212,6 +1216,8 @@ function renderClassement() {
       <td><span class="score-val">${team.score}</span></td>
       <td style="color:var(--green)">${sunkBy} / 5</td>
       <td style="color:var(--red)">${sunkOf} / 5</td>
+      <td style="color:var(--purple);text-align:center">${bonusTouches>0?'+'+bonusTouches*2+' pts ('+bonusTouches+'×)':'—'}</td>
+      <td style="color:var(--red);text-align:center">${malusTouches>0?'-'+malusTouches*2+' pts ('+malusTouches+'×)':'—'}</td>
     </tr>`;
   });
 
