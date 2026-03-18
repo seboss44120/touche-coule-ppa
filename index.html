@@ -7,336 +7,221 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:    #030810;
-      --bg2:   #060e1c;
-      --card:  #0a1828;
-      --card2: #0e2038;
-      --border: rgba(0,200,230,0.14);
-      --cyan:  #00d4ff;
-      --cyan2: #0099bb;
-      --gold:  #f0c040;
-      --red:   #ff4455;
-      --green: #00e878;
-      --purple:#cc88ff;
-      --muted: #2a4a6a;
-      --text:  #b8d8f0;
-      --text2: #507090;
-      --PA:    #f0c040;
-      --CU:    #00d4ff;
-      --SM1:   #7fff90;
-      --SM2:   #40cc60;
-      --TP:    #ff8844;
+      --bg:#030810; --bg2:#060e1c; --card:#0a1828; --card2:#0e2038;
+      --border:rgba(0,200,230,.14); --border2:rgba(0,200,230,.07);
+      --cyan:#00d4ff; --cyan2:#0099bb; --gold:#f0c040;
+      --red:#ff4455; --green:#00e878; --purple:#cc88ff; --orange:#ff8800;
+      --muted:#2a4a6a; --text:#b8d8f0; --text2:#507090;
     }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 16px;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-    body::before {
-      content: '';
-      position: fixed;
-      width: 700px; height: 700px;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background: radial-gradient(circle, rgba(0,180,220,0.04) 0%, transparent 65%);
-      pointer-events: none;
-    }
-    .app { position: relative; max-width: 1100px; margin: 0 auto; padding: 0 14px 80px; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:16px;min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;width:600px;height:600px;top:50%;left:50%;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(0,180,220,.04) 0%,transparent 65%);pointer-events:none}
+    .app{max-width:1100px;margin:0 auto;padding:0 14px 80px}
 
-    /* ── HEADER ─────────────────────────────── */
-    header {
-      text-align: center;
-      padding: 22px 0 14px;
-      border-bottom: 1px solid var(--border);
-    }
-    header h1 {
-      font-family: 'Orbitron', monospace;
-      font-size: clamp(1.3rem, 4vw, 2rem);
-      font-weight: 900;
-      color: var(--cyan);
-      letter-spacing: 5px;
-      text-shadow: 0 0 24px rgba(0,212,255,.35);
-    }
-    header p { color: var(--text2); font-size: .78rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; }
+    /* ── HEADER ── */
+    header{text-align:center;padding:18px 0 12px;border-bottom:1px solid var(--border)}
+    header h1{font-family:'Orbitron',monospace;font-size:clamp(1.2rem,4vw,1.9rem);font-weight:900;color:var(--cyan);letter-spacing:5px;text-shadow:0 0 24px rgba(0,212,255,.35)}
+    header p{color:var(--text2);font-size:.72rem;letter-spacing:3px;text-transform:uppercase;margin-top:3px}
+    .role-badge{display:inline-block;margin-top:6px;padding:2px 10px;border-radius:3px;font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+    .role-admin{background:rgba(240,192,64,.15);border:1px solid rgba(240,192,64,.4);color:var(--gold)}
+    .role-captain{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);color:var(--cyan)}
 
-    /* ── STATUS BAR ──────────────────────────── */
-    .status-bar {
-      display: flex; align-items: center; gap: 12px;
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 6px; padding: 9px 14px; margin: 14px 0;
-      font-size: .82rem;
-    }
-    .status-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--muted); flex-shrink: 0;
-    }
-    .status-dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); animation: blink 2s infinite; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.45} }
-    .status-text { flex: 1; }
-    .status-actions button { padding: 5px 12px; background: transparent; border: 1px solid var(--red); color: var(--red); border-radius: 4px; cursor: pointer; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: .75rem; letter-spacing: 1px; }
-    .status-actions button:hover { background: rgba(255,68,85,.1); }
+    /* ── STATUS BAR ── */
+    .status-bar{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 14px;margin:12px 0;font-size:.82rem}
+    .sdot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0}
+    .sdot.on{background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s infinite}
+    .sdot.win{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+    .status-text{flex:1}
+    .status-actions{display:flex;gap:6px;flex-shrink:0}
+    .sbtn{padding:4px 11px;background:transparent;border:1px solid var(--muted);color:var(--muted);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.73rem;letter-spacing:1px;transition:all .15s}
+    .sbtn:hover{border-color:var(--text2);color:var(--text2)}
+    .sbtn.danger{border-color:var(--red);color:var(--red)}
+    .sbtn.danger:hover{background:rgba(255,68,85,.1)}
 
-    /* ── TABS ────────────────────────────────── */
-    .tabs {
-      display: flex; border-bottom: 1px solid var(--border); margin-bottom: 22px;
-    }
-    .tab-btn {
-      flex: 1; padding: 13px 6px; background: none; border: none; border-bottom: 2px solid transparent;
-      color: var(--text2); font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: .82rem;
-      letter-spacing: 1px; cursor: pointer; text-transform: uppercase; transition: all .2s;
-    }
-    .tab-btn.active { color: var(--cyan); border-bottom-color: var(--cyan); }
-    .tab-btn:hover:not(.active) { color: var(--text); }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
+    /* ── TABS ── */
+    .tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px}
+    .tab-btn{flex:1;padding:12px 4px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:.8rem;letter-spacing:1px;cursor:pointer;text-transform:uppercase;transition:all .2s}
+    .tab-btn.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+    .tab-btn:hover:not(.active){color:var(--text)}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
 
-    /* ── SECTION TITLE ───────────────────────── */
-    .section-title {
-      font-family: 'Orbitron', monospace; font-size: .7rem; color: var(--text2);
-      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px;
-    }
+    /* ── SECTION TITLE ── */
+    .stitle{font-family:'Orbitron',monospace;font-size:.68rem;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
 
-    /* ── ALERTS ──────────────────────────────── */
-    .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; font-size: .9rem; line-height: 1.4; }
-    .alert-warn { background: rgba(240,192,64,.08); border: 1px solid rgba(240,192,64,.3); color: var(--gold); }
-    .alert-ok   { background: rgba(0,232,120,.08); border: 1px solid rgba(0,232,120,.3); color: var(--green); }
-    .alert-info { background: rgba(0,212,255,.07); border: 1px solid rgba(0,212,255,.18); color: var(--cyan); }
+    /* ── ALERTS ── */
+    .alert{padding:11px 15px;border-radius:6px;margin-bottom:14px;font-size:.88rem;line-height:1.45}
+    .a-warn{background:rgba(240,192,64,.08);border:1px solid rgba(240,192,64,.3);color:var(--gold)}
+    .a-ok{background:rgba(0,232,120,.08);border:1px solid rgba(0,232,120,.3);color:var(--green)}
+    .a-info{background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.18);color:var(--cyan)}
+    .a-err{background:rgba(255,68,85,.08);border:1px solid rgba(255,68,85,.3);color:var(--red)}
 
-    /* ══════════════════════════════════════════
-       CONFIG TAB
-    ══════════════════════════════════════════ */
-    .teams-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px; margin-bottom: 20px;
-    }
-    @media(max-width:680px){ .teams-grid { grid-template-columns: repeat(2, 1fr); } }
+    /* ── TEAM CARDS (Admin Config) ── */
+    .teams-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+    @media(max-width:680px){.teams-grid{grid-template-columns:repeat(2,1fr)}}
+    .team-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:13px;transition:border-color .2s}
+    .team-card.inactive{opacity:.5}
+    .tc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .tc-num{font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2);letter-spacing:2px}
+    .toggle{width:36px;height:20px;background:var(--muted);border-radius:10px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+    .toggle.on{background:var(--cyan)}
+    .toggle::after{content:'';position:absolute;width:16px;height:16px;background:white;border-radius:50%;top:2px;left:2px;transition:left .2s}
+    .toggle.on::after{left:18px}
+    .inp{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.86rem;font-weight:600;padding:6px 8px;border-radius:4px;margin-bottom:5px}
+    .inp.sm{font-weight:400;font-size:.78rem;color:var(--text2)}
+    .inp:focus{outline:none;border-color:var(--cyan)}
+    .inp:disabled{opacity:.4;cursor:not-allowed}
+    .tc-status{font-size:.72rem;margin-top:6px;text-align:center;color:var(--text2)}
+    .tc-status.full{color:var(--green)}
+    .link-row{display:flex;gap:5px;margin-top:8px;align-items:center}
+    .link-url{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.65rem;padding:5px 7px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .icon-btn{padding:5px 9px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;cursor:pointer;font-size:.75rem;transition:all .15s;white-space:nowrap}
+    .icon-btn:hover{border-color:var(--cyan);color:var(--cyan)}
 
-    .team-card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color .2s;
-    }
-    .team-card.sel { border-color: var(--cyan); box-shadow: 0 0 14px rgba(0,212,255,.1); }
-    .team-card.off { opacity: .5; }
-    .tc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .tc-num { font-family: 'Orbitron', monospace; font-size: .62rem; color: var(--text2); letter-spacing: 2px; }
-    .toggle-wrap { display: flex; align-items: center; gap: 6px; }
-    .toggle {
-      width: 36px; height: 20px; background: var(--muted); border-radius: 10px;
-      position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0;
-    }
-    .toggle.on { background: var(--cyan); }
-    .toggle::after {
-      content: ''; position: absolute; width: 16px; height: 16px;
-      background: white; border-radius: 50%; top: 2px; left: 2px; transition: left .2s;
-    }
-    .toggle.on::after { left: 18px; }
-    .team-input {
-      width: 100%; background: var(--bg2); border: 1px solid var(--border);
-      color: var(--text); font-family: 'Rajdhani', sans-serif; font-size: .88rem; font-weight: 600;
-      padding: 6px 8px; border-radius: 4px; margin-bottom: 6px;
-    }
-    .team-input.cap { font-weight: 400; font-size: .8rem; color: var(--text2); }
-    .team-input:focus { outline: none; border-color: var(--cyan); }
-    .tc-prog { font-size: .72rem; color: var(--text2); text-align: center; margin-top: 6px; }
-    .tc-prog.full { color: var(--green); }
+    /* ── START / ACTION BUTTONS ── */
+    .primary-btn{padding:11px 26px;background:var(--cyan);color:var(--bg);border:none;border-radius:5px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.92rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:background .15s}
+    .primary-btn:hover{background:var(--cyan2)}
+    .primary-btn:disabled{opacity:.3;cursor:not-allowed}
+    .primary-btn.gold{background:var(--gold);color:#111}
+    .primary-btn.gold:hover{background:#d4a830}
+    .primary-btn.gold:disabled{opacity:.3}
+    .danger-btn{padding:9px 20px;background:transparent;border:2px solid var(--red);color:var(--red);border-radius:5px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .15s}
+    .danger-btn:hover{background:rgba(255,68,85,.1)}
 
-    /* GRID EDITOR */
-    .grid-editor {
-      background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 18px;
-    }
-    .ge-title { font-family: 'Orbitron', monospace; font-size: .72rem; color: var(--cyan); letter-spacing: 2px; margin-bottom: 16px; }
-    .ge-layout { display: flex; gap: 22px; flex-wrap: wrap; }
-    .ge-grid-wrap { overflow-x: auto; flex-shrink: 0; }
-    .battle-grid {
-      display: grid;
-      grid-template-columns: 22px repeat(10, 28px);
-      grid-template-rows: 22px repeat(10, 28px);
-      gap: 1px;
-      user-select: none;
-    }
-    .gl { display: flex; align-items: center; justify-content: center;
-      font-family: 'Share Tech Mono', monospace; font-size: .65rem; color: var(--muted); }
-    .gc {
-      background: rgba(255,255,255,.03); border: 1px solid rgba(0,180,220,.1);
-      border-radius: 2px; cursor: pointer; transition: background .1s;
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Share Tech Mono', monospace; font-size: .55rem; color: rgba(255,255,255,.5);
-    }
-    .gc:hover { background: rgba(0,212,255,.09); }
-    .gc.pv { background: rgba(0,232,120,.22); border-color: var(--green); }
-    .gc.px { background: rgba(255,68,85,.22); border-color: var(--red); }
-    .gc.placed-PA  { background: rgba(240,192,64,.35);  border-color: var(--PA); }
-    .gc.placed-CU  { background: rgba(0,212,255,.28);   border-color: var(--CU); }
-    .gc.placed-SM1 { background: rgba(127,255,144,.28); border-color: var(--SM1); }
-    .gc.placed-SM2 { background: rgba(64,204,96,.28);   border-color: var(--SM2); }
-    .gc.placed-TP  { background: rgba(255,136,68,.28);  border-color: var(--TP); }
-    .gc.placed-bonus { background: rgba(200,136,255,.28); border-color: var(--purple); }
-    .gc.placed-malus  { background: rgba(255,68,85,.28);   border-color: var(--red); }
+    /* ── GRID EDITOR ── */
+    .grid-editor{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px}
+    .ge-title{font-family:'Orbitron',monospace;font-size:.7rem;color:var(--cyan);letter-spacing:2px;margin-bottom:14px}
+    .ge-layout{display:flex;gap:20px;flex-wrap:wrap}
+    .ge-grid-wrap{overflow-x:auto;flex-shrink:0}
+    .battle-grid{display:grid;grid-template-columns:22px repeat(10,28px);grid-template-rows:22px repeat(10,28px);gap:1px;user-select:none}
+    .gl{display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--muted)}
+    .gc{background:rgba(255,255,255,.03);border:1px solid rgba(0,180,220,.09);border-radius:2px;cursor:pointer;transition:background .1s;display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.4)}
+    .gc:hover{background:rgba(0,212,255,.08)}
+    .gc.pv{background:rgba(0,232,120,.2);border-color:var(--green)}
+    .gc.px{background:rgba(255,68,85,.2);border-color:var(--red)}
+    .gc.placed-PA   {background:rgba(240,192,64,.35); border-color:#f0c040}
+    .gc.placed-CU   {background:rgba(0,212,255,.28);  border-color:#00d4ff}
+    .gc.placed-SM1  {background:rgba(127,255,144,.28);border-color:#7fff90}
+    .gc.placed-SM2  {background:rgba(64,204,96,.28);  border-color:#40cc60}
+    .gc.placed-TP   {background:rgba(255,136,68,.28); border-color:#ff8844}
+    .gc.placed-bonus{background:rgba(200,136,255,.28);border-color:#cc88ff}
+    .gc.placed-malus{background:rgba(255,68,85,.28);  border-color:#ff4455}
+    /* readonly grid (no hover) */
+    .gc.readonly{cursor:default}
+    .gc.readonly:hover{background:rgba(255,255,255,.03)}
 
-    /* hit overlays for saisie grid display */
-    .gc.hit-water { background: rgba(42,74,106,.6); border-color: var(--muted); }
-    .gc.hit-ship  { background: rgba(240,192,64,.7); border-color: var(--gold); }
-    .gc.hit-sunk  { background: rgba(255,68,85,.7);  border-color: var(--red); }
-    .gc.hit-bonus { background: rgba(200,136,255,.7); border-color: var(--purple); }
-    .gc.hit-malus { background: rgba(255,68,85,.5);  border-color: var(--red); }
+    /* Palette */
+    .palette{flex:1;min-width:185px}
+    .pal-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:4px;border:1px solid var(--border);cursor:pointer;margin-bottom:4px;transition:all .15s;background:var(--bg2);font-size:.8rem;font-weight:600}
+    .pal-item:hover{border-color:var(--cyan)}
+    .pal-item.sel{border-color:var(--cyan);background:rgba(0,212,255,.09)}
+    .pal-item.done{opacity:.55}
+    .pal-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+    .pal-cells{display:flex;gap:2px;margin-left:auto}
+    .pal-cell{width:8px;height:8px;border-radius:1px}
+    .pal-count{font-size:.7rem;color:var(--text2);margin-left:auto}
+    .orient-row{display:flex;gap:5px;margin:8px 0 5px}
+    .orient-btn{flex:1;padding:5px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:.76rem;transition:all .15s}
+    .orient-btn.on{border-color:var(--cyan);color:var(--cyan)}
+    .erase-btn{width:100%;padding:6px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:.76rem;margin-top:4px;transition:all .15s}
+    .erase-btn:hover,.erase-btn.on{border-color:var(--red);color:var(--red)}
+    .clear-btn{width:100%;padding:6px;background:transparent;border:1px solid var(--muted);color:var(--muted);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:.74rem;margin-top:4px;transition:all .15s}
+    .clear-btn:hover{border-color:var(--red);color:var(--red)}
 
-    /* PALETTE */
-    .palette { flex: 1; min-width: 190px; }
-    .pal-title { font-size: .72rem; color: var(--text2); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
-    .pal-item {
-      display: flex; align-items: center; gap: 9px;
-      padding: 7px 10px; border-radius: 4px; border: 1px solid var(--border);
-      cursor: pointer; margin-bottom: 5px; transition: all .15s; background: var(--bg2);
-      font-size: .82rem; font-weight: 600;
-    }
-    .pal-item:hover { border-color: var(--cyan); }
-    .pal-item.sel { border-color: var(--cyan); background: rgba(0,212,255,.09); }
-    .pal-item.done { opacity: .55; }
-    .pal-item.done.sel { opacity: 1; border-color: var(--gold); background: rgba(240,192,64,.07); }
-    .pal-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
-    .pal-cells { display: flex; gap: 2px; margin-left: auto; }
-    .pal-cell { width: 8px; height: 8px; border-radius: 1px; opacity: .6; }
-    .pal-check { font-size: .7rem; color: var(--green); }
-    .pal-count { font-size: .7rem; color: var(--text2); margin-left: auto; }
-    .orient-row { display: flex; gap: 6px; margin: 10px 0 8px; }
-    .orient-btn {
-      flex: 1; padding: 6px; background: var(--bg2); border: 1px solid var(--border);
-      color: var(--text2); border-radius: 4px; cursor: pointer; font-family: 'Rajdhani', sans-serif;
-      font-weight: 600; font-size: .78rem; transition: all .15s;
-    }
-    .orient-btn.on { border-color: var(--cyan); color: var(--cyan); }
-    .erase-btn {
-      width: 100%; padding: 7px; background: transparent; border: 1px solid var(--border);
-      color: var(--text2); border-radius: 4px; cursor: pointer; font-family: 'Rajdhani', sans-serif;
-      font-weight: 600; font-size: .78rem; margin-top: 5px; transition: all .15s;
-    }
-    .erase-btn:hover, .erase-btn.on { border-color: var(--red); color: var(--red); }
-    .clear-btn {
-      width: 100%; padding: 7px; background: transparent; border: 1px solid var(--muted);
-      color: var(--muted); border-radius: 4px; cursor: pointer; font-family: 'Rajdhani', sans-serif;
-      font-weight: 600; font-size: .75rem; margin-top: 4px; transition: all .15s;
-    }
-    .clear-btn:hover { border-color: var(--red); color: var(--red); }
-    .start-btn {
-      margin-top: 18px; padding: 12px 28px; background: var(--cyan); color: var(--bg);
-      border: none; border-radius: 5px; font-family: 'Rajdhani', sans-serif;
-      font-weight: 700; font-size: .95rem; letter-spacing: 1px; text-transform: uppercase;
-      cursor: pointer; transition: background .15s;
-    }
-    .start-btn:hover { background: var(--cyan2); }
-    .start-btn:disabled { opacity: .35; cursor: not-allowed; }
+    /* ── ADMIN TOUR TAB ── */
+    .tour-matchup{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:14px;overflow:hidden}
+    .tm-head{display:flex;align-items:center;padding:10px 16px;background:var(--card2);border-bottom:1px solid var(--border);gap:8px}
+    .tm-title{font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;flex:1;color:var(--text)}
+    .tm-body{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
+    @media(max-width:540px){.tm-body{grid-template-columns:1fr}}
+    .tm-team{background:var(--bg2);padding:13px}
+    .tmt-name{font-weight:700;font-size:.88rem;margin-bottom:3px}
+    .tmt-status{font-size:.78rem;color:var(--text2)}
+    .tmt-status.submitted{color:var(--green)}
+    .tmt-status.waiting{color:var(--gold)}
+    .shots-preview{margin-top:7px;display:flex;gap:5px;flex-wrap:wrap}
+    .shot-tag{padding:2px 8px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--cyan)}
+    .tour-actions{margin-top:18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 
-    /* ══════════════════════════════════════════
-       SAISIE TAB
-    ══════════════════════════════════════════ */
-    .matchup-list { display: flex; flex-direction: column; gap: 18px; }
-    .matchup-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-    .mc-head {
-      display: flex; align-items: center; padding: 11px 16px;
-      background: var(--card2); border-bottom: 1px solid var(--border); gap: 10px;
-    }
-    .mc-title { font-family: 'Orbitron', monospace; font-size: .78rem; font-weight: 700; flex: 1; }
-    .mc-vs { color: var(--muted); font-size: .65rem; margin: 0 6px; }
-    .mc-body { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
-    .team-form {
-      background: var(--bg2); padding: 14px; border-radius: 0;
-    }
-    .tf-head { font-size: .75rem; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-    .tf-sub  { font-size: .72rem; color: var(--muted); margin-bottom: 10px; }
-    .shots-row { display: flex; gap: 5px; margin-bottom: 9px; }
-    .shot-inp {
-      flex: 1; background: var(--card); border: 1px solid var(--border);
-      color: var(--cyan); font-family: 'Share Tech Mono', monospace; font-size: .95rem;
-      text-align: center; padding: 8px 3px; border-radius: 4px; text-transform: uppercase;
-      min-width: 0;
-    }
-    .shot-inp:focus { outline: none; border-color: var(--cyan); }
-    .val-btn {
-      width: 100%; padding: 8px; background: var(--cyan); color: var(--bg);
-      border: none; border-radius: 4px; font-family: 'Rajdhani', sans-serif;
-      font-weight: 700; font-size: .82rem; letter-spacing: 1px; text-transform: uppercase;
-      cursor: pointer; transition: background .15s;
-    }
-    .val-btn:hover { background: var(--cyan2); }
-    .results-list { margin-top: 10px; }
-    .res-line {
-      display: flex; align-items: center; gap: 8px; padding: 4px 0;
-      border-bottom: 1px solid rgba(0,180,220,.07);
-      font-family: 'Share Tech Mono', monospace; font-size: .72rem;
-    }
-    .res-coord { color: var(--cyan); min-width: 28px; }
-    .r-water  { color: var(--muted); }
-    .r-hit    { color: var(--gold); }
-    .r-sunk   { color: var(--green); font-weight: 700; }
-    .r-bonus  { color: var(--purple); }
-    .r-malus  { color: var(--red); }
-    .r-skip   { color: var(--muted); font-style: italic; }
-    .res-pts  { margin-left: auto; font-weight: 700; }
-    .res-total { text-align: right; margin-top: 7px; font-size: .82rem; font-weight: 700; }
-    @media(max-width:600px){ .mc-body { grid-template-columns: 1fr; } }
+    /* ── CAPTAIN SAISIE ── */
+    .saisie-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px}
+    .sc-head{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+    .sc-title{font-family:'Orbitron',monospace;font-size:.82rem;color:var(--cyan);font-weight:700}
+    .sc-sub{font-size:.78rem;color:var(--text2);margin-top:3px}
+    .shots-row{display:flex;gap:6px;margin-bottom:10px}
+    .shot-inp{flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:.95rem;text-align:center;padding:9px 3px;border-radius:4px;text-transform:uppercase;min-width:0}
+    .shot-inp:focus{outline:none;border-color:var(--cyan)}
+    .shot-inp:disabled{opacity:.4;cursor:not-allowed}
+    .waiting-box{text-align:center;padding:20px;color:var(--gold)}
+    .waiting-box .wi{font-size:2rem;display:block;margin-bottom:8px}
+    .results-list{margin-top:10px}
+    .res-line{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border2);font-family:'Share Tech Mono',monospace;font-size:.74rem}
+    .res-coord{color:var(--cyan);min-width:32px}
+    .r-water{color:var(--muted)}
+    .r-hit{color:var(--orange)}
+    .r-sunk{color:var(--green);font-weight:700}
+    .r-bonus{color:var(--purple)}
+    .r-malus{color:var(--red)}
+    .res-pts{margin-left:auto;font-weight:700}
 
-    /* ══════════════════════════════════════════
-       CLASSEMENT TAB
-    ══════════════════════════════════════════ */
-    .ranking-wrap {
-      background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
-    }
-    table { width: 100%; border-collapse: collapse; }
-    th {
-      font-family: 'Orbitron', monospace; font-size: .62rem; color: var(--text2);
-      letter-spacing: 1px; text-transform: uppercase; padding: 10px 14px; text-align: left;
-      border-bottom: 1px solid var(--border);
-    }
-    td { padding: 12px 14px; border-bottom: 1px solid rgba(0,180,220,.06); font-size: .92rem; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: var(--card2); }
-    .rk-num { font-family: 'Orbitron', monospace; font-size: 1.05rem; font-weight: 900; color: var(--muted); }
-    .rk-1 { color: var(--gold); }
-    .rk-2 { color: #b0c8d8; }
-    .rk-3 { color: #cd7f32; }
-    .score-val { font-family: 'Orbitron', monospace; font-size: 1.1rem; font-weight: 700; color: var(--cyan); }
-    .bareme {
-      margin-top: 20px; background: var(--card); border: 1px solid var(--border);
-      border-radius: 8px; padding: 16px;
-    }
-    .bareme-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-top: 10px; }
-    .bareme-item { display: flex; align-items: center; gap: 8px; font-size: .82rem; }
-    .b-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
-    .b-pts { margin-left: auto; font-family: 'Share Tech Mono', monospace; }
+    /* ── CAPTAIN SUIVI ── */
+    .suivi-wrap{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px}
+    .suivi-layout{display:flex;gap:20px;flex-wrap:wrap}
+    .suivi-grid-wrap{overflow-x:auto;flex-shrink:0}
+    .suivi-legend{flex:1;min-width:150px}
+    .leg-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:4px;margin-bottom:5px;border:1px solid var(--border);font-size:.82rem}
+    .leg-dot{width:14px;height:14px;border-radius:2px;flex-shrink:0}
+    /* Suivi cell states */
+    .gc.sv-water{background:rgba(42,74,106,.55);border-color:var(--muted);cursor:default}
+    .gc.sv-water:hover{background:rgba(42,74,106,.55)}
+    .gc.sv-hit{background:rgba(255,136,0,.45);border-color:#ff8800;cursor:default}
+    .gc.sv-hit:hover{background:rgba(255,136,0,.45)}
+    .gc.sv-sunk{background:rgba(255,68,85,.55);border-color:var(--red);cursor:default}
+    .gc.sv-sunk:hover{background:rgba(255,68,85,.55)}
+    .gc.sv-bonus{background:rgba(200,136,255,.45);border-color:var(--purple);cursor:default}
+    .gc.sv-bonus:hover{background:rgba(200,136,255,.45)}
+    .gc.sv-malus{background:rgba(255,68,85,.35);border-color:var(--red);cursor:default}
+    .gc.sv-malus:hover{background:rgba(255,68,85,.35)}
+    .gc.sv-none{cursor:default}
+    .gc.sv-none:hover{background:rgba(255,255,255,.03)}
 
-    /* ══════════════════════════════════════════
-       FLOTTES TAB
-    ══════════════════════════════════════════ */
-    .flottes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px; }
-    .flotte-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
-    .fc-title {
-      font-family: 'Orbitron', monospace; font-size: .7rem; font-weight: 700; color: var(--cyan);
-      letter-spacing: 2px; margin-bottom: 13px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
-    }
-    .ship-row { display: flex; align-items: center; gap: 9px; padding: 6px 0; border-bottom: 1px solid rgba(0,180,220,.06); }
-    .ship-row:last-child { border-bottom: none; }
-    .sr-name { font-size: .8rem; min-width: 110px; }
-    .sr-name.sunk { text-decoration: line-through; color: var(--muted); }
-    .sr-cells { display: flex; gap: 3px; flex: 1; }
-    .sr-cell { width: 15px; height: 15px; border-radius: 2px; border: 1px solid; }
-    .sr-cell.ok    { opacity: .2; background: transparent; }
-    .sr-cell.hit   { opacity: 1; }
-    .sr-cell.sunk  { opacity: 1; }
-    .sunk-badge {
-      font-size: .62rem; padding: 2px 6px; background: var(--red); color: white;
-      border-radius: 3px; font-weight: 700; letter-spacing: 1px;
-    }
-    .sr-count { font-size: .72rem; color: var(--gold); }
-    .fc-special { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); font-size: .75rem; color: var(--text2); }
+    /* ── CLASSEMENT ── */
+    .ranking-wrap{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    th{font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
+    td{padding:11px 14px;border-bottom:1px solid var(--border2);font-size:.9rem}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:var(--card2)}
+    .rk-num{font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--muted)}
+    .rk-1{color:var(--gold)} .rk-2{color:#b0c8d8} .rk-3{color:#cd7f32}
+    .score-val{font-family:'Orbitron',monospace;font-size:1.05rem;font-weight:700;color:var(--cyan)}
+    .bareme{margin-top:18px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:15px}
+    .bareme-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px;margin-top:10px}
+    .bareme-item{display:flex;align-items:center;gap:7px;font-size:.8rem}
+    .b-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+    .b-pts{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:.8rem}
+
+    /* ── FLOTTES ── */
+    .flottes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:13px}
+    .flotte-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:15px}
+    .fc-title{font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;color:var(--cyan);letter-spacing:2px;margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid var(--border)}
+    .ship-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border2)}
+    .ship-row:last-child{border-bottom:none}
+    .sr-name{font-size:.78rem;min-width:108px}
+    .sr-name.sunk{text-decoration:line-through;color:var(--muted)}
+    .sr-cells{display:flex;gap:3px;flex:1}
+    .sr-cell{width:14px;height:14px;border-radius:2px;border:1px solid}
+    .sr-cell.ok{opacity:.18;background:transparent}
+    .sunk-badge{font-size:.6rem;padding:2px 5px;background:var(--red);color:white;border-radius:3px;font-weight:700;letter-spacing:1px}
+    .sr-count{font-size:.7rem;color:var(--gold)}
+    .fc-special{margin-top:7px;padding-top:7px;border-top:1px solid var(--border);font-size:.74rem;color:var(--text2)}
 
     /* misc */
-    .empty { text-align: center; color: var(--muted); padding: 40px 20px; font-style: italic; }
+    .empty{text-align:center;color:var(--muted);padding:40px 20px;font-style:italic;font-size:.9rem}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .mt{margin-top:16px}
   </style>
 </head>
 <body>
@@ -344,107 +229,117 @@
   <header>
     <h1>⚓ TOUCHÉ COULÉ</h1>
     <p>Suivi de partie — PPA</p>
+    <div id="role-badge"></div>
   </header>
   <div class="status-bar">
-    <div class="status-dot" id="sdot"></div>
-    <div class="status-text" id="stext">Partie non démarrée</div>
+    <div class="sdot" id="sdot"></div>
+    <div class="status-text" id="stext">Chargement…</div>
     <div class="status-actions" id="sact"></div>
   </div>
-  <div class="tabs">
-    <button class="tab-btn active" onclick="goTab('config')">⚙️ Config</button>
-    <button class="tab-btn" onclick="goTab('saisie')">🎯 Saisie</button>
-    <button class="tab-btn" onclick="goTab('classement')">🏆 Classement</button>
-    <button class="tab-btn" onclick="goTab('flottes')">⚓ Flottes</button>
-  </div>
-  <div id="tab-config"     class="tab-content active"></div>
-  <div id="tab-saisie"     class="tab-content"></div>
-  <div id="tab-classement" class="tab-content"></div>
-  <div id="tab-flottes"    class="tab-content"></div>
+  <div class="tabs" id="tabs"></div>
+  <div id="tab-contents"></div>
 </div>
 
 <script>
-/* ════════════════════════════════════
+/* ════════════════════════════════════════
    CONSTANTS
-════════════════════════════════════ */
+════════════════════════════════════════ */
 const COLS = ['A','B','C','D','E','F','G','H','I','J'];
 const ROWS = [1,2,3,4,5,6,7,8,9,10];
-
 const SHIPS = {
-  PA:  { name:'Porte-Avion',  size:5, color:'#f0c040', points:5 },
-  CU:  { name:'Cuirassé',     size:4, color:'#00d4ff', points:4 },
-  SM1: { name:'Sous-Marin 1', size:3, color:'#7fff90', points:3 },
-  SM2: { name:'Sous-Marin 2', size:3, color:'#40cc60', points:3 },
-  TP:  { name:'Torpilleur',   size:2, color:'#ff8844', points:2 },
+  PA:  {name:'Porte-Avion', size:5, color:'#f0c040', points:5},
+  CU:  {name:'Cuirassé',    size:4, color:'#00d4ff', points:4},
+  SM1: {name:'Sous-Marin 1',size:3, color:'#7fff90', points:3},
+  SM2: {name:'Sous-Marin 2',size:3, color:'#40cc60', points:3},
+  TP:  {name:'Torpilleur',  size:2, color:'#ff8844', points:2},
 };
 const SHIP_KEYS = ['PA','CU','SM1','SM2','TP'];
 const PAIRS = [[1,2],[3,4],[5,6]];
 
-/* ════════════════════════════════════
+/* ════════════════════════════════════════
+   ROLE DETECTION
+════════════════════════════════════════ */
+const ROLE = (() => {
+  const p = new URLSearchParams(location.search);
+  if (p.has('team')) {
+    const tid = parseInt(p.get('team'));
+    if (tid >= 1 && tid <= 6) return {type:'captain', teamId:tid};
+  }
+  return {type:'admin'};
+})();
+
+function baseUrl() { return location.origin + location.pathname; }
+function captainUrl(teamId) { return baseUrl() + '?team=' + teamId; }
+
+/* ════════════════════════════════════════
    STATE
-════════════════════════════════════ */
+════════════════════════════════════════ */
 function mkTeam(id) {
   return {
-    id, name:`Équipe ${id}`, captain:'', active: id <= 2,
-    grid:{},        // coord → 'PA'|'CU'|'SM1'|'SM2'|'TP'|'bonus'|'malus'
-    shipCells:{},   // shipKey → [coord, …]
-    bonusCells:[], malusCells:[],
-    hitGrid:{},     // coord → true  (shots received by this team)
-    score:0,
-    shotsGiven:0,   // total cells shot at opponent
+    id, name:`Équipe ${id}`, captain:'', email:'', active: id <= 2,
+    grid:{}, shipCells:{}, bonusCells:[], malusCells:[],
+    hitGrid:{}, score:0,
   };
 }
 
 let S = {
-  tab: 'config',
-  started: false,
-  turn: 1,
-  winner: null,
-  selTeam: 0,           // index of team selected in config grid editor
-  tool: 'PA',           // placement tool
-  orient: 'H',          // placement orientation
-  lastResults: {},       // teamId → [{coord,result,shipKey,points}]
+  started: false, turn: 1, winner: null,
   teams: Array.from({length:6}, (_,i) => mkTeam(i+1)),
+  pendingShots: {},   // {teamId: [coord, ...]} — soumis, en attente de résolution
+  shotHistory: {},    // {teamId: [{coord, result, shipKey, turn, points}]}
+  // UI (non persisté)
+  tool:'PA', orient:'H', selTeam:0, currentTab:'config',
 };
 
-/* ════════════════════════════════════
+/* ════════════════════════════════════════
    PERSISTENCE
-════════════════════════════════════ */
-function save() { try { localStorage.setItem('tc3', JSON.stringify(S)); } catch(e){} }
-function load() {
+════════════════════════════════════════ */
+function save() {
   try {
-    const d = localStorage.getItem('tc3');
-    if (d) S = JSON.parse(d);
+    localStorage.setItem('tc4', JSON.stringify({
+      started:S.started, turn:S.turn, winner:S.winner,
+      teams:S.teams, pendingShots:S.pendingShots, shotHistory:S.shotHistory,
+    }));
   } catch(e){}
 }
 
-/* ════════════════════════════════════
-   HELPERS
-════════════════════════════════════ */
-const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-function coord(ci,ri){ return COLS[ci]+ROWS[ri]; }
-function getTeam(id){ return S.teams.find(t=>t.id===id); }
-function oppId(id){ const p={1:2,2:1,3:4,4:3,5:6,6:5}; return p[id]; }
-function activePairs(){
-  return PAIRS.filter(([a,b])=>{
-    const ta=getTeam(a), tb=getTeam(b);
-    return ta&&tb&&ta.active&&tb.active;
-  });
+function load() {
+  try {
+    const d = localStorage.getItem('tc4');
+    if (!d) return;
+    const sv = JSON.parse(d);
+    Object.assign(S, {
+      started: sv.started||false, turn: sv.turn||1, winner: sv.winner||null,
+      teams: sv.teams||S.teams,
+      pendingShots: sv.pendingShots||{},
+      shotHistory: sv.shotHistory||{},
+    });
+  } catch(e){}
 }
-function isComplete(team){
-  return SHIP_KEYS.every(k=>team.shipCells[k]&&team.shipCells[k].length>0);
-}
-function placedCount(team){ return SHIP_KEYS.filter(k=>team.shipCells[k]&&team.shipCells[k].length>0).length; }
-function isShipSunk(team, key){
-  const cells = team.shipCells[key]||[];
-  return cells.length>0 && cells.every(c=>team.hitGrid[c]);
-}
-function allSunk(team){ return SHIP_KEYS.every(k=>isShipSunk(team,k)); }
 
-/* ════════════════════════════════════
+/* ════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════ */
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const coord = (ci,ri) => COLS[ci]+ROWS[ri];
+const getTeam = id => S.teams.find(t => t.id === id);
+const oppId = id => ({1:2,2:1,3:4,4:3,5:6,6:5}[id]);
+const activePairs = () => PAIRS.filter(([a,b]) => { const ta=getTeam(a),tb=getTeam(b); return ta&&tb&&ta.active&&tb.active; });
+const isComplete = t => SHIP_KEYS.every(k => t.shipCells[k]&&t.shipCells[k].length>0);
+const isShipSunk = (t,k) => { const c=t.shipCells[k]||[]; return c.length>0&&c.every(x=>t.hitGrid[x]); };
+const allSunk = t => SHIP_KEYS.every(k => isShipSunk(t,k));
+const allGridsReady = () => S.teams.filter(t=>t.active).every(t=>isComplete(t));
+const allPendingIn = () => {
+  const ids = activePairs().flat();
+  return ids.length>0 && ids.every(id => { const p=S.pendingShots[id]; return p&&p.length>0; });
+};
+const shotCoords = teamId => new Set((S.shotHistory[teamId]||[]).map(h=>h.coord));
+
+/* ════════════════════════════════════════
    PLACEMENT LOGIC
-════════════════════════════════════ */
-function previewCells(ci, ri, tool, orient){
-  if(tool==='bonus'||tool==='malus'||tool==='eraser') return [coord(ci,ri)];
+════════════════════════════════════════ */
+function previewCells(ci,ri,tool,orient) {
+  if(['bonus','malus','eraser'].includes(tool)) return [coord(ci,ri)];
   const size = SHIPS[tool].size;
   const cells = [];
   for(let i=0;i<size;i++){
@@ -454,457 +349,648 @@ function previewCells(ci, ri, tool, orient){
   return cells;
 }
 
-function canPlace(team, tool, cells){
+function canPlace(team,tool,cells) {
   if(!cells) return false;
-  if(tool==='bonus')  return team.bonusCells.length<2;
-  if(tool==='malus')  return team.malusCells.length<2;
+  if(tool==='bonus')  return team.bonusCells.length<2 && !team.grid[cells[0]];
+  if(tool==='malus')  return team.malusCells.length<2 && !team.grid[cells[0]];
   if(tool==='eraser') return true;
-  const existing = team.shipCells[tool]||[];
-  return cells.every(c=>!team.grid[c]||existing.includes(c));
+  const ex = team.shipCells[tool]||[];
+  return cells.every(c => !team.grid[c] || ex.includes(c));
 }
 
-function placeShip(teamIdx, ci, ri){
+function placeShip(teamIdx, ci, ri) {
+  if(S.started) return;
   const team = S.teams[teamIdx];
-  const tool = S.tool;
-  const cells = previewCells(ci, ri, tool, S.orient);
+  const {tool,orient} = S;
+  const cells = previewCells(ci,ri,tool,orient);
   if(!cells) return;
 
-  if(tool==='eraser'){
+  if(tool==='eraser') {
     const c = coord(ci,ri);
     const content = team.grid[c];
     if(!content) return;
-    if(content==='bonus'){ team.bonusCells=team.bonusCells.filter(x=>x!==c); }
-    else if(content==='malus'){ team.malusCells=team.malusCells.filter(x=>x!==c); }
-    else {
-      (team.shipCells[content]||[]).forEach(x=>{delete team.grid[x];});
-      team.shipCells[content]=[];
-    }
+    if(content==='bonus') team.bonusCells = team.bonusCells.filter(x=>x!==c);
+    else if(content==='malus') team.malusCells = team.malusCells.filter(x=>x!==c);
+    else { (team.shipCells[content]||[]).forEach(x=>{delete team.grid[x];}); team.shipCells[content]=[]; }
     delete team.grid[c];
-    save(); renderConfig(); return;
+    save(); renderTab(S.currentTab); return;
   }
-
   if(!canPlace(team,tool,cells)) return;
-
-  if(tool==='bonus'){
-    if(team.grid[cells[0]]) return;
-    team.grid[cells[0]]='bonus'; team.bonusCells.push(cells[0]);
-    save(); renderConfig(); return;
-  }
-  if(tool==='malus'){
-    if(team.grid[cells[0]]) return;
-    team.grid[cells[0]]='malus'; team.malusCells.push(cells[0]);
-    save(); renderConfig(); return;
-  }
-
-  // Remove existing ship cells before replacing
+  if(tool==='bonus') { team.grid[cells[0]]='bonus'; team.bonusCells.push(cells[0]); save(); renderTab(S.currentTab); return; }
+  if(tool==='malus') { team.grid[cells[0]]='malus'; team.malusCells.push(cells[0]); save(); renderTab(S.currentTab); return; }
   (team.shipCells[tool]||[]).forEach(c=>{delete team.grid[c];});
   team.shipCells[tool]=cells;
   cells.forEach(c=>{team.grid[c]=tool;});
-  save(); renderConfig();
+  save(); renderTab(S.currentTab);
 }
 
-/* ════════════════════════════════════
-   SHOT RESOLUTION
-════════════════════════════════════ */
-function resolveShot(attackerId, rawCoord){
-  rawCoord = rawCoord.toUpperCase().trim();
-  if(!/^[A-J]([1-9]|10)$/.test(rawCoord)) return {coord:rawCoord, result:'invalid', points:0};
-
+/* ════════════════════════════════════════
+   GAME LOGIC
+════════════════════════════════════════ */
+function resolveSingleShot(attackerId, rawCoord) {
   const defender = getTeam(oppId(attackerId));
-  if(!defender) return {coord:rawCoord, result:'noOpp', points:0};
-  if(defender.hitGrid[rawCoord]) return {coord:rawCoord, result:'already', points:0};
-
-  defender.hitGrid[rawCoord]=true;
+  if(!defender) return null;
+  if(defender.hitGrid[rawCoord]) return {coord:rawCoord, result:'already', points:0, shipKey:null};
+  defender.hitGrid[rawCoord] = true;
   const cell = defender.grid[rawCoord];
-
-  if(!cell)           return {coord:rawCoord, result:'water', points:0};
-  if(cell==='bonus')  return {coord:rawCoord, result:'bonus', points:2};
-  if(cell==='malus')  return {coord:rawCoord, result:'malus', points:-2};
-
-  // ship hit
-  if(isShipSunk(defender,cell)){
-    return {coord:rawCoord, result:'sunk', shipKey:cell, points:SHIPS[cell].points};
-  }
-  return {coord:rawCoord, result:'hit', shipKey:cell, points:0};
+  if(!cell)            return {coord:rawCoord, result:'water',  points:0,                    shipKey:null};
+  if(cell==='bonus')   return {coord:rawCoord, result:'bonus',  points:2,                    shipKey:null};
+  if(cell==='malus')   return {coord:rawCoord, result:'malus',  points:-2,                   shipKey:null};
+  if(isShipSunk(defender,cell)) return {coord:rawCoord, result:'sunk', points:SHIPS[cell].points, shipKey:cell};
+  return                        {coord:rawCoord, result:'hit',   points:0,                    shipKey:cell};
 }
 
-function checkWinner(){
-  for(const [a,b] of activePairs()){
+function processTour() {
+  const ids = activePairs().flat();
+  ids.forEach(attackerId => {
+    const shots = S.pendingShots[attackerId]||[];
+    if(!S.shotHistory[attackerId]) S.shotHistory[attackerId]=[];
+    let pts = 0;
+    shots.forEach(c => {
+      const r = resolveSingleShot(attackerId, c);
+      if(r) { r.turn=S.turn; S.shotHistory[attackerId].push(r); pts+=r.points||0; }
+    });
+    getTeam(attackerId).score += pts;
+  });
+  S.pendingShots = {};
+  const w = checkWinner();
+  if(w) S.winner=w;
+  else  S.turn++;
+  save();
+}
+
+function checkWinner() {
+  for(const [a,b] of activePairs()) {
     if(allSunk(getTeam(b))) return a;
     if(allSunk(getTeam(a))) return b;
   }
   return null;
 }
 
-/* ════════════════════════════════════
-   TAB ROUTING
-════════════════════════════════════ */
-function goTab(t){
-  S.tab=t;
-  document.querySelectorAll('.tab-btn').forEach(btn=>{
-    btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${t}'`));
+function submitCaptainShots(teamId, rawCoords) {
+  const already = shotCoords(teamId);
+  const errors=[], valid=[];
+  rawCoords.forEach(c => {
+    c = c.toUpperCase().trim();
+    if(!c) return;
+    if(!/^[A-J]([1-9]|10)$/.test(c)) { errors.push(`"${c}" invalide (ex: A1, J10)`); return; }
+    if(already.has(c)) { errors.push(`"${c}" déjà tiré`); return; }
+    if(valid.includes(c)) { errors.push(`"${c}" saisi deux fois`); return; }
+    valid.push(c);
   });
-  document.querySelectorAll('.tab-content').forEach(el=>{
-    el.classList.toggle('active', el.id===`tab-${t}`);
-  });
-  render(t);
+  if(errors.length) return {ok:false, errors};
+  if(!valid.length) return {ok:false, errors:['Entrez au moins une coordonnée']};
+  S.pendingShots[teamId] = valid;
+  save();
+  return {ok:true};
 }
 
-function render(t){
-  updateStatus();
-  if(t==='config')     renderConfig();
-  if(t==='saisie')     renderSaisie();
-  if(t==='classement') renderClassement();
-  if(t==='flottes')    renderFlottes();
+/* ════════════════════════════════════════
+   SUIVI CELL CLASS
+════════════════════════════════════════ */
+function suviClass(captainTeamId, co) {
+  const history = S.shotHistory[captainTeamId]||[];
+  const shot = history.find(h=>h.coord===co);
+  if(!shot) return 'sv-none';
+  if(shot.result==='water')  return 'sv-water';
+  if(shot.result==='bonus')  return 'sv-bonus';
+  if(shot.result==='malus')  return 'sv-malus';
+  if(shot.result==='sunk')   return 'sv-sunk';
+  if(shot.result==='hit') {
+    // Si le navire a finalement été coulé, mettre en rouge
+    const shipSunk = history.some(h=>h.shipKey===shot.shipKey&&h.result==='sunk');
+    return shipSunk ? 'sv-sunk' : 'sv-hit';
+  }
+  return 'sv-none';
 }
 
-/* ════════════════════════════════════
+/* ════════════════════════════════════════
    STATUS BAR
-════════════════════════════════════ */
-function updateStatus(){
+════════════════════════════════════════ */
+function updateStatus() {
   const dot=document.getElementById('sdot');
   const txt=document.getElementById('stext');
   const act=document.getElementById('sact');
-  if(S.winner){
+  if(!dot) return;
+  let acts='';
+  if(S.winner) {
     const w=getTeam(S.winner);
-    dot.className='status-dot on';
+    dot.className='sdot win';
     txt.innerHTML=`🏆 Victoire : <strong>${esc(w.name)}</strong>`;
-    act.innerHTML=`<button onclick="resetGame()">Nouvelle partie</button>`;
-  } else if(S.started){
-    dot.className='status-dot on';
-    txt.textContent=`Tour ${S.turn} — Partie en cours`;
-    act.innerHTML=`<button onclick="resetGame()">Réinitialiser</button>`;
+    if(ROLE.type==='admin') acts=`<button class="sbtn danger" onclick="resetGame()">Réinitialiser</button>`;
+  } else if(S.started) {
+    dot.className='sdot on';
+    const allIn = allPendingIn();
+    txt.textContent=`Tour ${S.turn} — ${allIn?'Tous les tirs soumis':'En attente des capitaines'}`;
+    if(ROLE.type==='admin') acts=`<button class="sbtn danger" onclick="resetGame()">Reset</button>`;
   } else {
-    dot.className='status-dot';
-    txt.textContent='Partie non démarrée';
-    act.innerHTML='';
+    dot.className='sdot';
+    if(ROLE.type==='admin') txt.textContent='Partie non démarrée';
+    else txt.textContent='En attente du démarrage par l\'admin';
+    if(ROLE.type==='admin') acts=`<button class="sbtn" onclick="refresh()">↻ Actualiser</button>`;
+  }
+  if(ROLE.type==='captain') {
+    acts=`<button class="sbtn" onclick="refresh()">↻ Actualiser</button>`;
+  }
+  act.innerHTML=acts;
+}
+
+/* ════════════════════════════════════════
+   TAB ROUTING
+════════════════════════════════════════ */
+function goTab(t) {
+  S.currentTab = t;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===t));
+  document.querySelectorAll('.tab-content').forEach(e => e.classList.toggle('active', e.id===`tab-${t}`));
+  renderTab(t);
+}
+
+function renderTab(t) {
+  updateStatus();
+  if(ROLE.type==='admin') {
+    if(t==='config')     renderAdminConfig();
+    if(t==='tour')       renderAdminTour();
+    if(t==='classement') renderClassement();
+    if(t==='flottes')    renderFlottes();
+  } else {
+    if(t==='config') renderCaptainConfig();
+    if(t==='saisie') renderCaptainSaisie();
+    if(t==='suivi')  renderCaptainSuivi();
   }
 }
 
-/* ════════════════════════════════════
-   CONFIG RENDER
-════════════════════════════════════ */
-function renderConfig(){
-  const el=document.getElementById('tab-config');
-  const sel=S.selTeam;
+function refresh() { load(); renderTab(S.currentTab); }
 
-  // Team cards
-  let h=`<p class="section-title">Équipes participantes</p><div class="teams-grid">`;
-  S.teams.forEach((team,i)=>{
-    const full=isComplete(team);
-    const cnt=placedCount(team);
-    h+=`<div class="team-card ${i===sel?'sel':''} ${!team.active?'off':''}" onclick="selTeam(${i})">
+/* ════════════════════════════════════════
+   ██  ADMIN — CONFIG
+════════════════════════════════════════ */
+function renderAdminConfig() {
+  const el = document.getElementById('tab-config');
+  let h = `<p class="stitle">Équipes participantes</p><div class="teams-grid">`;
+
+  S.teams.forEach((team,i) => {
+    const full = isComplete(team);
+    const cnt = SHIP_KEYS.filter(k=>team.shipCells[k]&&team.shipCells[k].length>0).length;
+    const url = captainUrl(team.id);
+    const locked = S.started;
+
+    h += `<div class="team-card ${!team.active?'inactive':''}">
       <div class="tc-head">
         <span class="tc-num">ÉQUIPE ${team.id}</span>
-        <div class="toggle-wrap" onclick="event.stopPropagation();toggleActive(${i})">
-          <div class="toggle ${team.active?'on':''}"></div>
-        </div>
+        <div class="toggle ${team.active?'on':''}" onclick="${locked?'':'toggleActive('+i+')'}" title="${locked?'Partie en cours':'Activer/désactiver'}" style="${locked?'cursor:not-allowed':''}"></div>
       </div>
-      <input class="team-input" type="text" value="${esc(team.name)}" placeholder="Nom de l'équipe"
-        onclick="event.stopPropagation()" onchange="setName(${i},this.value)">
-      <input class="team-input cap" type="text" value="${esc(team.captain)}" placeholder="Capitaine"
-        onclick="event.stopPropagation()" onchange="setCap(${i},this.value)">
-      <div class="tc-prog ${full?'full':''}">
-        ${full?'✅ Grille complète':`${cnt}/5 navires`}
+      <input class="inp" type="text" value="${esc(team.name)}" placeholder="Nom de l'équipe"
+        ${locked?'disabled':''} onchange="setName(${i},this.value)">
+      <input class="inp sm" type="text" value="${esc(team.captain)}" placeholder="Capitaine"
+        ${locked?'disabled':''} onchange="setCap(${i},this.value)">
+      <input class="inp sm" type="email" value="${esc(team.email)}" placeholder="Email du capitaine"
+        ${locked?'disabled':''} onchange="setEmail(${i},this.value)">
+      <div class="tc-status ${full?'full':''}">
+        ${full?'✅ Grille complète':`🚧 ${cnt}/5 navires placés`}
         ${(team.bonusCells.length||team.malusCells.length)?` · ⭐${team.bonusCells.length} 💣${team.malusCells.length}`:''}
+      </div>
+      <div class="link-row">
+        <div class="link-url" title="${url}">${url}</div>
+        <button class="icon-btn" onclick="copyUrl('${url}')" title="Copier le lien">📋</button>
+        ${team.email?`<button class="icon-btn" onclick="sendEmail(${i})" title="Envoyer par email">📧</button>`:''}
       </div>
     </div>`;
   });
-  h+=`</div>`;
+  h += `</div>`;
 
-  // Grid editor
-  h+=renderGridEditor(S.teams[sel],sel);
-
-  // Start or locked notice
-  if(!S.started){
-    const actTeams=S.teams.filter(t=>t.active);
-    const ok=actTeams.length>=2&&actTeams.every(t=>isComplete(t));
-    const hint=!ok?`<span style="color:var(--muted);font-size:.78rem;margin-left:12px">Toutes les grilles des équipes actives doivent être complètes</span>`:'';
-    h+=`<div style="margin-top:18px;display:flex;align-items:center;flex-wrap:wrap;gap:10px">
-      <button class="start-btn" ${ok?'':'disabled'} onclick="startGame()">🚀 Démarrer la partie</button>
-      ${hint}
+  // Start button
+  if(!S.started) {
+    const allAct = S.teams.filter(t=>t.active);
+    const ok = allAct.length>=2 && allAct.every(t=>isComplete(t));
+    h += `<div class="row mt">
+      <button class="primary-btn" ${ok?'':'disabled'} onclick="startGame()">🚀 Démarrer la partie</button>
+      ${!ok?`<span style="color:var(--text2);font-size:.8rem">Toutes les grilles des équipes actives doivent être complètes</span>`:''}
     </div>`;
   } else {
-    h+=`<div class="alert alert-warn" style="margin-top:16px">⚠️ Partie en cours — configuration verrouillée.</div>`;
+    h += `<div class="alert a-warn mt">⚠️ Partie en cours — les équipes et configurations sont verrouillées.</div>`;
   }
 
-  el.innerHTML=h;
-  attachGridEvents(S.teams[sel],sel);
+  el.innerHTML = h;
 }
 
-function renderGridEditor(team,tIdx){
-  const tool=S.tool, orient=S.orient;
-  let h=`<div class="grid-editor" style="margin-top:16px">
-    <div class="ge-title">🗺️ Grille — ${esc(team.name)}</div>
-    <div class="ge-layout">
-      <div class="ge-grid-wrap">
-        <div class="battle-grid" id="bgrid">`;
+/* Admin config actions */
+function toggleActive(i) { if(S.started)return; S.teams[i].active=!S.teams[i].active; save(); renderAdminConfig(); }
+function setName(i,v)  { S.teams[i].name=v;    save(); }
+function setCap(i,v)   { S.teams[i].captain=v; save(); }
+function setEmail(i,v) { S.teams[i].email=v;   save(); }
 
-  // Col headers
-  h+=`<div class="gl"></div>`;
+function copyUrl(url) {
+  navigator.clipboard.writeText(url).then(()=>{
+    alert('Lien copié : ' + url);
+  }).catch(()=>{ alert('Lien : ' + url); });
+}
+
+function sendEmail(teamIdx) {
+  const team = S.teams[teamIdx];
+  const url = captainUrl(team.id);
+  const subject = encodeURIComponent(`Touché Coulé PPA — Ton lien capitaine`);
+  const body = encodeURIComponent(
+    `Bonjour ${team.captain||team.name},\n\nVoici ton lien pour accéder à l'interface capitaine :\n${url}\n\nBonne chance !`
+  );
+  window.open(`mailto:${team.email}?subject=${subject}&body=${body}`);
+}
+
+function startGame() {
+  S.started=true; S.turn=1; S.winner=null; S.pendingShots={}; S.shotHistory={};
+  S.teams.forEach(t=>{ t.hitGrid={}; t.score=0; });
+  save(); renderTab(S.currentTab);
+}
+
+function resetGame() {
+  if(!confirm('Réinitialiser toute la partie ? Les scores seront perdus.')) return;
+  S.started=false; S.turn=1; S.winner=null; S.pendingShots={}; S.shotHistory={};
+  S.teams.forEach(t=>{ t.hitGrid={}; t.score=0; });
+  save(); renderTab(S.currentTab);
+}
+
+/* ════════════════════════════════════════
+   ██  ADMIN — TOUR
+════════════════════════════════════════ */
+function renderAdminTour() {
+  const el = document.getElementById('tab-tour');
+  if(!S.started && !S.winner) {
+    el.innerHTML=`<div class="alert a-warn">⚠️ La partie n'est pas encore démarrée. Allez dans Config pour préparer les grilles et démarrer.</div>`; return;
+  }
+  if(S.winner) {
+    const w=getTeam(S.winner);
+    el.innerHTML=`<div class="alert a-ok">🏆 Partie terminée ! <strong>${esc(w.name)}</strong> a coulé toute la flotte adverse.</div>`; return;
+  }
+
+  const pairs = activePairs();
+  let h = `<p class="stitle">Tour ${S.turn} — État des soumissions</p>`;
+
+  pairs.forEach(([aId,bId]) => {
+    const ta=getTeam(aId), tb=getTeam(bId);
+    h += renderTourMatchup(ta, tb);
+  });
+
+  const allIn = allPendingIn();
+  h += `<div class="tour-actions">
+    <button class="primary-btn gold" ${allIn?'':'disabled'} onclick="doTourSuivant()">⏭ Tour Suivant</button>
+    ${!allIn?`<span style="color:var(--text2);font-size:.82rem">En attente que toutes les équipes soumettent leurs tirs</span>`:`<span style="color:var(--green);font-size:.82rem">✅ Tous les tirs sont soumis — vous pouvez passer au tour suivant</span>`}
+  </div>`;
+
+  el.innerHTML = h;
+}
+
+function renderTourMatchup(ta, tb) {
+  return `<div class="tour-matchup">
+    <div class="tm-head">
+      <div class="tm-title">${esc(ta.name)} <span style="color:var(--muted);font-size:.6rem">VS</span> ${esc(tb.name)}</div>
+    </div>
+    <div class="tm-body">
+      ${renderTourTeam(ta)} ${renderTourTeam(tb)}
+    </div>
+  </div>`;
+}
+
+function renderTourTeam(team) {
+  const pending = S.pendingShots[team.id];
+  const submitted = !!(pending && pending.length);
+  const shotsHtml = submitted
+    ? pending.map(c=>`<span class="shot-tag">${c}</span>`).join('')
+    : '';
+  return `<div class="tm-team">
+    <div class="tmt-name">⚡ ${esc(team.name)}</div>
+    ${submitted
+      ? `<div class="tmt-status submitted">✅ Tirs soumis</div><div class="shots-preview">${shotsHtml}</div>`
+      : `<div class="tmt-status waiting">⏳ En attente des tirs…</div>`
+    }
+  </div>`;
+}
+
+function doTourSuivant() {
+  if(!allPendingIn()) return;
+  processTour();
+  renderTab('tour');
+  // Aussi actualiser classement et flottes si déjà ouverts
+}
+
+/* ════════════════════════════════════════
+   ██  CAPTAIN — CONFIG (grille)
+════════════════════════════════════════ */
+function renderCaptainConfig() {
+  const el = document.getElementById('tab-config');
+  const teamIdx = S.teams.findIndex(t=>t.id===ROLE.teamId);
+  const team = S.teams[teamIdx];
+  if(!team) { el.innerHTML=`<div class="alert a-err">Équipe introuvable.</div>`; return; }
+
+  if(S.started) {
+    el.innerHTML = `
+      <div class="alert a-warn">⚠️ La partie est démarrée — la grille est verrouillée.</div>
+      ${renderGridReadOnly(team)}`;
+    return;
+  }
+
+  let h = `<p class="stitle">Ma grille — ${esc(team.name)}</p>`;
+  h += renderGridEditor(team, teamIdx);
+  if(isComplete(team)) {
+    h += `<div class="alert a-ok mt">✅ Grille complète ! L'admin peut désormais démarrer la partie.</div>`;
+  } else {
+    const cnt = SHIP_KEYS.filter(k=>team.shipCells[k]&&team.shipCells[k].length>0).length;
+    h += `<div class="alert a-info mt">🚧 ${cnt}/5 navires placés. Placez tous les navires avant que l'admin démarre la partie.</div>`;
+  }
+  el.innerHTML = h;
+  attachGridEvents(team, teamIdx);
+}
+
+function renderGridReadOnly(team) {
+  let h = `<div class="grid-editor"><div class="ge-title">🗺️ Grille — ${esc(team.name)}</div>
+    <div class="battle-grid">`;
+  h += `<div class="gl"></div>`;
   COLS.forEach(c=>{h+=`<div class="gl">${c}</div>`;});
-
-  // Rows
   ROWS.forEach((row,ri)=>{
     h+=`<div class="gl">${row}</div>`;
     COLS.forEach((col,ci)=>{
-      const co=col+row;
-      const content=team.grid[co];
-      let cls='gc'+(content?` placed-${content}`:'');
-      let inner=content?({bonus:'⭐',malus:'💣'}[content]||content):'';
-      h+=`<div class="${cls}" id="gc-${co}" data-ci="${ci}" data-ri="${ri}" data-co="${co}">${inner}</div>`;
+      const co=col+row, content=team.grid[co];
+      const cls=`gc readonly${content?` placed-${content}`:''}`;
+      h+=`<div class="${cls}">${content?({bonus:'⭐',malus:'💣'}[content]||''):''}`;
+      h+=`</div>`;
     });
   });
+  h+=`</div></div>`;
+  return h;
+}
 
-  h+=`</div></div><!-- end grid -->`;
+function renderGridEditor(team, tIdx) {
+  const {tool,orient} = S;
+  let h = `<div class="grid-editor"><div class="ge-title">🗺️ Positionner mes navires</div>
+    <div class="ge-layout">
+      <div class="ge-grid-wrap"><div class="battle-grid" id="bgrid">`;
+
+  h += `<div class="gl"></div>`;
+  COLS.forEach(c=>{h+=`<div class="gl">${c}</div>`;});
+  ROWS.forEach((row,ri)=>{
+    h+=`<div class="gl">${row}</div>`;
+    COLS.forEach((col,ci)=>{
+      const co=col+row, content=team.grid[co];
+      const cls=`gc${content?` placed-${content}`:''}`;
+      h+=`<div class="${cls}" data-ci="${ci}" data-ri="${ri}" data-co="${co}">${content?({bonus:'⭐',malus:'💣'}[content]||content):''}`;
+      h+=`</div>`;
+    });
+  });
+  h+=`</div></div>`;
 
   // Palette
-  h+=`<div class="palette"><div class="pal-title">Placement</div>`;
+  h+=`<div class="palette">`;
   SHIP_KEYS.forEach(key=>{
     const ship=SHIPS[key];
     const done=!!(team.shipCells[key]&&team.shipCells[key].length);
-    const isSel=tool===key;
-    const dots=Array.from({length:ship.size}).map(()=>`<div class="pal-cell" style="background:${ship.color}"></div>`).join('');
-    h+=`<div class="pal-item ${isSel?'sel':''} ${done?'done':''}" onclick="setTool('${key}')">
+    const dots=Array.from({length:ship.size}).map(()=>`<div class="pal-cell" style="background:${ship.color};opacity:.7"></div>`).join('');
+    h+=`<div class="pal-item ${tool===key?'sel':''} ${done?'done':''}" onclick="setTool('${key}')">
       <div class="pal-dot" style="background:${ship.color}"></div>
       <span>${ship.name}</span>
       <div class="pal-cells">${dots}</div>
-      ${done?`<span class="pal-check">✓</span>`:''}
+      ${done?`<span style="color:var(--green);font-size:.75rem">✓</span>`:''}
     </div>`;
   });
-  h+=`<div class="pal-item ${tool==='bonus'?'sel':''} ${team.bonusCells.length>=2?'done':''}" onclick="setTool('bonus')">
+  h+=`<div class="pal-item ${tool==='bonus'?'sel':''}" onclick="setTool('bonus')">
     <div class="pal-dot" style="background:#cc88ff"></div>
-    <span>Case Bonus</span><span class="pal-count">${team.bonusCells.length}/2</span>
+    <span>Case Bonus ⭐</span><span class="pal-count">${team.bonusCells.length}/2</span>
   </div>
-  <div class="pal-item ${tool==='malus'?'sel':''} ${team.malusCells.length>=2?'done':''}" onclick="setTool('malus')">
+  <div class="pal-item ${tool==='malus'?'sel':''}" onclick="setTool('malus')">
     <div class="pal-dot" style="background:#ff4455"></div>
-    <span>Case Malus</span><span class="pal-count">${team.malusCells.length}/2</span>
+    <span>Case Malus 💣</span><span class="pal-count">${team.malusCells.length}/2</span>
   </div>`;
 
-  // Orientation (ships only)
   if(!['bonus','malus','eraser'].includes(tool)){
     h+=`<div class="orient-row">
-      <button class="orient-btn ${orient==='H'?'on':''}" onclick="setOrient('H')">↔ Horizontal</button>
-      <button class="orient-btn ${orient==='V'?'on':''}" onclick="setOrient('V')">↕ Vertical</button>
+      <button class="orient-btn ${orient==='H'?'on':''}" onclick="setOrient('H')">↔ Horiz.</button>
+      <button class="orient-btn ${orient==='V'?'on':''}" onclick="setOrient('V')">↕ Vert.</button>
     </div>`;
   }
-
-  h+=`<button class="erase-btn ${tool==='eraser'?'on':''}" onclick="setTool('eraser')">🗑️ Effaceur</button>
+  h+=`<button class="erase-btn ${tool==='eraser'?'on':''}" onclick="setTool('eraser')">🗑️ Effacer</button>
     <button class="clear-btn" onclick="clearGrid(${tIdx})">⚠️ Vider la grille</button>
   </div></div></div>`;
 
   return h;
 }
 
-/* Grid event attachment */
-function attachGridEvents(team,tIdx){
-  const grid=document.getElementById('bgrid');
+function attachGridEvents(team, tIdx) {
+  const grid = document.getElementById('bgrid');
   if(!grid) return;
-  let prevCells=[];
-
-  function clearPrev(){
-    prevCells.forEach(co=>{
-      const el=document.getElementById(`gc-${co}`);
-      if(el){ el.classList.remove('pv','px'); }
-    });
-    prevCells=[];
-  }
-
-  function showPrev(ci,ri){
-    clearPrev();
-    const tool=S.tool, orient=S.orient;
-    if(tool==='eraser') return;
-    let cells;
-    if(tool==='bonus'||tool==='malus') cells=[coord(ci,ri)];
-    else { cells=previewCells(ci,ri,tool,orient); if(!cells) return; }
-    const valid=canPlace(team,tool,cells);
-    cells.forEach(co=>{
-      const el=document.getElementById(`gc-${co}`);
-      if(el){ el.classList.add(valid?'pv':'px'); prevCells.push(co); }
-    });
-  }
+  let prev=[];
+  const clearPrev=()=>{ prev.forEach(co=>{ const e=document.getElementById(`gc-${co}`); if(e){e.classList.remove('pv','px');} }); prev=[]; };
 
   grid.querySelectorAll('.gc').forEach(cell=>{
+    cell.id=`gc-${cell.dataset.co}`;
     cell.addEventListener('mouseenter',()=>{
-      showPrev(+cell.dataset.ci,+cell.dataset.ri);
+      clearPrev();
+      if(S.tool==='eraser') return;
+      const cells=previewCells(+cell.dataset.ci,+cell.dataset.ri,S.tool,S.orient);
+      if(!cells) return;
+      const valid=canPlace(team,S.tool,cells);
+      cells.forEach(co=>{ const e=document.getElementById(`gc-${co}`); if(e){e.classList.add(valid?'pv':'px'); prev.push(co);} });
     });
-    cell.addEventListener('mouseleave',()=>clearPrev());
-    cell.addEventListener('click',()=>{
-      if(S.started) return;
-      placeShip(tIdx,+cell.dataset.ci,+cell.dataset.ri);
-    });
+    cell.addEventListener('mouseleave',clearPrev);
+    cell.addEventListener('click',()=>{ if(S.started)return; placeShip(tIdx,+cell.dataset.ci,+cell.dataset.ri); });
   });
 }
 
-/* Config actions */
-function selTeam(i){ S.selTeam=i; renderConfig(); }
-function toggleActive(i){ if(S.started)return; S.teams[i].active=!S.teams[i].active; save(); renderConfig(); }
-function setName(i,v){ S.teams[i].name=v; save(); }
-function setCap(i,v){ S.teams[i].captain=v; save(); }
-function setTool(t){ S.tool=t; renderConfig(); }
-function setOrient(o){ S.orient=o; renderConfig(); }
-function clearGrid(tIdx){
+function setTool(t) { S.tool=t; renderTab(S.currentTab); }
+function setOrient(o) { S.orient=o; renderTab(S.currentTab); }
+function clearGrid(tIdx) {
   const t=S.teams[tIdx];
   t.grid={}; t.shipCells={}; t.bonusCells=[]; t.malusCells=[];
-  save(); renderConfig();
-}
-function startGame(){
-  S.started=true; S.turn=1; S.winner=null; S.lastResults={};
-  S.teams.forEach(t=>{ t.hitGrid={}; t.score=0; t.shotsGiven=0; });
-  save(); updateStatus(); renderConfig();
-}
-function resetGame(){
-  if(!confirm('Réinitialiser la partie ? Les scores seront perdus.')) return;
-  S.started=false; S.turn=1; S.winner=null; S.lastResults={};
-  S.teams.forEach(t=>{ t.hitGrid={}; t.score=0; t.shotsGiven=0; });
-  save(); render(S.tab);
+  save(); renderTab(S.currentTab);
 }
 
-/* ════════════════════════════════════
-   SAISIE RENDER
-════════════════════════════════════ */
-function renderSaisie(){
-  const el=document.getElementById('tab-saisie');
-  if(!S.started){
-    el.innerHTML=`<div class="alert alert-warn">⚠️ La partie n'est pas encore démarrée. Allez dans Configuration pour préparer les grilles et démarrer.</div>`;
-    return;
+/* ════════════════════════════════════════
+   ██  CAPTAIN — SAISIE
+════════════════════════════════════════ */
+function renderCaptainSaisie() {
+  const el = document.getElementById('tab-saisie');
+  const team = getTeam(ROLE.teamId);
+  const opp = getTeam(oppId(ROLE.teamId));
+
+  if(!S.started) {
+    el.innerHTML=`<div class="alert a-warn">⏳ La partie n'est pas encore démarrée. L'admin doit démarrer la partie.</div>`; return;
   }
-  if(S.winner){
+  if(S.winner) {
     const w=getTeam(S.winner);
-    el.innerHTML=`<div class="alert alert-ok">🏆 Partie terminée ! <strong>${esc(w.name)}</strong> a gagné.</div>`;
-    return;
+    el.innerHTML=`<div class="alert ${S.winner===ROLE.teamId?'a-ok':'a-err'}">
+      ${S.winner===ROLE.teamId?'🏆 Vous avez gagné !':'💀 '+esc(w.name)+' a gagné la partie.'}
+    </div>`; return;
   }
 
-  const pairs=activePairs();
-  if(!pairs.length){
-    el.innerHTML=`<div class="alert alert-warn">⚠️ Aucun affrontement actif.</div>`;
-    return;
-  }
+  const pending = S.pendingShots[ROLE.teamId];
+  const submitted = !!(pending&&pending.length);
 
-  let h=`<p class="section-title">Tour ${S.turn} — Saisie des tirs</p><div class="matchup-list">`;
+  // Last turn results
+  const history = S.shotHistory[ROLE.teamId]||[];
+  const lastTurnResults = history.filter(h=>h.turn===S.turn-1);
 
-  pairs.forEach(([aId,bId])=>{
-    const ta=getTeam(aId), tb=getTeam(bId);
-    h+=`<div class="matchup-card">
-      <div class="mc-head">
-        <div class="mc-title">${esc(ta.name)}<span class="mc-vs">VS</span>${esc(tb.name)}</div>
-      </div>
-      <div class="mc-body">
-        ${renderTeamForm(ta,tb)}
-        ${renderTeamForm(tb,ta)}
-      </div>
+  let h = `<div class="saisie-card">
+    <div class="sc-head">
+      <div class="sc-title">Tour ${S.turn} — Mes tirs</div>
+      <div class="sc-sub">Tirs dirigés sur : <strong>${esc(opp?opp.name:'adversaire')}</strong></div>
     </div>`;
-  });
 
-  h+=`</div>`;
-  el.innerHTML=h;
-}
-
-function renderTeamForm(attacker,defender){
-  const res=S.lastResults[attacker.id];
-  const done=!!(res&&res.length);
-
-  let h=`<div class="team-form">
-    <div class="tf-head">⚡ ${esc(attacker.name)}</div>
-    <div class="tf-sub">Tirs sur : ${esc(defender.name)}</div>`;
-
-  if(!done){
-    h+=`<div class="shots-row">
-      <input class="shot-inp" id="s${attacker.id}0" type="text" maxlength="3" placeholder="A1" oninput="this.value=this.value.toUpperCase()">
-      <input class="shot-inp" id="s${attacker.id}1" type="text" maxlength="3" placeholder="B5" oninput="this.value=this.value.toUpperCase()">
-      <input class="shot-inp" id="s${attacker.id}2" type="text" maxlength="3" placeholder="J10" oninput="this.value=this.value.toUpperCase()">
-    </div>
-    <button class="val-btn" onclick="validateShots(${attacker.id})">✔ Valider</button>`;
+  if(submitted) {
+    const shotsHtml = pending.map(c=>`<span class="shot-tag">${c}</span>`).join('');
+    h+=`<div class="waiting-box">
+      <span class="wi">⏳</span>
+      <div style="font-weight:700;margin-bottom:6px">Tirs soumis — en attente de validation par l'admin</div>
+      <div class="shots-preview" style="justify-content:center">${shotsHtml}</div>
+    </div>`;
   } else {
-    h+=`<div class="results-list">`;
-    let total=0;
-    res.forEach(r=>{
-      const cls=`r-${r.result==='sunk'?'sunk':r.result==='hit'?'hit':r.result==='water'?'water':r.result==='bonus'?'bonus':r.result==='malus'?'malus':'skip'}`;
-      const ptsHtml=r.points?`<span class="res-pts" style="color:${r.points>0?'var(--green)':'var(--red)'}">${r.points>0?'+':''}${r.points}</span>`:'';
+    h+=`<p style="font-size:.8rem;color:var(--text2);margin-bottom:10px">Entrez jusqu'à 3 coordonnées (ex: A1, J10)</p>
+    <div class="shots-row">
+      <input class="shot-inp" id="s0" type="text" maxlength="3" placeholder="A1" oninput="this.value=this.value.toUpperCase()">
+      <input class="shot-inp" id="s1" type="text" maxlength="3" placeholder="B5" oninput="this.value=this.value.toUpperCase()">
+      <input class="shot-inp" id="s2" type="text" maxlength="3" placeholder="J10" oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <div id="shot-err" style="color:var(--red);font-size:.8rem;margin-bottom:8px"></div>
+    <button class="primary-btn" onclick="doSubmitShots()">✔ Soumettre mes tirs</button>`;
+  }
+
+  if(lastTurnResults.length) {
+    h+=`<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px">
+      <p class="stitle" style="margin-bottom:10px">Résultats du tour ${S.turn-1}</p>
+      <div class="results-list">`;
+    let tot=0;
+    lastTurnResults.forEach(r=>{
+      const cls=`r-${r.result==='sunk'?'sunk':r.result==='hit'?'hit':r.result==='water'?'water':r.result==='bonus'?'bonus':r.result==='malus'?'malus':'water'}`;
+      tot+=r.points||0;
       h+=`<div class="res-line">
-        <span class="res-coord">${r.coord||'?'}</span>
+        <span class="res-coord">${r.coord}</span>
         <span class="${cls}">${fmtResult(r)}</span>
-        ${ptsHtml}
+        ${r.points?`<span class="res-pts" style="color:${r.points>0?'var(--green)':'var(--red)'}">${r.points>0?'+':''}${r.points}</span>`:''}
       </div>`;
-      total+=r.points||0;
     });
     h+=`</div>`;
-    if(total!==0){
-      h+=`<div class="res-total" style="color:${total>0?'var(--green)':'var(--red)'}">
-        Total ce tour : ${total>0?'+':''}${total} pts
-      </div>`;
-    }
+    if(tot) h+=`<div class="res-total mt" style="text-align:right;font-weight:700;color:${tot>0?'var(--green)':'var(--red)'}">
+      Total tour ${S.turn-1} : ${tot>0?'+':''}${tot} pts
+    </div>`;
+    h+=`</div>`;
   }
 
   h+=`</div>`;
-  return h;
+  el.innerHTML = h;
 }
 
-function fmtResult(r){
-  if(r.result==='water')   return '🌊 Coup dans l\'eau';
-  if(r.result==='hit')     return `💥 Touché ! (${SHIPS[r.shipKey]?.name||r.shipKey})`;
-  if(r.result==='sunk')    return `💀 Coulé ! ${SHIPS[r.shipKey]?.name||r.shipKey}`;
-  if(r.result==='bonus')   return '⭐ Case Bonus !';
-  if(r.result==='malus')   return '💣 Case Malus !';
-  if(r.result==='already') return '🔄 Déjà tiré';
-  if(r.result==='invalid') return '❌ Coord invalide';
+function doSubmitShots() {
+  const coords = [0,1,2].map(i=>{
+    const e=document.getElementById(`s${i}`);
+    return e?e.value.trim().toUpperCase():'';
+  });
+  const res = submitCaptainShots(ROLE.teamId, coords);
+  if(!res.ok) {
+    document.getElementById('shot-err').innerHTML = res.errors.join('<br>');
+    return;
+  }
+  renderCaptainSaisie();
+}
+
+function fmtResult(r) {
+  if(r.result==='water') return '🌊 Coup dans l\'eau';
+  if(r.result==='hit')   return `💥 Touché ! (${SHIPS[r.shipKey]?.name||r.shipKey})`;
+  if(r.result==='sunk')  return `💀 Coulé ! ${SHIPS[r.shipKey]?.name||r.shipKey}`;
+  if(r.result==='bonus') return '⭐ Case Bonus !';
+  if(r.result==='malus') return '💣 Case Malus !';
   return r.result;
 }
 
-function validateShots(attackerId){
-  const coords=[0,1,2].map(i=>{
-    const el=document.getElementById(`s${attackerId}${i}`);
-    return el?el.value.trim().toUpperCase():'';
-  }).filter(c=>c);
+/* ════════════════════════════════════════
+   ██  CAPTAIN — SUIVI
+════════════════════════════════════════ */
+function renderCaptainSuivi() {
+  const el = document.getElementById('tab-suivi');
+  const opp = getTeam(oppId(ROLE.teamId));
+  const history = S.shotHistory[ROLE.teamId]||[];
 
-  if(!coords.length){ alert('Entrez au moins une coordonnée (ex: A1, J10).'); return; }
+  if(!S.started) {
+    el.innerHTML=`<div class="alert a-warn">La partie n'est pas encore démarrée.</div>`; return;
+  }
 
-  const results=[];
-  let pts=0;
-  coords.forEach(c=>{
-    const r=resolveShot(attackerId,c);
-    results.push(r);
-    pts+=r.points||0;
+  let h = `<p class="stitle">Mes tirs sur la grille de ${esc(opp?opp.name:'l\'adversaire')}</p>
+    <div class="suivi-wrap">
+      <div class="suivi-layout">
+        <div class="suivi-grid-wrap">
+          <div class="battle-grid">`;
+
+  h += `<div class="gl"></div>`;
+  COLS.forEach(c=>{h+=`<div class="gl">${c}</div>`;});
+  ROWS.forEach((row,ri)=>{
+    h+=`<div class="gl">${row}</div>`;
+    COLS.forEach((col,ci)=>{
+      const co=col+row;
+      const cls=suviClass(ROLE.teamId,co);
+      const shot=history.find(x=>x.coord===co);
+      let icon='';
+      if(shot){
+        if(shot.result==='water') icon='🌊';
+        else if(shot.result==='bonus') icon='⭐';
+        else if(shot.result==='malus') icon='💣';
+        else if(cls==='sv-sunk') icon='💀';
+        else if(cls==='sv-hit') icon='💥';
+      }
+      h+=`<div class="gc ${cls}" title="${co}">${icon}</div>`;
+    });
   });
 
-  getTeam(attackerId).score+=pts;
-  S.lastResults[attackerId]=results;
+  h+=`</div></div>
+    <div class="suivi-legend">
+      <p style="font-size:.72rem;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Légende</p>
+      <div class="leg-item"><div class="leg-dot" style="background:rgba(42,74,106,.9);border:1px solid var(--muted)"></div><span>Coup dans l'eau</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:rgba(255,136,0,.7);border:1px solid #ff8800"></div><span>Navire touché</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:rgba(255,68,85,.8);border:1px solid var(--red)"></div><span>Navire coulé</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:rgba(200,136,255,.7);border:1px solid var(--purple)"></div><span>Case Bonus</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:rgba(255,68,85,.5);border:1px solid var(--red)"></div><span>Case Malus</span></div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+        <p style="font-size:.72rem;color:var(--text2);margin-bottom:5px">Tirs réalisés : <strong style="color:var(--cyan)">${history.length}</strong></p>
+        <p style="font-size:.72rem;color:var(--text2)">Score actuel : <strong style="color:var(--gold)">${getTeam(ROLE.teamId)?.score||0} pts</strong></p>
+      </div>
+    </div>
+  </div></div>`;
 
-  // Check win
-  const w=checkWinner();
-  if(w){ S.winner=w; save(); updateStatus(); renderSaisie(); return; }
+  // Résumé texte
+  if(history.length) {
+    h+=`<div style="margin-top:16px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:15px">
+      <p class="stitle">Historique de mes tirs</p>
+      <div class="results-list">`;
+    [...history].reverse().slice(0,20).forEach(r=>{
+      const cls=`r-${r.result==='sunk'?'sunk':r.result==='hit'?'hit':r.result==='water'?'water':r.result==='bonus'?'bonus':r.result==='malus'?'malus':'water'}`;
+      h+=`<div class="res-line">
+        <span style="color:var(--muted);font-size:.7rem;min-width:45px">T${r.turn}</span>
+        <span class="res-coord">${r.coord}</span>
+        <span class="${cls}">${fmtResult(r)}</span>
+        ${r.points?`<span class="res-pts" style="color:${r.points>0?'var(--green)':'var(--red)'}">${r.points>0?'+':''}${r.points}</span>`:''}
+      </div>`;
+    });
+    h+=`</div></div>`;
+  }
 
-  // Advance turn if all teams shot
-  const allIds=activePairs().flat();
-  const allDone=allIds.every(id=>S.lastResults[id]&&S.lastResults[id].length>0);
-  if(allDone){ S.turn++; S.lastResults={}; }
-
-  save(); renderSaisie(); updateStatus();
+  el.innerHTML = h;
 }
 
-/* ════════════════════════════════════
-   CLASSEMENT RENDER
-════════════════════════════════════ */
-function renderClassement(){
-  const el=document.getElementById('tab-classement');
-  const active=S.teams.filter(t=>t.active).sort((a,b)=>b.score-a.score);
-
+/* ════════════════════════════════════════
+   ██  COMMUN — CLASSEMENT
+════════════════════════════════════════ */
+function renderClassement() {
+  const el = document.getElementById('tab-classement');
+  const active = S.teams.filter(t=>t.active).sort((a,b)=>b.score-a.score);
   if(!active.length){ el.innerHTML=`<div class="empty">Aucune équipe active</div>`; return; }
 
-  let h=`<p class="section-title">Classement général</p><div class="ranking-wrap">
-    <table><thead><tr>
+  let h = `<p class="stitle">Classement général</p>
+    <div class="ranking-wrap"><table><thead><tr>
       <th>#</th><th>Équipe</th><th>Capitaine</th><th>Score</th><th>Coulés</th><th>Perdus</th>
     </tr></thead><tbody>`;
 
   active.forEach((team,i)=>{
-    const rank=i+1;
-    const rk=rank<=3?`rk-${rank}`:'';
+    const rank=i+1, rk=rank<=3?`rk-${rank}`:'';
     const opp=getTeam(oppId(team.id));
     const sunkBy=opp?SHIP_KEYS.filter(k=>isShipSunk(opp,k)).length:0;
     const sunkOf=SHIP_KEYS.filter(k=>isShipSunk(team,k)).length;
-    h+=`<tr>
+    const isMe=ROLE.type==='captain'&&team.id===ROLE.teamId;
+    h+=`<tr ${isMe?'style="background:rgba(0,212,255,.05)"':''}>
       <td><span class="rk-num ${rk}">${rank}</span></td>
-      <td><strong>${esc(team.name)}</strong></td>
+      <td><strong>${esc(team.name)}</strong>${isMe?` <span style="font-size:.7rem;color:var(--cyan)">(moi)</span>`:''}</td>
       <td style="color:var(--text2)">${esc(team.captain||'—')}</td>
       <td><span class="score-val">${team.score}</span></td>
       <td style="color:var(--green)">${sunkBy} / 5</td>
@@ -912,92 +998,87 @@ function renderClassement(){
     </tr>`;
   });
 
-  h+=`</tbody></table></div>`;
-
-  h+=`<div class="bareme">
-    <p class="section-title">Barème des points</p>
-    <div class="bareme-grid">`;
+  h+=`</tbody></table></div>
+    <div class="bareme"><p class="stitle">Barème des points</p><div class="bareme-grid">`;
   Object.entries(SHIPS).forEach(([k,s])=>{
-    h+=`<div class="bareme-item">
-      <div class="b-dot" style="background:${s.color}"></div>
-      <span>${s.name} coulé</span>
-      <span class="b-pts" style="color:var(--cyan)">${s.points} pts</span>
-    </div>`;
+    h+=`<div class="bareme-item"><div class="b-dot" style="background:${s.color}"></div><span>${s.name} coulé</span><span class="b-pts" style="color:var(--cyan)">${s.points} pts</span></div>`;
   });
-  h+=`<div class="bareme-item">
-    <div class="b-dot" style="background:#cc88ff"></div>
-    <span>Case Bonus</span>
-    <span class="b-pts" style="color:var(--green)">+2 pts</span>
-  </div>
-  <div class="bareme-item">
-    <div class="b-dot" style="background:#ff4455"></div>
-    <span>Case Malus</span>
-    <span class="b-pts" style="color:var(--red)">-2 pts</span>
-  </div>
+  h+=`<div class="bareme-item"><div class="b-dot" style="background:#cc88ff"></div><span>Case Bonus</span><span class="b-pts" style="color:var(--green)">+2 pts</span></div>
+    <div class="bareme-item"><div class="b-dot" style="background:#ff4455"></div><span>Case Malus</span><span class="b-pts" style="color:var(--red)">-2 pts</span></div>
   </div></div>`;
 
-  el.innerHTML=h;
+  el.innerHTML = h;
 }
 
-/* ════════════════════════════════════
-   FLOTTES RENDER
-════════════════════════════════════ */
-function renderFlottes(){
-  const el=document.getElementById('tab-flottes');
-  const active=S.teams.filter(t=>t.active);
+/* ════════════════════════════════════════
+   ██  COMMUN — FLOTTES
+════════════════════════════════════════ */
+function renderFlottes() {
+  const el = document.getElementById('tab-flottes');
+  const active = S.teams.filter(t=>t.active);
   if(!active.length){ el.innerHTML=`<div class="empty">Aucune équipe active</div>`; return; }
 
-  let h=`<p class="section-title">État des flottes</p><div class="flottes-grid">`;
-
+  let h = `<p class="stitle">État des flottes</p><div class="flottes-grid">`;
   active.forEach(team=>{
     h+=`<div class="flotte-card">
       <div class="fc-title">${esc(team.name)}${team.captain?` — ${esc(team.captain)}`:''}</div>`;
-
     SHIP_KEYS.forEach(key=>{
-      const ship=SHIPS[key];
-      const cells=team.shipCells[key]||[];
+      const ship=SHIPS[key], cells=team.shipCells[key]||[];
       if(!cells.length){
-        h+=`<div class="ship-row">
-          <span class="sr-name" style="color:var(--muted)">${ship.name}</span>
-          <span style="font-size:.7rem;color:var(--muted)">Non placé</span>
-        </div>`; return;
+        h+=`<div class="ship-row"><span class="sr-name" style="color:var(--muted)">${ship.name}</span><span style="font-size:.7rem;color:var(--muted)">Non placé</span></div>`;
+        return;
       }
-      const sunk=isShipSunk(team,key);
-      const hits=cells.filter(c=>team.hitGrid[c]).length;
-      const cellsHtml=cells.map(c=>{
-        const h2=team.hitGrid[c];
-        return `<div class="sr-cell ${h2?(sunk?'sunk':'hit'):'ok'}" style="background:${h2?ship.color:'transparent'};border-color:${ship.color}"></div>`;
-      }).join('');
+      const sunk=isShipSunk(team,key), hits=cells.filter(c=>team.hitGrid[c]).length;
       h+=`<div class="ship-row">
         <span class="sr-name ${sunk?'sunk':''}">${ship.name}</span>
-        <div class="sr-cells">${cellsHtml}</div>
+        <div class="sr-cells">${cells.map(c=>{
+          const h2=team.hitGrid[c];
+          return `<div class="sr-cell ${h2?(sunk?'sunk':'hit'):'ok'}" style="${h2?`background:${ship.color};`:''}border-color:${ship.color}"></div>`;
+        }).join('')}</div>
         ${sunk?'<span class="sunk-badge">COULÉ</span>':hits>0?`<span class="sr-count">${hits}/${cells.length}</span>`:''}
       </div>`;
     });
-
-    // Bonus/malus
     if(team.bonusCells.length||team.malusCells.length){
       h+=`<div class="fc-special">`;
-      team.bonusCells.forEach(c=>{
-        h+=`<span style="margin-right:10px">⭐ ${c}: ${team.hitGrid[c]?'<span style="color:var(--purple)">Activé</span>':'Intact'}</span>`;
-      });
-      team.malusCells.forEach(c=>{
-        h+=`<span style="margin-right:10px">💣 ${c}: ${team.hitGrid[c]?'<span style="color:var(--red)">Activé</span>':'Intact'}</span>`;
-      });
+      team.bonusCells.forEach(c=>{ h+=`<span style="margin-right:10px">⭐ ${c}: ${team.hitGrid[c]?'<span style="color:var(--purple)">Activé</span>':'Intact'}</span>`; });
+      team.malusCells.forEach(c=>{ h+=`<span style="margin-right:10px">💣 ${c}: ${team.hitGrid[c]?'<span style="color:var(--red)">Activé</span>':'Intact'}</span>`; });
       h+=`</div>`;
     }
     h+=`</div>`;
   });
-
   h+=`</div>`;
   el.innerHTML=h;
 }
 
-/* ════════════════════════════════════
+/* ════════════════════════════════════════
    INIT
-════════════════════════════════════ */
-load();
-render('config');
+════════════════════════════════════════ */
+function init() {
+  load();
+
+  // Role badge
+  const badge = document.getElementById('role-badge');
+  if(ROLE.type==='admin') {
+    badge.innerHTML=`<span class="role-badge role-admin">⚙️ Interface Admin</span>`;
+  } else {
+    const team=getTeam(ROLE.teamId);
+    badge.innerHTML=`<span class="role-badge role-captain">🚢 Interface Capitaine — ${esc(team?team.name:`Équipe ${ROLE.teamId}`)}</span>`;
+  }
+
+  // Build tabs
+  const tabsEl=document.getElementById('tabs');
+  const contEl=document.getElementById('tab-contents');
+  const tabDefs = ROLE.type==='admin'
+    ? [{id:'config',label:'⚙️ Config'},{id:'tour',label:'🎯 Tour'},{id:'classement',label:'🏆 Classement'},{id:'flottes',label:'⚓ Flottes'}]
+    : [{id:'config',label:'🗺️ Ma Grille'},{id:'saisie',label:'🎯 Mes Tirs'},{id:'suivi',label:'📡 Suivi'},{id:'classement',label:'🏆 Classement'}];
+
+  tabsEl.innerHTML = tabDefs.map(t=>`<button class="tab-btn" data-tab="${t.id}" onclick="goTab('${t.id}')">${t.label}</button>`).join('');
+  contEl.innerHTML = tabDefs.map(t=>`<div id="tab-${t.id}" class="tab-content"></div>`).join('');
+
+  goTab(tabDefs[0].id);
+}
+
+init();
 </script>
 </body>
 </html>
