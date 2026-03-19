@@ -111,6 +111,11 @@
     .clear-data-btn{padding:6px 13px;background:transparent;border:1px solid rgba(255,68,85,.4);color:var(--red);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.76rem;transition:all .15s;opacity:.7}
     .clear-data-btn:hover{opacity:1;background:rgba(255,68,85,.08)}
 
+    .validate-grid-btn{width:100%;margin-top:12px;padding:12px;background:rgba(0,232,120,.12);border:2px solid var(--green);color:var(--green);border-radius:6px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:900;font-size:1rem;letter-spacing:2px;text-transform:uppercase;transition:all .2s}
+    .validate-grid-btn:hover{background:rgba(0,232,120,.25);box-shadow:0 0 16px rgba(0,232,120,.2)}
+    .validate-grid-btn:disabled{opacity:.3;cursor:not-allowed}
+    .validated-badge{width:100%;margin-top:12px;padding:11px;background:rgba(0,232,120,.1);border:2px solid var(--green);color:var(--green);border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:800;font-size:.95rem;letter-spacing:2px;text-transform:uppercase;text-align:center}
+
     /* ── START / ACTION BUTTONS ── */
     .primary-btn{padding:11px 26px;background:var(--cyan);color:var(--bg);border:none;border-radius:5px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.92rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:background .15s}
     .primary-btn:hover{background:var(--cyan2)}
@@ -127,9 +132,9 @@
     .ge-layout{display:flex;gap:20px;flex-wrap:wrap}
     .ge-grid-wrap{overflow-x:auto;flex-shrink:0}
     .battle-grid{display:grid;grid-template-columns:22px repeat(10,28px);grid-template-rows:22px repeat(10,28px);gap:1px;user-select:none}
-    .gl{display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--muted)}
-    .gc{background:rgba(255,255,255,.03);border:1px solid rgba(0,180,220,.09);border-radius:2px;cursor:pointer;transition:background .1s;display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.4)}
-    .gc:hover{background:rgba(0,212,255,.08)}
+    .gl{display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:.68rem;color:rgba(255,255,255,.75);font-weight:600}
+    .gc{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.18);border-radius:2px;cursor:pointer;transition:background .1s;display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.7)}
+    .gc:hover{background:rgba(0,212,255,.15)}
     .gc.pv{background:rgba(0,232,120,.2);border-color:var(--green)}
     .gc.px{background:rgba(255,68,85,.2);border-color:var(--red)}
     .gc.placed-PA   {background:rgba(240,192,64,.35); border-color:#f0c040}
@@ -348,7 +353,7 @@ function mkTeam(id) {
   return {
     id, name:`Équipe ${id}`, captain:'', email:'', active: id <= 2,
     grid:{}, shipCells:{}, bonusCells:[], malusCells:[],
-    hitGrid:{}, score:0,
+    hitGrid:{}, score:0, gridValidated:false,
   };
 }
 
@@ -588,7 +593,7 @@ const activePairs = () => PAIRS.filter(([a,b]) => { const ta=getTeam(a),tb=getTe
 const isComplete = t => SHIP_KEYS.every(k => t.shipCells[k]&&t.shipCells[k].length>0);
 const isShipSunk = (t,k) => { const c=t.shipCells[k]||[]; return c.length>0&&c.every(x=>t.hitGrid[x]); };
 const allSunk = t => SHIP_KEYS.every(k => isShipSunk(t,k));
-const allGridsReady = () => S.teams.filter(t=>t.active).every(t=>isComplete(t));
+const allGridsReady = () => S.teams.filter(t=>t.active).every(t=>isComplete(t)&&t.gridValidated);
 const allPendingIn = () => {
   const ids = activePairs().flat();
   return ids.length>0 && ids.every(id => { const p=S.pendingShots[id]; return p&&p.length>0; });
@@ -620,6 +625,7 @@ function canPlace(team,tool,cells) {
 
 function placeShip(teamIdx, ci, ri) {
   if(S.started) return;
+  if(S.teams[teamIdx]?.gridValidated) return;
   const team = S.teams[teamIdx];
   const {tool,orient} = S;
   const cells = previewCells(ci,ri,tool,orient);
@@ -864,9 +870,9 @@ function renderAdminConfig() {
         ${locked?'disabled':''} onchange="setCap(${i},this.value)">
       <input class="inp sm" type="email" value="${esc(team.email)}" placeholder="Email du capitaine"
         ${locked?'disabled':''} onchange="setEmail(${i},this.value)">
-      <div class="grid-status ${full?'gs-ok':'gs-wait'}">
-        <span class="gs-icon">${full?'✅':'⏳'}</span>
-        <span class="gs-label">${full?'Grille complète':'En attente de la grille'}</span>
+      <div class="grid-status ${team.gridValidated?'gs-ok':full?'gs-wait':'gs-wait'}">
+        <span class="gs-icon">${team.gridValidated?'✅':full?'🔓':'⏳'}</span>
+        <span class="gs-label">${team.gridValidated?'Grille validée':full?'Grille complète (non validée)':'En attente de la grille'}</span>
         ${full?`<span class="gs-detail">${cnt}/5 · ⭐${team.bonusCells.length} 💣${team.malusCells.length}</span>`:`<span class="gs-detail">${cnt}/5 navires placés</span>`}
       </div>
       <div class="link-row">
@@ -883,7 +889,7 @@ function renderAdminConfig() {
   // Start button
   if(!S.started) {
     const allAct = S.teams.filter(t=>t.active);
-    const ok = allAct.length>=2 && allAct.every(t=>isComplete(t));
+    const ok = allAct.length>=2 && allAct.every(t=>isComplete(t)&&t.gridValidated);
     h += `<div class="row mt">
       <button class="primary-btn" ${ok?'':'disabled'} onclick="startGame()">🚀 Démarrer la partie</button>
       ${!ok?`<span style="color:var(--text2);font-size:.8rem">Toutes les grilles des équipes actives doivent être complètes</span>`:''}
@@ -1015,16 +1021,28 @@ function renderCaptainConfig() {
     return;
   }
 
+  const validated = !!team.gridValidated;
   let h = `<p class="stitle">Ma grille — ${esc(team.name)}</p>`;
-  h += renderGridEditor(team, teamIdx);
-  if(isComplete(team)) {
-    h += `<div class="alert a-ok mt">✅ Grille complète ! L'admin peut désormais démarrer la partie.</div>`;
+
+  if (validated) {
+    // Grille verrouillée après validation
+    h += `<div class="validated-badge">✅ Grille validée et transmise à l'admin</div>`;
+    h += renderGridReadOnly(team);
+    h += `<div class="alert a-info mt" style="margin-top:10px">La grille est verrouillée. Contactez l'admin si vous souhaitez la modifier.</div>`;
   } else {
+    h += renderGridEditor(team, teamIdx);
+    const complete = isComplete(team);
     const cnt = SHIP_KEYS.filter(k=>team.shipCells[k]&&team.shipCells[k].length>0).length;
-    h += `<div class="alert a-info mt">🚧 ${cnt}/5 navires placés. Placez tous les navires avant que l'admin démarre la partie.</div>`;
+    if (complete) {
+      h += `<button class="validate-grid-btn" onclick="validateGrid(${teamIdx})">✔ Valider ma grille</button>`;
+      h += `<div class="alert a-ok mt" style="margin-top:8px">✅ Grille complète — cliquez <strong>Valider</strong> pour la transmettre à l'admin.</div>`;
+    } else {
+      h += `<button class="validate-grid-btn" disabled>✔ Valider ma grille</button>`;
+      h += `<div class="alert a-info mt" style="margin-top:8px">🚧 ${cnt}/5 navires placés. Complétez la grille avant de valider.</div>`;
+    }
   }
   el.innerHTML = h;
-  attachGridEvents(team, teamIdx);
+  if (!validated) attachGridEvents(team, teamIdx);
 }
 
 function renderGridReadOnly(team) {
@@ -1124,8 +1142,16 @@ function setTool(t) { S.tool=t; renderTab(S.currentTab); }
 function setOrient(o) { S.orient=o; renderTab(S.currentTab); }
 function clearGrid(tIdx) {
   const t=S.teams[tIdx];
-  t.grid={}; t.shipCells={}; t.bonusCells=[]; t.malusCells=[];
+  t.grid={}; t.shipCells={}; t.bonusCells=[]; t.malusCells=[]; t.gridValidated=false;
   save(); renderTab(S.currentTab);
+}
+
+function validateGrid(tIdx) {
+  const t = S.teams[tIdx];
+  if (!isComplete(t)) return;
+  t.gridValidated = true;
+  save();
+  renderTab(S.currentTab);
 }
 
 /* ════════════════════════════════════════
