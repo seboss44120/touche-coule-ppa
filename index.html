@@ -583,11 +583,20 @@ async function saveBinId() {
 
 async function clearAllData() {
   if (!confirm('Effacer toutes les données (équipes, grilles, scores) ? Cette action est irréversible.')) return;
+  // 1. Annuler toute écriture en file d'attente pour éviter qu'elle réécrase l'effacement
+  _pendingWrite = false;
+  _writeQueue = Promise.resolve(); // vide la file
+  // 2. Réinitialiser l'état local
   localStorage.removeItem('tc4');
-  S.started=false; S.turn=1; S.winner=null; S.pendingShots={}; S.shotHistory={};
+  S.started=false; S.turn=1; S.winner=null; S.pairWinners={}; S.pendingShots={}; S.shotHistory={};
   S.teams=Array.from({length:6},(_,i)=>mkTeam(i+1));
   saveLocal();
-  if (SYNC.binId && SYNC.apiKey) await saveToCloud();
+  // 3. Écriture directe dans le cloud (sans merge, sans file d'attente)
+  if (SYNC.binId && SYNC.apiKey) {
+    try {
+      await writeCloudRaw(gamePayload());
+    } catch(e) { console.warn('Clear cloud write failed:', e); }
+  }
   renderTab(S.currentTab);
 }
 
