@@ -469,8 +469,14 @@ function mergeMyData(cloudRecord) {
       }
     }
   } else {
-    // Admin : état complet
+    // Admin : état complet, mais on préserve les gridValidated=true
+    // déjà posés par les capitaines dans le cloud (évite l'écrasement en cas de désynchronisation)
+    const cloudValidated = {};
+    (cloudRecord.teams||[]).forEach(t => { if (t.gridValidated) cloudValidated[t.id] = true; });
     Object.assign(merged, gamePayload());
+    merged.teams.forEach(t => {
+      if (cloudValidated[t.id]) t.gridValidated = true;
+    });
   }
   return merged;
 }
