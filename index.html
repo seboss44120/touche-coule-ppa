@@ -880,7 +880,10 @@ function renderAdminConfig() {
       <div class="grid-status ${team.gridValidated?'gs-ok':full?'gs-wait':'gs-wait'}">
         <span class="gs-icon">${team.gridValidated?'✅':full?'🔓':'⏳'}</span>
         <span class="gs-label">${team.gridValidated?'Grille validée':full?'Grille complète (non validée)':'En attente de la grille'}</span>
-        ${full?`<span class="gs-detail">${cnt}/5 · ⭐${team.bonusCells.length} 💣${team.malusCells.length}</span>`:`<span class="gs-detail">${cnt}/5 navires placés</span>`}
+        <span class="gs-detail" style="margin-left:auto;display:flex;align-items:center;gap:6px">
+          ${full?`${cnt}/5 · ⭐${team.bonusCells.length} 💣${team.malusCells.length}`:`${cnt}/5`}
+          ${full&&!team.gridValidated&&!locked?`<button onclick="adminForceValidate(${i})" style="padding:1px 7px;background:rgba(0,232,120,.15);border:1px solid var(--green);color:var(--green);border-radius:3px;cursor:pointer;font-size:.65rem;font-weight:700;font-family:'Rajdhani',sans-serif" title="Forcer la validation côté admin">Forcer ✔</button>`:''}
+        </span>
       </div>
       <div class="link-row">
         <div class="link-url" title="${url}">${baseUrl()}?team=${team.id}</div>
@@ -941,6 +944,14 @@ function resetGame() {
   S.started=false; S.turn=1; S.winner=null; S.pendingShots={}; S.shotHistory={};
   S.teams.forEach(t=>{ t.hitGrid={}; t.score=0; });
   save(); renderTab(S.currentTab);
+}
+
+function adminForceValidate(teamIdx) {
+  const t = S.teams[teamIdx];
+  if (!t || !isComplete(t)) return;
+  t.gridValidated = true;
+  save();
+  renderAdminConfig();
 }
 
 function disconnectSync() {
