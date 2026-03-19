@@ -454,13 +454,14 @@ function mergeMyData(cloudRecord) {
     const localTeam = S.teams.find(t => t.id === ROLE.teamId);
     if (myIdx >= 0 && localTeam) {
       // On fusionne uniquement les données de grille (pas hitGrid ni score, contrôlés par admin)
-      merged.teams[myIdx].name       = localTeam.name;
-      merged.teams[myIdx].captain    = localTeam.captain;
-      merged.teams[myIdx].email      = localTeam.email;
-      merged.teams[myIdx].grid       = localTeam.grid;
-      merged.teams[myIdx].shipCells  = localTeam.shipCells;
-      merged.teams[myIdx].bonusCells = localTeam.bonusCells;
-      merged.teams[myIdx].malusCells = localTeam.malusCells;
+      merged.teams[myIdx].name          = localTeam.name;
+      merged.teams[myIdx].captain       = localTeam.captain;
+      merged.teams[myIdx].email         = localTeam.email;
+      merged.teams[myIdx].grid          = localTeam.grid;
+      merged.teams[myIdx].shipCells     = localTeam.shipCells;
+      merged.teams[myIdx].bonusCells    = localTeam.bonusCells;
+      merged.teams[myIdx].malusCells    = localTeam.malusCells;
+      merged.teams[myIdx].gridValidated = localTeam.gridValidated;
       // Tirs soumis par ce capitaine
       if (S.pendingShots[ROLE.teamId]) {
         merged.pendingShots = merged.pendingShots || {};
