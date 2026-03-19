@@ -359,6 +359,7 @@ function mkTeam(id) {
 
 let S = {
   started: false, turn: 1, winner: null,
+  pairWinners: {},    // {'1-2':winnerId, '3-4':winnerId, ...} — gagnant par paire
   teams: Array.from({length:6}, (_,i) => mkTeam(i+1)),
   pendingShots: {},   // {teamId: [coord, ...]} — soumis, en attente de résolution
   shotHistory: {},    // {teamId: [{coord, result, shipKey, turn, points}]}
@@ -390,13 +391,14 @@ function saveSyncConfig() {
 }
 
 function gamePayload() {
-  return { started:S.started, turn:S.turn, winner:S.winner,
+  return { started:S.started, turn:S.turn, winner:S.winner, pairWinners:S.pairWinners,
     teams:S.teams, pendingShots:S.pendingShots, shotHistory:S.shotHistory };
 }
 
 function applyPayload(sv) {
   Object.assign(S, {
     started: sv.started||false, turn: sv.turn||1, winner: sv.winner||null,
+    pairWinners: sv.pairWinners||{},
     teams: sv.teams||S.teams,
     pendingShots: sv.pendingShots||{},
     shotHistory: sv.shotHistory||{},
@@ -596,16 +598,23 @@ const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 const coord = (ci,ri) => COLS[ci]+ROWS[ri];
 const getTeam = id => S.teams.find(t => t.id === id);
 const oppId = id => ({1:2,2:1,3:4,4:3,5:6,6:5}[id]);
-const activePairs = () => PAIRS.filter(([a,b]) => { const ta=getTeam(a),tb=getTeam(b); return ta&&tb&&ta.active&&tb.active; });
+const activePairs = () => PAIRS.filter(([a,b]) => { const ta=getTeam(a),tb=getTeam(b); return ta&&tb&&ta.active&&tb.active&&!pairIsFinished(a,b); });
+const allPairs     = () => PAIRS.filter(([a,b]) => { const ta=getTeam(a),tb=getTeam(b); return ta&&tb&&ta.active&&tb.active; });
 const isComplete = t => SHIP_KEYS.every(k => t.shipCells[k]&&t.shipCells[k].length>0);
 const isShipSunk = (t,k) => { const c=t.shipCells[k]||[]; return c.length>0&&c.every(x=>t.hitGrid[x]); };
 const allSunk = t => SHIP_KEYS.every(k => isShipSunk(t,k));
 const allGridsReady = () => S.teams.filter(t=>t.active).every(t=>isComplete(t)&&t.gridValidated);
 const allPendingIn = () => {
-  const ids = activePairs().flat();
+  const ids = activePairs().flat(); // paires non terminées uniquement
   return ids.length>0 && ids.every(id => { const p=S.pendingShots[id]; return p&&p.length>0; });
 };
 const shotCoords = teamId => new Set((S.shotHistory[teamId]||[]).map(h=>h.coord));
+const pairKey = (a,b) => Math.min(a,b)+'-'+Math.max(a,b);
+const myPairWinner = () => {
+  if(ROLE.type!=='captain') return null;
+  return S.pairWinners[pairKey(ROLE.teamId, oppId(ROLE.teamId))]||null;
+};
+const pairIsFinished = (a,b) => !!S.pairWinners[pairKey(a,b)];
 
 /* ════════════════════════════════════════
    PLACEMENT LOGIC
@@ -686,18 +695,35 @@ function processTour() {
     getTeam(attackerId).score += pts;
   });
   S.pendingShots = {};
-  const w = checkWinner();
-  if(w) S.winner=w;
-  else  S.turn++;
+  // Détecter les gagnants par paire
+  checkAndSetPairWinners();
+  // Partie globalement terminée quand toutes les paires actives ont un gagnant
+  const allPairsActive = allPairs();
+  const allDone = allPairsActive.length>0 && allPairsActive.every(([a,b])=>pairIsFinished(a,b));
+  if(allDone) {
+    // Gagnant global = meilleur score parmi les gagnants de paire
+    const winners = Object.values(S.pairWinners);
+    S.winner = winners.sort((a,b)=>(getTeam(b)?.score||0)-(getTeam(a)?.score||0))[0];
+  }
+  S.turn++;
   save();
 }
 
-function checkWinner() {
+function checkAndSetPairWinners() {
   for(const [a,b] of activePairs()) {
-    if(allSunk(getTeam(b))) return a;
-    if(allSunk(getTeam(a))) return b;
+    const ta=getTeam(a), tb=getTeam(b);
+    const aWon = allSunk(tb); // a a coulé tous les navires de b
+    const bWon = allSunk(ta); // b a coulé tous les navires de a
+    if(aWon && bWon) {
+      // Double victoire simultanée : le meilleur score gagne
+      const w = ta.score>=tb.score ? a : b;
+      S.pairWinners[pairKey(a,b)] = w;
+    } else if(aWon) {
+      S.pairWinners[pairKey(a,b)] = a;
+    } else if(bWon) {
+      S.pairWinners[pairKey(a,b)] = b;
+    }
   }
-  return null;
 }
 
 function submitCaptainShots(teamId, rawCoords) {
@@ -746,10 +772,16 @@ function updateStatus() {
   const act=document.getElementById('sact');
   if(!dot) return;
   let acts='';
-  if(S.winner) {
-    const w=getTeam(S.winner);
+  const finishedPairs = Object.entries(S.pairWinners||{});
+  if(S.winner || (S.started && finishedPairs.length>0 && activePairs().length===0)) {
     dot.className='sdot win';
-    txt.innerHTML=`🏆 Victoire : <strong>${esc(w.name)}</strong>`;
+    if(finishedPairs.length===1) {
+      const w=getTeam(Object.values(S.pairWinners)[0]);
+      txt.innerHTML=`🏆 <strong>${esc(w?.name||'?')}</strong> a gagné sa paire`;
+    } else {
+      const names=finishedPairs.map(([,wId])=>getTeam(wId)?.name||'?').map(n=>esc(n)).join(', ');
+      txt.innerHTML=`🏆 Gagnants : <strong>${names}</strong>`;
+    }
     if(ROLE.type==='admin') acts=`<button class="sbtn danger" onclick="resetGame()">Réinitialiser</button>`;
   } else if(S.started) {
     dot.className='sdot on';
@@ -934,14 +966,14 @@ function sendEmail(teamIdx) {
 }
 
 function startGame() {
-  S.started=true; S.turn=1; S.winner=null; S.pendingShots={}; S.shotHistory={};
+  S.started=true; S.turn=1; S.winner=null; S.pairWinners={}; S.pendingShots={}; S.shotHistory={};
   S.teams.forEach(t=>{ t.hitGrid={}; t.score=0; });
   save(); renderTab(S.currentTab);
 }
 
 function resetGame() {
   if(!confirm('Réinitialiser toute la partie ? Les scores seront perdus.')) return;
-  S.started=false; S.turn=1; S.winner=null; S.pendingShots={}; S.shotHistory={};
+  S.started=false; S.turn=1; S.winner=null; S.pairWinners={}; S.pendingShots={}; S.shotHistory={};
   S.teams.forEach(t=>{ t.hitGrid={}; t.score=0; });
   save(); renderTab(S.currentTab);
 }
@@ -968,15 +1000,20 @@ function renderAdminTour() {
   if(!S.started && !S.winner) {
     el.innerHTML=`<div class="alert a-warn">⚠️ La partie n'est pas encore démarrée. Allez dans Config pour préparer les grilles et démarrer.</div>`; return;
   }
-  if(S.winner) {
-    const w=getTeam(S.winner);
-    el.innerHTML=`<div class="alert a-ok">🏆 Partie terminée ! <strong>${esc(w.name)}</strong> a coulé toute la flotte adverse.</div>`; return;
-  }
-
-  const pairs = activePairs();
+  // Afficher les paires déjà terminées
+  const finishedEntries = Object.entries(S.pairWinners||{});
+  const activePairsNow = activePairs();
   let h = `<p class="stitle">Tour ${S.turn} — État des soumissions</p>`;
 
-  pairs.forEach(([aId,bId]) => {
+  finishedEntries.forEach(([key, wId])=>{
+    const w=getTeam(wId);
+    h+=`<div class="alert a-ok" style="margin-bottom:8px">🏆 Paire ${esc(key.replace('-',' vs '))} — <strong>${esc(w?.name||'?')}</strong> a coulé toute la flotte adverse.</div>`;
+  });
+
+  if(!activePairsNow.length && finishedEntries.length) { el.innerHTML=h; return; }
+  if(!activePairsNow.length) { el.innerHTML=`<div class="alert a-warn">Aucune paire active.</div>`; return; }
+
+  activePairsNow.forEach(([aId,bId]) => {
     const ta=getTeam(aId), tb=getTeam(bId);
     h += renderTourMatchup(ta, tb);
   });
@@ -1233,10 +1270,11 @@ function renderCaptainSaisie() {
   if(!S.started) {
     el.innerHTML=`<div class="alert a-warn">⏳ La partie n'est pas encore démarrée. L'admin doit démarrer la partie.</div>`; return;
   }
-  if(S.winner) {
-    const w=getTeam(S.winner);
-    el.innerHTML=`<div class="alert ${S.winner===ROLE.teamId?'a-ok':'a-err'}">
-      ${S.winner===ROLE.teamId?'🏆 Vous avez gagné !':'💀 '+esc(w.name)+' a gagné la partie.'}
+  const pairWin = myPairWinner();
+  if(pairWin) {
+    const w=getTeam(pairWin);
+    el.innerHTML=`<div class="alert ${pairWin===ROLE.teamId?'a-ok':'a-err'}">
+      ${pairWin===ROLE.teamId?'🏆 Vous avez coulé toute la flotte adverse — Bravo !':'💀 <strong>'+esc(w?.name||'?')+'</strong> a coulé votre flotte.'}
     </div>`; return;
   }
 
@@ -1396,6 +1434,54 @@ function renderCaptainSuivi() {
     el.innerHTML=`<div class="alert a-warn">La partie n'est pas encore démarrée.</div>`; return;
   }
 
+  // ── FIN DE PARTIE : révéler la grille adverse ──────────────────────
+  const pairWin = myPairWinner();
+  if(pairWin && opp) {
+    const iWon = pairWin===ROLE.teamId;
+    let h = `<div class="alert ${iWon?'a-ok':'a-err'}" style="margin-bottom:16px">
+      ${iWon?'🏆 Vous avez gagné cette paire !':'💀 Vous avez perdu cette paire.'}
+    </div>`;
+    h += `<p class="stitle">Grille de ${esc(opp.name)} — Révélée</p>
+      <div class="suivi-wrap"><div class="suivi-layout"><div class="suivi-grid-wrap">
+        <div class="battle-grid">`;
+    h += `<div class="gl"></div>`;
+    COLS.forEach(c=>{h+=`<div class="gl">${c}</div>`;});
+    ROWS.forEach((row,ri)=>{
+      h+=`<div class="gl">${row}</div>`;
+      COLS.forEach((col,ci)=>{
+        const co=col+row;
+        const cell=opp.grid[co];
+        const myShot=(S.shotHistory[ROLE.teamId]||[]).find(s=>s.coord===co);
+        let cls='', icon='', extra='';
+        if(cell && cell!=='bonus' && cell!=='malus') {
+          // Navire adverse
+          const shipSunk=isShipSunk(opp,cell);
+          if(shipSunk) {
+            cls='gc def-sunk'; icon='💀';
+          } else {
+            // Non coulé → vert
+            cls='gc'; extra=`background:rgba(0,232,120,.25);border-color:var(--green)`;
+          }
+        } else if(cell==='bonus') { cls='gc placed-bonus'; icon='⭐'; }
+        else if(cell==='malus')  { cls='gc placed-malus'; icon='💣'; }
+        else if(myShot&&myShot.result==='water') { cls='gc def-water'; icon='🌊'; }
+        else { cls='gc'; }
+        h+=`<div class="${cls}" style="${extra}" title="${co}">${icon}</div>`;
+      });
+    });
+    h+=`</div></div>`;
+    // Légende révélation
+    h+=`<div class="suivi-legend">
+      <p class="stitle" style="margin-bottom:8px">Légende</p>
+      <div class="leg-item"><div class="leg-dot" style="background:rgba(0,232,120,.25);border:1px solid var(--green)"></div><span>Navire intact (non coulé)</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:rgba(255,68,85,.55);border:1px solid var(--red)"></div><span>Navire coulé 💀</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:rgba(200,136,255,.28);border:1px solid #cc88ff"></div><span>Case Bonus</span></div>
+      <div class="leg-item"><div class="leg-dot" style="background:rgba(255,68,85,.28);border:1px solid #ff4455"></div><span>Case Malus</span></div>
+    </div></div></div>`;
+    el.innerHTML=h;
+    return;
+  }
+
   const tiradesRecues = oppHistory.length;
 
   let h = `<p class="stitle">Tirs de ${esc(opp?opp.name:"l'adversaire")} sur ma grille</p>
@@ -1439,10 +1525,14 @@ function renderCaptainSuivi() {
       <div class="results-list">`;
     [...oppHistory].reverse().slice(0,20).forEach(r=>{
       const cls=`r-${r.result==='sunk'?'sunk':r.result==='hit'?'hit':r.result==='water'?'water':r.result==='bonus'?'bonus':r.result==='malus'?'malus':'water'}`;
+      // Nom du navire uniquement si coulé
+      const label = r.result==='sunk'
+        ? `💀 Coulé ! ${SHIPS[r.shipKey]?.name||r.shipKey}`
+        : fmtResult(r, false);
       h+=`<div class="res-line">
         <span style="color:var(--muted);font-size:.7rem;min-width:45px">T${r.turn}</span>
         <span class="res-coord">${r.coord}</span>
-        <span class="${cls}">${fmtResult(r,false)}</span>
+        <span class="${cls}">${label}</span>
       </div>`;
     });
     h+=`</div></div>`;
