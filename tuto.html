@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guide — Touché Coulé PPA</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#030810;--bg2:#060e1c;--card:#0a1828;--card2:#0e2038;
+  --border:rgba(0,200,230,.15);--border2:rgba(0,200,230,.08);
+  --cyan:#00d4ff;--cyan2:#0099bb;--gold:#f0c040;--gold2:#d4a830;
+  --red:#ff4455;--green:#00e878;--purple:#cc88ff;--orange:#ff8800;
+  --text:#e0f0ff;--text2:#7aabcc;--muted:#2a4a6a;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:16px;min-height:100vh;overflow-x:hidden}
+
+/* ── BG GRID ── */
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+/* ── HERO ── */
+.hero{position:relative;text-align:center;padding:60px 20px 40px;z-index:1}
+.hero-label{font-size:.7rem;letter-spacing:5px;color:var(--text2);text-transform:uppercase;margin-bottom:12px}
+.hero h1{font-family:'Orbitron',monospace;font-size:clamp(1.8rem,6vw,3rem);font-weight:900;color:var(--cyan);text-shadow:0 0 40px rgba(0,212,255,.3);letter-spacing:4px}
+.hero p{color:var(--text2);font-size:1rem;margin-top:8px;letter-spacing:1px}
+
+/* ── TABS SELECTOR ── */
+.role-selector{display:flex;justify-content:center;gap:12px;padding:0 20px 40px;position:relative;z-index:1;flex-wrap:wrap}
+.role-btn{padding:14px 32px;border-radius:8px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;letter-spacing:2px;text-transform:uppercase;transition:all .25s;border:2px solid}
+.role-btn.admin{border-color:var(--gold);color:var(--gold);background:rgba(240,192,64,.08)}
+.role-btn.admin.active,.role-btn.admin:hover{background:rgba(240,192,64,.18);box-shadow:0 0 20px rgba(240,192,64,.2)}
+.role-btn.captain{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.06)}
+.role-btn.captain.active,.role-btn.captain:hover{background:rgba(0,212,255,.15);box-shadow:0 0 20px rgba(0,212,255,.2)}
+
+/* ── CONTENT ── */
+.content{max-width:860px;margin:0 auto;padding:0 20px 80px;position:relative;z-index:1}
+.section{display:none}
+.section.active{display:block}
+
+/* ── STEP CARDS ── */
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:0;position:relative}
+.step:not(:last-child)::after{content:'';position:absolute;left:28px;top:56px;bottom:0;width:2px;background:linear-gradient(to bottom,var(--border),transparent);z-index:0}
+.step-num{flex-shrink:0;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-weight:900;font-size:1.1rem;position:relative;z-index:1;margin-top:2px}
+.admin-step .step-num{background:rgba(240,192,64,.12);border:2px solid var(--gold);color:var(--gold)}
+.captain-step .step-num{background:rgba(0,212,255,.1);border:2px solid var(--cyan);color:var(--cyan)}
+.step-body{flex:1;padding:0 0 32px 20px}
+.step-title{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:700;letter-spacing:2px;margin-bottom:10px}
+.admin-step .step-title{color:var(--gold)}
+.captain-step .step-title{color:var(--cyan)}
+.step-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px}
+
+/* ── SECTION HEADER ── */
+.section-header{text-align:center;margin-bottom:36px}
+.section-header .sh-badge{display:inline-block;padding:4px 14px;border-radius:4px;font-size:.7rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px}
+.admin .sh-badge{background:rgba(240,192,64,.12);border:1px solid rgba(240,192,64,.35);color:var(--gold)}
+.captain .sh-badge{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);color:var(--cyan)}
+.section-header h2{font-family:'Orbitron',monospace;font-size:clamp(1.1rem,3vw,1.6rem);font-weight:900;letter-spacing:3px}
+.admin .section-header h2{color:var(--gold)}
+.captain .section-header h2{color:var(--cyan)}
+.section-header p{color:var(--text2);font-size:.92rem;margin-top:8px;line-height:1.5}
+
+/* ── TEXT ELEMENTS ── */
+p.body{color:var(--text);font-size:.95rem;line-height:1.6;margin-bottom:8px}
+p.body:last-child{margin-bottom:0}
+.tip{background:rgba(0,232,120,.07);border:1px solid rgba(0,232,120,.2);border-radius:6px;padding:10px 14px;color:#00e878;font-size:.88rem;line-height:1.5;margin-top:10px;display:flex;gap:10px;align-items:flex-start}
+.tip .tip-icon{flex-shrink:0;font-size:1rem}
+.warn{background:rgba(240,192,64,.07);border:1px solid rgba(240,192,64,.2);border-radius:6px;padding:10px 14px;color:var(--gold);font-size:.88rem;line-height:1.5;margin-top:10px;display:flex;gap:10px;align-items:flex-start}
+.warn .tip-icon{flex-shrink:0}
+.info{background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:6px;padding:10px 14px;color:var(--cyan);font-size:.88rem;line-height:1.5;margin-top:10px;display:flex;gap:10px;align-items:flex-start}
+
+/* ── BUTTONS LEGEND ── */
+.btn-legend{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.btn-item{display:flex;align-items:flex-start;gap:12px}
+.btn-pill{padding:3px 11px;border-radius:4px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.5px;white-space:nowrap;flex-shrink:0;margin-top:1px}
+.bp-cyan{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);color:var(--cyan)}
+.bp-gold{background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.3);color:var(--gold)}
+.bp-red{background:rgba(255,68,85,.1);border:1px solid rgba(255,68,85,.3);color:var(--red)}
+.bp-green{background:rgba(0,232,120,.1);border:1px solid rgba(0,232,120,.3);color:var(--green)}
+.bp-muted{background:rgba(42,74,106,.3);border:1px solid rgba(42,74,106,.5);color:var(--text2)}
+.btn-desc{color:var(--text2);font-size:.88rem;line-height:1.45}
+
+/* ── GRID MINI DEMO ── */
+.mini-grid{display:inline-grid;grid-template-columns:repeat(5,22px);gap:2px;margin:10px 0}
+.mg{width:22px;height:22px;border-radius:2px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.03);display:flex;align-items:center;justify-content:center;font-size:.55rem}
+.mg.ship{background:rgba(0,212,255,.25);border-color:var(--cyan)}
+.mg.hit{background:rgba(255,136,0,.4);border-color:var(--orange)}
+.mg.sunk{background:rgba(255,68,85,.4);border-color:var(--red)}
+.mg.water{background:rgba(42,74,106,.5);border-color:var(--muted)}
+.mg.bonus{background:rgba(204,136,255,.3);border-color:var(--purple)}
+
+/* ── SCORE TABLE ── */
+.score-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.88rem}
+.score-table th{font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2);letter-spacing:1px;padding:7px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.score-table td{padding:7px 10px;border-bottom:1px solid var(--border2);color:var(--text)}
+.score-table tr:last-child td{border-bottom:none}
+.score-dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+
+/* ── FLOW TIMELINE ── */
+.flow{display:flex;flex-direction:column;gap:0;margin-top:10px}
+.flow-item{display:flex;gap:14px;padding-bottom:16px;position:relative}
+.flow-item:not(:last-child)::before{content:'';position:absolute;left:15px;top:32px;bottom:0;width:2px;background:var(--border)}
+.flow-dot{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;position:relative;z-index:1}
+.flow-dot.d-gold{background:rgba(240,192,64,.15);border:1px solid var(--gold);color:var(--gold)}
+.flow-dot.d-cyan{background:rgba(0,212,255,.1);border:1px solid var(--cyan);color:var(--cyan)}
+.flow-dot.d-green{background:rgba(0,232,120,.1);border:1px solid var(--green);color:var(--green)}
+.flow-dot.d-red{background:rgba(255,68,85,.1);border:1px solid var(--red);color:var(--red)}
+.flow-dot.d-purple{background:rgba(204,136,255,.1);border:1px solid var(--purple);color:var(--purple)}
+.flow-text{padding-top:5px}
+.flow-text strong{color:var(--text);display:block;font-weight:700;margin-bottom:2px}
+.flow-text span{color:var(--text2);font-size:.88rem;line-height:1.4}
+
+/* ── FAQ ACCORDION ── */
+.faq{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.faq-item{}
+.faq-q{background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:11px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.92rem;transition:background .15s;user-select:none}
+.faq-q:hover{background:rgba(0,212,255,.06)}
+.faq-q .arrow{transition:transform .2s;color:var(--text2);font-size:.8rem}
+.faq-item.open .faq-q .arrow{transform:rotate(90deg)}
+.faq-a{display:none;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;color:var(--text2);font-size:.9rem;line-height:1.6}
+.faq-item.open .faq-a{display:block}
+
+/* ── SEPARATOR ── */
+.sep{border:none;border-top:1px solid var(--border);margin:28px 0}
+
+/* ── QUICK REF ── */
+.quick-ref{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px}
+.qr-card{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:13px 15px}
+.qr-card .qr-title{font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:2px;margin-bottom:8px}
+.admin-step .qr-title,.admin .qr-title{color:var(--gold)}
+.captain-step .qr-title,.captain .qr-title{color:var(--cyan)}
+.qr-card p{font-size:.85rem;color:var(--text2);line-height:1.5}
+
+/* ── RESPONSIVE ── */
+@media(max-width:500px){
+  .role-btn{padding:11px 18px;font-size:.85rem}
+  .step-num{width:44px;height:44px;font-size:.9rem}
+  .step:not(:last-child)::after{left:22px}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-label">Documentation officielle</div>
+  <h1>⚓ TOUCHÉ COULÉ PPA</h1>
+  <p>Guide de prise en main · Admin & Capitaine</p>
+</div>
+
+<div class="role-selector">
+  <button class="role-btn admin active" onclick="switchRole('admin')">⚙️ Interface Admin</button>
+  <button class="role-btn captain" onclick="switchRole('captain')">🚢 Interface Capitaine</button>
+</div>
+
+<div class="content">
+
+  <!-- ════════════════════ ADMIN ════════════════════ -->
+  <div class="section admin active" id="section-admin">
+
+    <div class="section-header admin">
+      <div class="sh-badge">⚙️ Interface Admin</div>
+      <h2>LE GUIDE DE L'AMIRAL</h2>
+      <p>Tu gères la partie de A à Z : équipes, démarrage, tours et résultats.<br>Les capitaines s'occupent du reste !</p>
+    </div>
+
+    <!-- ÉTAPE 1 -->
+    <div class="steps">
+      <div class="step admin-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Connexion au cloud (JSONBin)</div>
+          <div class="step-card">
+            <p class="body">Pour que tout le monde joue en temps réel depuis des appareils différents, tu dois connecter l'appli à un <strong>espace de stockage cloud gratuit</strong>.</p>
+            <div class="flow" style="margin-top:14px">
+              <div class="flow-item">
+                <div class="flow-dot d-gold">1</div>
+                <div class="flow-text"><strong>Crée un compte gratuit sur jsonbin.io</strong><span>C'est rapide, juste un email + mot de passe.</span></div>
+              </div>
+              <div class="flow-item">
+                <div class="flow-dot d-gold">2</div>
+                <div class="flow-text"><strong>Copie ta Master Key</strong><span>Dans le tableau de bord JSONBin → icône clé → copie la clé qui commence par <code style="color:var(--cyan);font-family:'Share Tech Mono',monospace">$2a$10$...</code></span></div>
+              </div>
+              <div class="flow-item">
+                <div class="flow-dot d-gold">3</div>
+                <div class="flow-text"><strong>Colle-la dans le panneau Synchronisation</strong><span>En haut de l'onglet Config → champ "Clé API" → clique <strong>Créer le Bin</strong>.</span></div>
+              </div>
+              <div class="flow-item" style="padding-bottom:0">
+                <div class="flow-dot d-green">✓</div>
+                <div class="flow-text"><strong>Le Bin est créé, tu es connecté !</strong><span>Un identifiant de partie (Bin ID) est généré. Il sera inclus automatiquement dans tous les liens capitaines.</span></div>
+              </div>
+            </div>
+            <div class="tip" style="margin-top:14px"><span class="tip-icon">💡</span>Tu ne fais ça qu'une seule fois. La clé est mémorisée d'une session à l'autre.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 2 -->
+      <div class="step admin-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Configurer les équipes</div>
+          <div class="step-card">
+            <p class="body">Dans l'onglet <strong>Config</strong>, tu vois 6 cartes équipes. Pour chaque équipe qui participe :</p>
+            <div class="btn-legend" style="margin-top:12px">
+              <div class="btn-item"><span class="btn-pill bp-cyan">Toggle ON/OFF</span><span class="btn-desc">Active ou désactive l'équipe. Seules les équipes actives participent à la partie.</span></div>
+              <div class="btn-item"><span class="btn-pill bp-muted">Nom d'équipe</span><span class="btn-desc">Saisis le nom affiché partout dans l'appli.</span></div>
+              <div class="btn-item"><span class="btn-pill bp-muted">Capitaine</span><span class="btn-desc">Le nom du capitaine, affiché dans le classement.</span></div>
+              <div class="btn-item"><span class="btn-pill bp-muted">Email</span><span class="btn-desc">L'email du capitaine, pour lui envoyer son lien.</span></div>
+            </div>
+            <div class="tip" style="margin-top:12px"><span class="tip-icon">⚓</span>Les affrontements sont fixes : Équipe 1 vs 2 · Équipe 3 vs 4 · Équipe 5 vs 6. Active les équipes par paires !</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 3 -->
+      <div class="step admin-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Envoyer les liens capitaines</div>
+          <div class="step-card">
+            <p class="body">Chaque capitaine a un lien unique qui ouvre son interface personnelle. Deux façons de leur envoyer :</p>
+            <div class="btn-legend" style="margin-top:12px">
+              <div class="btn-item"><span class="btn-pill bp-cyan">📋 Copier</span><span class="btn-desc">Copie le lien dans le presse-papier — tu peux le coller dans Teams, WhatsApp, etc.</span></div>
+              <div class="btn-item"><span class="btn-pill bp-cyan">📧 Envoyer</span><span class="btn-desc">Ouvre ton client mail avec l'objet et le lien pré-remplis. Clique sur le bouton puis envoie l'email !</span></div>
+            </div>
+            <div class="warn"><span class="tip-icon">⚠️</span>Le lien contient la clé de synchronisation. Ne le modifie pas manuellement.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 4 -->
+      <div class="step admin-step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Attendre que les grilles soient prêtes</div>
+          <div class="step-card">
+            <p class="body">Chaque capitaine positionne sa flotte dans son interface. Sur chaque carte équipe, tu vois l'état en temps réel :</p>
+            <div class="btn-legend" style="margin-top:12px">
+              <div class="btn-item"><span class="btn-pill bp-muted">⏳ En attente</span><span class="btn-desc">Le capitaine n'a pas encore placé tous ses navires.</span></div>
+              <div class="btn-item"><span class="btn-pill bp-muted">🔓 Complète</span><span class="btn-desc">Les navires sont placés mais pas encore confirmés.</span></div>
+              <div class="btn-item"><span class="btn-pill bp-green">✅ Validée</span><span class="btn-desc">Le capitaine a cliqué sur "Valider ma grille" — prête pour le jeu !</span></div>
+            </div>
+            <div class="btn-legend" style="margin-top:10px">
+              <div class="btn-item"><span class="btn-pill bp-cyan">↻ Actualiser</span><span class="btn-desc">Récupère les dernières données du cloud pour voir si de nouvelles grilles ont été validées.</span></div>
+              <div class="btn-item"><span class="btn-pill bp-green">✔ Valider (admin)</span><span class="btn-desc">Apparaît si une grille est complète mais non validée. Permet de débloquer manuellement sans solliciter le capitaine.</span></div>
+            </div>
+            <div class="tip"><span class="tip-icon">💡</span>La barre de statut indique un compteur qui se rafraîchit automatiquement toutes les 20 secondes.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 5 -->
+      <div class="step admin-step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">Démarrer la partie !</div>
+          <div class="step-card">
+            <p class="body">Une fois toutes les grilles des équipes actives validées, le bouton <strong style="color:var(--cyan)">🚀 Démarrer la partie</strong> s'active en bas de la Config.</p>
+            <div class="warn"><span class="tip-icon">⚠️</span>Dès que tu cliques, les grilles sont verrouillées. Plus aucune modification possible. Vérifie bien que tout est en ordre !</div>
+            <p class="body" style="margin-top:10px">Les capitaines voient automatiquement la partie démarrée lors de leur prochain refresh.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 6 -->
+      <div class="step admin-step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <div class="step-title">Gérer les tours (onglet Tour)</div>
+          <div class="step-card">
+            <p class="body">L'onglet <strong>Tour</strong> est ton tableau de bord de match. À chaque tour :</p>
+            <div class="flow" style="margin-top:12px">
+              <div class="flow-item">
+                <div class="flow-dot d-cyan">👁</div>
+                <div class="flow-text"><strong>Tu vois qui a soumis ses tirs</strong><span>Chaque équipe affiche ✅ Tirs soumis avec les coordonnées, ou ⏳ En attente.</span></div>
+              </div>
+              <div class="flow-item">
+                <div class="flow-dot d-gold">⏭</div>
+                <div class="flow-text"><strong>Tour Suivant devient cliquable</strong><span>Uniquement lorsque toutes les équipes actives ont soumis leurs 3 tirs. C'est toi qui contrôles le rythme !</span></div>
+              </div>
+              <div class="flow-item" style="padding-bottom:0">
+                <div class="flow-dot d-green">✓</div>
+                <div class="flow-text"><strong>Les résultats sont calculés automatiquement</strong><span>Touches, coulés, bonus, malus — tout est résolu en un clic. Les capitaines voient les résultats à leur prochain refresh.</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 7 -->
+      <div class="step admin-step">
+        <div class="step-num">7</div>
+        <div class="step-body">
+          <div class="step-title">Suivre les scores (Classement & Flottes)</div>
+          <div class="step-card">
+            <p class="body"><strong>Onglet Classement</strong> — scores en temps réel de toutes les équipes, avec détail des bonus/malus touchés.</p>
+            <p class="body" style="margin-top:6px"><strong>Onglet Flottes</strong> — état case par case des navires de chaque équipe. Tu vois en un coup d'œil qui est en difficulté.</p>
+            <div class="tip"><span class="tip-icon">🏆</span>Quand une équipe coule toute la flotte adverse, sa paire est marquée comme terminée. Les autres paires continuent leurs tours normalement.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 8 : boutons -->
+      <div class="step admin-step">
+        <div class="step-num">8</div>
+        <div class="step-body">
+          <div class="step-title">Les boutons à connaître</div>
+          <div class="step-card">
+            <div class="btn-legend">
+              <div class="btn-item"><span class="btn-pill bp-cyan">↻ Actualiser</span><span class="btn-desc">Synchronise depuis le cloud. À cliquer quand tu veux voir les dernières grilles ou soumissions de tirs.</span></div>
+              <div class="btn-item"><span class="btn-pill bp-red">🗑 Effacer les données</span><span class="btn-desc">Supprime tout — équipes, grilles, scores. Dans le cloud ET en local. À utiliser entre deux parties ou en cas de problème.</span></div>
+              <div class="btn-item"><span class="btn-pill bp-muted">⊘ Déconnecter</span><span class="btn-desc">Détache l'appli du Bin JSONBin. Les données locales sont conservées. Utile si tu veux changer de Bin.</span></div>
+              <div class="btn-item"><span class="btn-pill bp-red">Reset</span><span class="btn-desc">Réinitialise les scores et tirs de la partie en cours. Les équipes et grilles sont conservées — tu peux rejouer directement !</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- FAQ ADMIN -->
+    <div class="step-card" style="margin-bottom:24px">
+      <div class="step-title" style="color:var(--gold);margin-bottom:14px">❓ Questions fréquentes</div>
+      <div class="faq">
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Le bouton "Démarrer" est grisé, pourquoi ? <span class="arrow">▶</span></div>
+          <div class="faq-a">Toutes les équipes actives doivent avoir leur grille validée (badge ✅ vert). Vérifie qu'aucune équipe n'est encore en ⏳ ou 🔓. Si un capitaine a du mal, utilise le bouton "✔ Valider (admin)" sur sa carte.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Un capitaine dit que sa grille est validée mais je vois toujours ⏳. <span class="arrow">▶</span></div>
+          <div class="faq-a">Clique sur ↻ Actualiser pour récupérer les dernières données du cloud. Si le problème persiste, utilise le bouton "✔ Valider (admin)" directement sur la carte.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Quelle est la différence entre "Effacer" et "Reset" ? <span class="arrow">▶</span></div>
+          <div class="faq-a"><strong>Effacer</strong> = tout supprime : équipes, noms, emails, grilles, scores. Repart de zéro total.<br><strong>Reset</strong> = remet à zéro uniquement les scores et la progression de la partie. Les équipes, les noms et les grilles sont conservés — idéal pour rejouer immédiatement !</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Dois-je recréer un Bin JSONBin pour chaque partie ? <span class="arrow">▶</span></div>
+          <div class="faq-a">Non ! Un seul Bin suffit pour toutes tes parties. Utilise Reset entre deux parties pour repartir avec les mêmes équipes, ou Effacer si tu veux tout recommencer à zéro.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">La partie s'est arrêtée pour une paire mais pas pour l'autre, est-ce normal ? <span class="arrow">▶</span></div>
+          <div class="faq-a">Oui, c'est le comportement prévu ! Chaque paire (1v2, 3v4, 5v6) est indépendante. Quand une paire a son gagnant, elle s'arrête. Les autres continuent jusqu'à ce qu'elles aient aussi leur résultat.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════ CAPITAINE ════════════════════ -->
+  <div class="section captain" id="section-captain">
+
+    <div class="section-header captain">
+      <div class="sh-badge">🚢 Interface Capitaine</div>
+      <h2>LE GUIDE DU CAPITAINE</h2>
+      <p>Tu as reçu un lien par email ? Bienvenue à bord.<br>Voici tout ce que tu dois savoir pour mener ta flotte à la victoire !</p>
+    </div>
+
+    <div class="steps">
+
+      <!-- ÉTAPE 1 -->
+      <div class="step captain-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Accéder à ton interface</div>
+          <div class="step-card">
+            <p class="body">L'admin t'a envoyé un lien par email. Ce lien est <strong>uniquement pour toi</strong> — il pointe directement sur l'interface de ton équipe.</p>
+            <div class="info"><span class="tip-icon">📱</span>Ça fonctionne sur mobile, tablette et PC. Pas besoin d'installer quoi que ce soit.</div>
+            <div class="warn"><span class="tip-icon">⚠️</span>Ne partage pas ton lien ! Il contient ta clé de synchronisation. Si quelqu'un d'autre l'ouvre, il verra ta grille.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 2 -->
+      <div class="step captain-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Placer ta flotte (onglet Ma Grille)</div>
+          <div class="step-card">
+            <p class="body">Avant que la partie commence, tu dois positionner tous tes navires sur la grille 10×10.</p>
+
+            <div class="btn-legend" style="margin-top:12px">
+              <div class="btn-item"><span class="btn-pill bp-gold" style="background:rgba(240,192,64,.15)">Porte-Avion</span><span class="btn-desc">5 cases — le plus grand et le plus précieux (5 pts)</span></div>
+              <div class="btn-item"><span class="btn-pill bp-cyan">Cuirassé</span><span class="btn-desc">4 cases (4 pts)</span></div>
+              <div class="btn-item"><span class="btn-pill bp-green">Sous-Marin 1&nbsp;&amp;&nbsp;2</span><span class="btn-desc">3 cases chacun (3 pts)</span></div>
+              <div class="btn-item"><span class="btn-pill bp-muted" style="color:var(--orange);border-color:var(--orange)">Torpilleur</span><span class="btn-desc">2 cases (2 pts)</span></div>
+              <div class="btn-item"><span class="btn-pill" style="background:rgba(204,136,255,.1);border:1px solid var(--purple);color:var(--purple)">Case Bonus ⭐</span><span class="btn-desc">+2 pts si l'adversaire tombe dessus (2 max)</span></div>
+              <div class="btn-item"><span class="btn-pill bp-red">Case Malus 💣</span><span class="btn-desc">−2 pts à l'adversaire qui tire dessus (2 max)</span></div>
+            </div>
+
+            <p class="body" style="margin-top:12px">Utilise les boutons <strong>↔ Horiz.</strong> / <strong>↕ Vert.</strong> pour changer l'orientation avant de cliquer sur la grille. Survole les cases pour voir un aperçu vert (OK) ou rouge (impossible).</p>
+            <div class="tip"><span class="tip-icon">🗑️</span>Utilise l'Effaceur pour supprimer une pièce mal placée. Tu peux aussi vider toute la grille avec ⚠️ Vider.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 3 -->
+      <div class="step captain-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Valider ta grille</div>
+          <div class="step-card">
+            <p class="body">Une fois tous les navires placés, le bouton <strong style="color:var(--green)">✔ Valider ma grille</strong> apparaît en bas. Clique dessus pour transmettre ta grille à l'admin.</p>
+            <div class="warn"><span class="tip-icon">⚠️</span>Après validation, ta grille est verrouillée. Impossible de la modifier — réfléchis bien à ton placement !</div>
+            <div class="tip"><span class="tip-icon">💡</span>L'admin voit instantanément que ta grille est ✅ validée. Il peut démarrer la partie quand tout le monde est prêt.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 4 -->
+      <div class="step captain-step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Attaquer (onglet Mes Tirs)</div>
+          <div class="step-card">
+            <p class="body">C'est ici que ça se joue ! Quand c'est ton tour, tu as <strong>3 tirs</strong> à placer sur la grille adverse.</p>
+            <p class="body" style="margin-top:6px">Clique sur 3 cases de la grille — elles s'illuminent en bleu. Les cases déjà jouées sont automatiquement bloquées.</p>
+
+            <div style="margin:12px 0">
+              <div class="mini-grid">
+                <div class="mg water">🌊</div><div class="mg water">🌊</div><div class="mg hit">💥</div><div class="mg"></div><div class="mg"></div>
+                <div class="mg"></div><div class="mg sunk">💀</div><div class="mg sunk">💀</div><div class="mg sunk">💀</div><div class="mg"></div>
+                <div class="mg"></div><div class="mg"></div><div class="mg"></div><div class="mg water">🌊</div><div class="mg bonus">⭐</div>
+              </div>
+              <p style="color:var(--text2);font-size:.78rem;margin-top:4px">🌊 eau · 💥 touché · 💀 coulé · ⭐ bonus</p>
+            </div>
+
+            <p class="body">Une fois tes 3 cases choisies, clique sur <strong style="color:var(--cyan)">✔ Soumettre</strong>. Tu vois "⏳ Tirs soumis" — attends que l'admin valide le tour.</p>
+            <div class="tip"><span class="tip-icon">💡</span>Les résultats (touché, coulé, eau…) ne s'affichent qu'au tour suivant, après validation admin.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 5 -->
+      <div class="step captain-step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">Surveiller sa défense (onglet Suivi)</div>
+          <div class="step-card">
+            <p class="body">L'onglet <strong>Suivi</strong> te montre les tirs que l'équipe adverse a envoyés sur <strong>ta grille</strong>. Tu vois exactement où ils ont tiré et ce qu'ils ont touché.</p>
+            <div class="btn-legend" style="margin-top:10px">
+              <div class="btn-item"><span class="btn-pill bp-muted">🌊</span><span class="btn-desc">Coup dans l'eau — ils ont raté</span></div>
+              <div class="btn-item"><span class="btn-pill" style="background:rgba(255,136,0,.1);border-color:var(--orange);color:var(--orange)">💥</span><span class="btn-desc">Un de tes navires est touché</span></div>
+              <div class="btn-item"><span class="btn-pill bp-red">💀</span><span class="btn-desc">Un de tes navires est coulé — il est perdu</span></div>
+            </div>
+            <div class="tip"><span class="tip-icon">🔓</span>En fin de partie, la grille adverse est entièrement révélée ! Tu verras leurs navires non coulés (en vert) et coulés (en rouge).</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 6 -->
+      <div class="step captain-step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <div class="step-title">Suivre le classement</div>
+          <div class="step-card">
+            <p class="body">L'onglet <strong>Classement</strong> affiche le score de toutes les équipes. Ton équipe est mise en avant en bleu <span style="color:var(--cyan)">◀ MOI</span>, ton adversaire en rouge <span style="color:var(--red)">⚔ ADV</span>.</p>
+            <table class="score-table">
+              <thead><tr><th>#</th><th>Équipe</th><th>Score</th><th>Coulés</th></tr></thead>
+              <tbody>
+                <tr><td style="color:var(--gold)">1</td><td><span style="color:var(--cyan)">Équipe 3 ◀ MOI</span></td><td style="color:var(--cyan)">24</td><td style="color:var(--green)">4/5</td></tr>
+                <tr><td style="color:#b0c8d8">2</td><td>Équipe 1</td><td style="color:var(--cyan)">18</td><td style="color:var(--green)">3/5</td></tr>
+                <tr><td>3</td><td><span style="color:var(--red)">Équipe 4 ⚔ ADV</span></td><td style="color:var(--cyan)">15</td><td style="color:var(--green)">2/5</td></tr>
+                <tr><td>4</td><td>Équipe 2</td><td style="color:var(--cyan)">11</td><td style="color:var(--green)">1/5</td></tr>
+              </tbody>
+            </table>
+            <p class="body" style="margin-top:10px">Un encart duel en bas de page montre ton score face à ton adversaire direct, avec l'écart en vert si tu mènes.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 7 -->
+      <div class="step captain-step">
+        <div class="step-num">7</div>
+        <div class="step-body">
+          <div class="step-title">Les animations en jeu</div>
+          <div class="step-card">
+            <div class="btn-legend">
+              <div class="btn-item"><span class="btn-pill" style="background:rgba(255,68,85,.1);border-color:var(--red);color:var(--red)">💀 Navire coulé</span><span class="btn-desc">Au début du tour suivant, une animation t'informe si tu as coulé un navire adverse — ou si tu en as perdu un !</span></div>
+              <div class="btn-item"><span class="btn-pill bp-gold">🏆 Victoire</span><span class="btn-desc">Si tu coules toute la flotte adverse, une animation de victoire avec confettis s'affiche. Sinon, tu vois une animation de défaite sobre.</span></div>
+            </div>
+            <div class="tip"><span class="tip-icon">⚡</span>Ces animations apparaissent automatiquement dans l'onglet Mes Tirs. Pas besoin de faire quoi que ce soit — elles se déclenchent seules !</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 8 -->
+      <div class="step captain-step">
+        <div class="step-num">8</div>
+        <div class="step-body">
+          <div class="step-title">Le bouton Actualiser</div>
+          <div class="step-card">
+            <p class="body">En haut à droite de la barre de statut, le bouton <strong style="color:var(--cyan)">↻ Actualiser</strong> te permet de récupérer manuellement les dernières données du cloud.</p>
+            <div class="btn-legend" style="margin-top:10px">
+              <div class="btn-item"><span class="btn-pill bp-cyan">↻ 20s</span><span class="btn-desc">La page se rafraîchit automatiquement toutes les 20 secondes. Le compteur est visible dans la barre de statut.</span></div>
+            </div>
+            <div class="tip"><span class="tip-icon">💡</span>Utilise Actualiser manuellement après que l'admin a validé un tour pour voir les résultats immédiatement sans attendre.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <hr class="sep">
+
+    <!-- BARÈME -->
+    <div class="step-card" style="margin-bottom:24px">
+      <div class="step-title" style="color:var(--cyan);margin-bottom:14px">🎯 Barème des points</div>
+      <table class="score-table">
+        <thead><tr><th>Navire</th><th>Taille</th><th>Points si coulé</th></tr></thead>
+        <tbody>
+          <tr><td><span class="score-dot" style="background:#f0c040"></span>Porte-Avion</td><td>5 cases</td><td style="color:var(--green)">+5 pts</td></tr>
+          <tr><td><span class="score-dot" style="background:#00d4ff"></span>Cuirassé</td><td>4 cases</td><td style="color:var(--green)">+4 pts</td></tr>
+          <tr><td><span class="score-dot" style="background:#7fff90"></span>Sous-Marin 1</td><td>3 cases</td><td style="color:var(--green)">+3 pts</td></tr>
+          <tr><td><span class="score-dot" style="background:#b464ff"></span>Sous-Marin 2</td><td>3 cases</td><td style="color:var(--green)">+3 pts</td></tr>
+          <tr><td><span class="score-dot" style="background:#ff8844"></span>Torpilleur</td><td>2 cases</td><td style="color:var(--green)">+2 pts</td></tr>
+          <tr><td><span class="score-dot" style="background:#cc88ff"></span>Case Bonus ⭐</td><td>1 case</td><td style="color:var(--purple)">+2 pts</td></tr>
+          <tr><td><span class="score-dot" style="background:#ff4455"></span>Case Malus 💣</td><td>1 case</td><td style="color:var(--red)">−2 pts</td></tr>
+        </tbody>
+      </table>
+      <div class="info" style="margin-top:12px"><span class="tip-icon">🏁</span>La partie se termine quand tu coules <strong>tous</strong> les navires adverses. Les points ne servent qu'à départager en cas d'égalité.</div>
+    </div>
+
+    <!-- FAQ CAPTAIN -->
+    <div class="step-card">
+      <div class="step-title" style="color:var(--cyan);margin-bottom:14px">❓ Questions fréquentes</div>
+      <div class="faq">
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Je vois "En attente du démarrage par l'admin" — que faire ? <span class="arrow">▶</span></div>
+          <div class="faq-a">L'admin n'a pas encore démarré la partie. Attends qu'il clique sur "🚀 Démarrer". La page se rafraîchit automatiquement toutes les 20 secondes — tu n'as rien à faire.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">J'ai validé ma grille mais l'admin dit qu'il ne la voit pas. <span class="arrow">▶</span></div>
+          <div class="faq-a">Demande à l'admin de cliquer sur ↻ Actualiser dans la barre de statut. Si le problème persiste, il peut utiliser le bouton "✔ Valider (admin)" sur ta carte équipe.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Je ne vois pas les résultats de mes tirs après les avoir soumis. <span class="arrow">▶</span></div>
+          <div class="faq-a">Les résultats ne s'affichent qu'après que l'admin clique sur "⏭ Tour Suivant". Attends que toutes les équipes aient soumis leurs tirs et que l'admin valide le tour.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Ma partie est terminée mais les autres continuent — est-ce normal ? <span class="arrow">▶</span></div>
+          <div class="faq-a">Oui ! La paire 1v2, 3v4 et 5v6 sont indépendantes. Quand tu as ton résultat, tu peux regarder le classement et les autres paires continuer. La fête ne s'arrête pas !</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">Puis-je utiliser l'appli sur mon téléphone ? <span class="arrow">▶</span></div>
+          <div class="faq-a">Oui, l'interface est responsive. Pour une meilleure expérience sur mobile, tourne ton téléphone en mode paysage pour placer ta grille plus facilement.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function switchRole(role) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('section-'+role).classList.add('active');
+  document.querySelector('.role-btn.'+role).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleFaq(el) {
+  const item = el.parentElement;
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
+  if(!wasOpen) item.classList.add('open');
+}
+</script>
+</body>
+</html>
