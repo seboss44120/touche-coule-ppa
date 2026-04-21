@@ -1452,9 +1452,10 @@ function renderCaptainSaisie() {
     <div class="leg-item"><div class="leg-dot" style="background:rgba(200,136,255,.45);border:1px solid var(--purple)"></div><span>Case Bonus</span></div>
     <div class="leg-item"><div class="leg-dot" style="background:rgba(255,68,85,.35);border:1px solid var(--red)"></div><span>Case Malus</span></div>
     ${!submitted?`<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
-      <button class="primary-btn" style="width:100%;margin-bottom:6px" ${S.selectedShots.length>0?'':'disabled'} onclick="doSubmitShots()">
-        ✔ Soumettre ${S.selectedShots.length} tir${S.selectedShots.length>1?'s':''}
+      <button class="primary-btn" style="width:100%;margin-bottom:6px;transition:all .2s;${S.selectedShots.length===3?'box-shadow:0 0 18px rgba(0,212,255,.35)':''}" ${S.selectedShots.length===3?'':'disabled'} onclick="doSubmitShots()">
+        ${S.selectedShots.length===3?'✔ VALIDER MES TIRS':`🎯 VALIDER (${S.selectedShots.length}/3)`}
       </button>
+      ${S.selectedShots.length>0&&S.selectedShots.length<3?`<div style="font-size:.78rem;color:var(--gold);text-align:center;margin:4px 0 6px;font-weight:600">⚠ Sélectionnez encore ${3-S.selectedShots.length} case${3-S.selectedShots.length>1?'s':''} pour valider</div>`:''}
       ${S.selectedShots.length>0?`<button class="clear-btn" style="width:100%" onclick="S.selectedShots=[];renderCaptainSaisie()">✕ Réinitialiser</button>`:''}
     </div>`:''}
   </div></div>`;
@@ -1486,11 +1487,38 @@ function renderCaptainSaisie() {
 }
 
 function doSubmitShots() {
-  const coords=[...S.selectedShots];
-  const res=submitCaptainShots(ROLE.teamId,coords);
-  if(!res.ok){ alert(res.errors.join('\n')); return; }
-  S.selectedShots=[];
-  renderCaptainSaisie();
+  if(S.selectedShots.length!==3) return;
+  showConfirmShotsModal([...S.selectedShots], () => {
+    const coords=[...S.selectedShots];
+    const res=submitCaptainShots(ROLE.teamId,coords);
+    if(!res.ok){ alert(res.errors.join('\n')); return; }
+    S.selectedShots=[];
+    renderCaptainSaisie();
+  });
+}
+
+function showConfirmShotsModal(coords, onConfirm) {
+  document.querySelectorAll('.confirm-shots-overlay').forEach(e=>e.remove());
+  const overlay=document.createElement('div');
+  overlay.className='confirm-shots-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(3,8,16,.88);z-index:9998;display:flex;align-items:center;justify-content:center;animation:fadein-overlay .2s ease';
+  const coordsHtml=coords.map(c=>`<span style="display:inline-block;padding:6px 16px;background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.45);border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:1.15rem;color:var(--cyan);font-weight:700;letter-spacing:2px">${c}</span>`).join('');
+  overlay.innerHTML=`
+    <div style="background:#0a1828;border:2px solid rgba(0,212,255,.35);border-radius:12px;padding:28px 28px 22px;width:300px;text-align:center;position:relative">
+      <div style="font-size:2rem;margin-bottom:8px">🎯</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.65rem;letter-spacing:3px;color:var(--text2);text-transform:uppercase;margin-bottom:14px">Confirmer les tirs</div>
+      <div style="display:flex;justify-content:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">${coordsHtml}</div>
+      <div style="font-size:.82rem;color:var(--text2);margin-bottom:20px;line-height:1.5">Ces 3 cases seront soumises à l'admin.<br>Cette action est <strong style="color:var(--gold)">irréversible</strong>.</div>
+      <div style="display:flex;gap:10px">
+        <button id="cs-cancel" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:5px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:1px;text-transform:uppercase;transition:all .15s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">✕ Annuler</button>
+        <button id="cs-confirm" style="flex:1;padding:10px;background:rgba(0,212,255,.15);border:2px solid var(--cyan);color:var(--cyan);border-radius:5px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:1px;text-transform:uppercase;transition:all .15s" onmouseover="this.style.background='rgba(0,212,255,.28)'" onmouseout="this.style.background='rgba(0,212,255,.15)'">✔ Confirmer</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#cs-cancel').onclick=()=>overlay.remove();
+  overlay.querySelector('#cs-confirm').onclick=()=>{ overlay.remove(); onConfirm(); };
+  // Fermer sur clic extérieur
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
 }
 
 /* ════════════════════════════════════════
