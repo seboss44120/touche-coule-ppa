@@ -1,2000 +1,1466 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Touché Coulé — PPA</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg:#030810; --bg2:#060e1c; --card:#0a1828; --card2:#0e2038;
-      --border:rgba(0,200,230,.14); --border2:rgba(0,200,230,.07);
-      --cyan:#00d4ff; --cyan2:#0099bb; --gold:#f0c040;
-      --red:#ff4455; --green:#00e878; --purple:#cc88ff; --orange:#ff8800;
-      --muted:#2a4a6a; --text:#e0f0ff; --text2:#7aabcc;
-    }
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%}
-    body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:16px;min-height:100vh;overflow-x:hidden}
-    body::before{content:'';position:fixed;width:600px;height:600px;top:50%;left:50%;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(0,180,220,.04) 0%,transparent 65%);pointer-events:none}
-    .app{max-width:1100px;margin:0 auto;padding:0 14px 80px}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1">
+<title>⚓ Touché Coulé — PPA Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#080e1a; --bg2:#0d1624; --bg3:#111e30;
+  --text:#d4e8ff; --text2:#7aabcc; --text3:#3f6080;
+  --gold:#f5c842; --cyan:#00d4ff; --green:#00e878;
+  --red:#ff4455; --orange:#ff8844; --purple:#cc88ff;
+  --border:#1a2f4a; --border2:#234; --card:#0f1c2e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;font-size:15px}
+a{color:inherit;text-decoration:none}
 
-    /* ── HEADER ── */
-    header{text-align:center;padding:18px 0 12px;border-bottom:1px solid var(--border)}
-    header h1{font-family:'Orbitron',monospace;font-size:clamp(1.2rem,4vw,1.9rem);font-weight:900;color:var(--cyan);letter-spacing:5px;text-shadow:0 0 24px rgba(0,212,255,.35)}
-    header p{color:var(--text2);font-size:.72rem;letter-spacing:3px;text-transform:uppercase;margin-top:3px}
-    .role-badge{display:inline-block;margin-top:6px;padding:2px 10px;border-radius:3px;font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase}
-    .role-admin{background:rgba(240,192,64,.15);border:1px solid rgba(240,192,64,.4);color:var(--gold)}
-    .role-captain{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);color:var(--cyan)}
+/* HEADER */
+header{background:linear-gradient(135deg,#040b14 0%,#0a1628 60%,#061020 100%);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo-sub{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:3px;text-transform:uppercase}
+.logo-title{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--gold);letter-spacing:3px;line-height:1}
+.header-right{display:flex;align-items:center;gap:10px;font-size:.72rem}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--text3);display:inline-block;margin-right:5px}
+.sdot.on{background:var(--green);box-shadow:0 0 8px var(--green)}
+.sdot.win{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.role-badge{font-family:'Orbitron',monospace;font-size:.55rem;padding:3px 8px;border-radius:20px;letter-spacing:2px;text-transform:uppercase}
+.role-badge.admin{background:rgba(245,200,66,.15);border:1px solid var(--gold);color:var(--gold)}
+.role-badge.captain{background:rgba(0,212,255,.12);border:1px solid var(--cyan);color:var(--cyan)}
+#hdrStatusTxt{color:var(--text2);font-size:.72rem}
 
-    /* ── STATUS BAR ── */
-    .status-bar{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 14px;margin:12px 0;font-size:.82rem}
-    .sdot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0}
-    .sdot.on{background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s infinite}
-    .sdot.win{background:var(--gold);box-shadow:0 0 8px var(--gold)}
-    @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
-    .status-text{flex:1}
-    .status-actions{display:flex;gap:6px;flex-shrink:0}
-    .sbtn{padding:4px 11px;background:transparent;border:1px solid var(--muted);color:var(--muted);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.73rem;letter-spacing:1px;transition:all .15s}
-    .sbtn:hover{border-color:var(--text2);color:var(--text2)}
-    .sbtn.danger{border-color:var(--red);color:var(--red)}
-    .sbtn.danger:hover{background:rgba(255,68,85,.1)}
+/* NAV */
+nav{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;padding:0 8px}
+nav button{font-family:'Rajdhani',sans-serif;font-size:.82rem;font-weight:700;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;padding:9px 14px;cursor:pointer;white-space:nowrap;text-transform:uppercase;letter-spacing:.5px;transition:all .2s}
+nav button.active{color:var(--gold);border-bottom-color:var(--gold)}
+nav button:hover:not(.active){color:var(--text2)}
 
-    /* ── TABS ── */
-    .tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px}
-    .tab-btn{flex:1;padding:12px 4px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-family:'Rajdhani',sans-serif;font-weight:600;font-size:.8rem;letter-spacing:1px;cursor:pointer;text-transform:uppercase;transition:all .2s}
-    .tab-btn.active{color:var(--cyan);border-bottom-color:var(--cyan)}
-    .tab-btn:hover:not(.active){color:var(--text)}
-    .tab-content{display:none}
-    .tab-content.active{display:block}
+/* TAB CONTENT */
+main{padding:12px}
+.tab-content{display:none}.tab-content.active{display:block}
 
-    /* ── SECTION TITLE ── */
-    .stitle{font-family:'Orbitron',monospace;font-size:.68rem;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px}
+.card-title{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--gold);margin-bottom:10px}
+.stitle{font-family:'Orbitron',monospace;font-size:.62rem;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
 
-    /* ── ALERTS ── */
-    .alert{padding:11px 15px;border-radius:6px;margin-bottom:14px;font-size:.88rem;line-height:1.45}
-    .a-warn{background:rgba(240,192,64,.08);border:1px solid rgba(240,192,64,.3);color:var(--gold)}
-    .a-ok{background:rgba(0,232,120,.08);border:1px solid rgba(0,232,120,.3);color:var(--green)}
-    .a-info{background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.18);color:var(--cyan)}
-    .a-err{background:rgba(255,68,85,.08);border:1px solid rgba(255,68,85,.3);color:var(--red)}
+/* DUEL PANEL */
+.duel-panel{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:14px;overflow:hidden}
+.duel-header{background:linear-gradient(90deg,#0a1828,#081420);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.duel-name{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:3px;color:var(--gold)}
+.duel-turn{font-family:'Orbitron',monospace;font-size:.68rem;color:var(--cyan);letter-spacing:2px}
+.duel-body{padding:12px}
+.status-badge{font-family:'Orbitron',monospace;font-size:.55rem;padding:3px 8px;border-radius:12px;letter-spacing:1px;font-weight:700}
+.status-badge.ready{background:rgba(122,171,204,.12);border:1px solid var(--text3);color:var(--text3)}
+.status-badge.battle{background:rgba(0,212,255,.12);border:1px solid var(--cyan);color:var(--cyan)}
+.status-badge.finished{background:rgba(245,200,66,.12);border:1px solid var(--gold);color:var(--gold)}
 
-    /* ── TEAM CARDS (Admin Config) ── */
-    .teams-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
-    @media(min-width:900px){.teams-grid{grid-template-columns:repeat(3,1fr)}}
-    .team-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:13px;transition:border-color .2s}
-    .team-card.inactive{opacity:.5}
-    .tc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-    .tc-num{font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2);letter-spacing:2px}
-    .toggle{width:36px;height:20px;background:var(--muted);border-radius:10px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
-    .toggle.on{background:var(--cyan)}
-    .toggle::after{content:'';position:absolute;width:16px;height:16px;background:white;border-radius:50%;top:2px;left:2px;transition:left .2s}
-    .toggle.on::after{left:18px}
-    .inp{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(0,200,230,.22);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;padding:7px 9px;border-radius:4px;margin-bottom:5px}
-    .inp.sm{font-weight:600;font-size:.8rem;color:var(--text)}
-    .inp:focus{outline:none;border-color:var(--cyan)}
-    .inp::placeholder{color:rgba(180,220,255,.5);font-weight:400}
-    .inp:disabled{opacity:.4;cursor:not-allowed}
-    .tc-status{font-size:.72rem;margin-top:6px;text-align:center;color:var(--text2)}
-    .tc-status.full{color:var(--green)}
-    .grid-status{display:flex;align-items:center;gap:7px;margin-top:9px;padding:8px 10px;border-radius:5px;border:1px solid}
-    .grid-status.gs-ok{background:rgba(0,232,120,.07);border-color:rgba(0,232,120,.3)}
-    .grid-status.gs-wait{background:rgba(240,192,64,.06);border-color:rgba(240,192,64,.25)}
-    .gs-icon{font-size:.9rem;flex-shrink:0}
-    .gs-label{font-weight:700;font-size:.8rem;flex:1}
-    .gs-ok .gs-label{color:var(--green)}
-    .gs-wait .gs-label{color:var(--gold)}
-    .gs-detail{font-size:.7rem;color:var(--text2);white-space:nowrap}
-    .link-row{display:flex;gap:5px;margin-top:8px;align-items:center}
-    .link-url{flex:1;min-width:0;background:var(--bg);border:1px solid var(--border);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:.65rem;padding:5px 7px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .icon-btn{padding:5px 9px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;cursor:pointer;font-size:.75rem;transition:all .15s;white-space:nowrap}
-    .icon-btn:hover{border-color:var(--cyan);color:var(--cyan)}
-    .send-btn{width:100%;margin-top:7px;padding:7px 10px;background:transparent;border:1px solid rgba(0,212,255,.35);color:var(--cyan);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.5px;transition:all .15s}
-    .send-btn:hover:not(:disabled){background:rgba(0,212,255,.1);border-color:var(--cyan)}
-    .send-btn:disabled{opacity:.3;cursor:not-allowed;color:var(--muted);border-color:var(--muted)}
+/* TEAM ROW */
+.team-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg3);border-radius:6px;margin-bottom:6px;gap:8px}
+.team-row-info{flex:1;min-width:0}
+.team-row-name{font-weight:700;color:var(--text);font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.team-row-captain{font-size:.72rem;color:var(--text3)}
+.shot-status{font-family:'Orbitron',monospace;font-size:.58rem;padding:3px 7px;border-radius:10px;white-space:nowrap}
+.shot-status.done{background:rgba(0,232,120,.12);border:1px solid var(--green);color:var(--green)}
+.shot-status.pending{background:rgba(255,68,85,.08);border:1px solid var(--text3);color:var(--text3)}
 
-    /* ── SYNC PANEL ── */
-    .sync-panel{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:18px}
-    .sync-title{font-family:'Orbitron',monospace;font-size:.68rem;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-    .sync-row{display:flex;gap:7px;align-items:stretch;margin-bottom:8px}
-    .sync-inp{flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.78rem;padding:7px 10px;border-radius:4px}
-    .sync-inp:focus{outline:none;border-color:var(--cyan)}
-    .sync-inp::placeholder{color:rgba(176,216,240,.35)}
-    .sync-btn{padding:7px 13px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;white-space:nowrap;transition:all .15s}
-    .sync-btn:hover{background:rgba(0,212,255,.1)}
-    .sync-btn:disabled{opacity:.35;cursor:not-allowed}
-    .sync-status{font-size:.78rem;padding:6px 10px;border-radius:4px;display:flex;align-items:center;gap:7px;margin-bottom:8px}
-    .ss-ok{background:rgba(0,232,120,.07);border:1px solid rgba(0,232,120,.25);color:var(--green)}
-    .ss-warn{background:rgba(240,192,64,.07);border:1px solid rgba(240,192,64,.25);color:var(--gold)}
-    .ss-err{background:rgba(255,68,85,.07);border:1px solid rgba(255,68,85,.25);color:var(--red)}
-    .ss-spin{animation:spin .8s linear infinite;display:inline-block}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .clear-data-btn{padding:6px 13px;background:transparent;border:1px solid rgba(255,68,85,.4);color:var(--red);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.76rem;transition:all .15s;opacity:.7}
-    .clear-data-btn:hover{opacity:1;background:rgba(255,68,85,.08)}
+/* BUTTONS */
+.btn{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;padding:7px 14px;border-radius:6px;border:none;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:all .2s;display:inline-flex;align-items:center;gap:5px}
+.btn-gold{background:var(--gold);color:#000}
+.btn-gold:hover{background:#e0b430}
+.btn-gold:disabled{background:#333;color:#555;cursor:default}
+.btn-cyan{background:rgba(0,212,255,.15);border:1px solid var(--cyan);color:var(--cyan)}
+.btn-cyan:hover{background:rgba(0,212,255,.25)}
+.btn-danger{background:rgba(255,68,85,.15);border:1px solid var(--red);color:var(--red)}
+.btn-danger:hover{background:rgba(255,68,85,.25)}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn-outline:hover{border-color:var(--text3);color:var(--text)}
+.btn-sm{font-size:.75rem;padding:4px 9px}
+.btn-xs{font-size:.68rem;padding:3px 7px}
 
-    /* ── MODALE NAVIRE COULÉ ── */
-    .sunk-overlay{position:fixed;inset:0;background:rgba(3,8,16,.88);z-index:9999;display:flex;align-items:center;justify-content:center;animation:fadein-overlay .25s ease}
-    @keyframes fadein-overlay{from{opacity:0}to{opacity:1}}
-    .sunk-modal{background:#0a1828;border:1px solid rgba(255,68,85,.35);border-radius:12px;padding:30px 36px;width:300px;text-align:center;position:relative;overflow:hidden}
-    .sunk-modal.attacker{border-color:rgba(255,68,85,.4)}
-    .sunk-modal.defender{border-color:rgba(255,136,0,.4)}
-    .sunk-ring{position:absolute;top:50%;left:50%;border-radius:50%;border:2px solid;transform:translate(-50%,-50%);opacity:0;width:40px;height:40px}
-    .sunk-ring-1{border-color:#ff4455;animation:sunk-ring-ex 1.2s ease-out .05s forwards}
-    .sunk-ring-2{border-color:#ff8800;animation:sunk-ring-ex 1.2s ease-out .22s forwards}
-    .sunk-ring-3{border-color:#f0c040;animation:sunk-ring-ex 1.2s ease-out .4s forwards}
-    @keyframes sunk-ring-ex{0%{width:30px;height:30px;opacity:.9}100%{width:280px;height:280px;opacity:0}}
-    .sunk-sparks{position:absolute;top:50%;left:50%;width:0;height:0}
-    .sunk-spark{position:absolute;width:3px;height:9px;border-radius:2px;transform-origin:50% 100%;opacity:0;animation:sunk-spark-fly .95s ease-out forwards}
-    @keyframes sunk-spark-fly{0%{opacity:1;transform:rotate(var(--a)) translateY(-4px) scaleY(1)}100%{opacity:0;transform:rotate(var(--a)) translateY(-52px) scaleY(.3)}}
-    .sunk-ripple{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);width:20px;height:8px;border-radius:50%;border:1px solid rgba(0,212,255,.6);opacity:0}
-    .sunk-ripple-1{animation:sunk-ripple-out .95s ease .55s forwards}
-    .sunk-ripple-2{animation:sunk-ripple-out .95s ease .75s forwards}
-    .sunk-ripple-3{animation:sunk-ripple-out .95s ease .95s forwards}
-    @keyframes sunk-ripple-out{0%{width:20px;height:8px;opacity:.8}100%{width:120px;height:28px;opacity:0}}
-    .sunk-anchor{font-size:40px;display:block;animation:sunk-sink 1.5s ease-in .15s forwards;opacity:0;position:relative;z-index:2}
-    @keyframes sunk-sink{0%{opacity:1;transform:translateY(0) rotate(0deg)}40%{opacity:1;transform:translateY(5px) rotate(-7deg)}100%{opacity:0;transform:translateY(28px) rotate(-22deg)}}
-    .sunk-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#507090;position:relative;z-index:2;animation:sunk-fadein .4s ease .1s forwards;opacity:0}
-    .sunk-shipname{font-size:20px;font-weight:700;letter-spacing:2px;text-transform:uppercase;position:relative;z-index:2;animation:sunk-bang .5s cubic-bezier(.17,.67,.35,1.4) .28s forwards;opacity:0}
-    .attacker .sunk-shipname{color:#ff4455}
-    .defender .sunk-shipname{color:#ff8800}
-    .sunk-pts{display:inline-block;margin-top:8px;padding:3px 13px;border-radius:4px;font-size:13px;font-weight:700;letter-spacing:1px;position:relative;z-index:2;animation:sunk-fadein .4s ease .65s forwards;opacity:0}
-    .attacker .sunk-pts{background:rgba(0,232,120,.12);border:1px solid rgba(0,232,120,.3);color:#00e878}
-    .defender .sunk-pts{background:rgba(255,68,85,.1);border:1px solid rgba(255,68,85,.3);color:#ff4455}
-    .sunk-divider{border:none;border-top:1px solid rgba(0,200,230,.1);margin:14px 0 10px;position:relative;z-index:2}
-    .sunk-by-label{font-size:11px;color:#507090;position:relative;z-index:2;animation:sunk-fadein .4s ease .8s forwards;opacity:0}
-    .sunk-by-name{font-size:14px;font-weight:700;letter-spacing:1px;color:#00d4ff;position:relative;z-index:2;animation:sunk-fadein .4s ease .85s forwards;opacity:0}
-    .sunk-close{margin-top:16px;width:100%;padding:8px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);color:#00d4ff;border-radius:5px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;position:relative;z-index:2;animation:sunk-fadein .4s ease 1.05s forwards;opacity:0;transition:background .15s}
-    .sunk-close:hover{background:rgba(0,212,255,.16)}
-    @keyframes sunk-fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes sunk-bang{0%{opacity:0;transform:scale(.5)}100%{opacity:1;transform:scale(1)}}
+/* FORMS */
+.form-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
+input,select{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:600;padding:6px 10px;border-radius:5px;outline:none}
+input:focus,select:focus{border-color:var(--cyan)}
+input::placeholder{color:var(--text3);opacity:.5}
+select option{background:var(--bg2)}
 
-    /* ── MODALE VICTOIRE ── */
-    .victory-overlay{position:fixed;inset:0;background:rgba(3,8,16,.92);z-index:10000;display:flex;align-items:center;justify-content:center;animation:vo-fadein .35s ease}
-    @keyframes vo-fadein{from{opacity:0}to{opacity:1}}
-    #victory-confetti{position:fixed;inset:0;pointer-events:none;z-index:9999}
-    .victory-modal{background:#0a1828;border-radius:14px;padding:32px 38px;width:320px;text-align:center;position:relative;overflow:hidden}
-    .victory-modal.vm-win{border:1px solid rgba(240,192,64,.5)}
-    .victory-modal.vm-lose{border:1px solid rgba(80,112,144,.3)}
-    .vm-halo{position:absolute;width:300px;height:300px;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
-    .vm-win .vm-halo{background:radial-gradient(circle,rgba(240,192,64,.12) 0%,transparent 70%);animation:vm-halo-pulse 2.5s ease-in-out .4s infinite}
-    .vm-lose .vm-halo{background:radial-gradient(circle,rgba(80,112,144,.08) 0%,transparent 70%);animation:vm-halo-in .6s ease .2s forwards;opacity:0}
-    @keyframes vm-halo-pulse{0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}}
-    @keyframes vm-halo-in{to{opacity:1}}
-    .vm-icon{font-size:50px;display:block;position:relative;z-index:2;opacity:0}
-    .vm-win .vm-icon{animation:vm-bounce .7s cubic-bezier(.17,.67,.35,1.55) .15s forwards}
-    .vm-lose .vm-icon{animation:vm-fadein .5s ease .2s forwards}
-    @keyframes vm-bounce{0%{opacity:0;transform:scale(.3) translateY(20px)}100%{opacity:1;transform:scale(1) translateY(0)}}
-    @keyframes vm-fadein{to{opacity:1}}
-    .vm-result{font-size:10px;letter-spacing:4px;text-transform:uppercase;position:relative;z-index:2;margin-top:10px;opacity:0;animation:vm-slide-up .4s ease .3s forwards}
-    .vm-win .vm-result{color:#f0c040}
-    .vm-lose .vm-result{color:#507090}
-    .vm-team{font-size:22px;font-weight:700;letter-spacing:1px;position:relative;z-index:2;margin-top:6px;opacity:0}
-    .vm-win .vm-team{color:#f0c040;animation:vm-bang .55s cubic-bezier(.17,.67,.35,1.4) .45s forwards}
-    .vm-lose .vm-team{color:#b8d8f0;animation:vm-slide-up .4s ease .45s forwards}
-    @keyframes vm-bang{0%{opacity:0;transform:scale(.6)}100%{opacity:1;transform:scale(1)}}
-    .vm-score-wrap{margin-top:12px;display:flex;justify-content:center;position:relative;z-index:2;opacity:0;animation:vm-slide-up .4s ease .6s forwards}
-    .vm-score-card{padding:8px 18px;border-radius:6px;text-align:center}
-    .vm-win .vm-score-card{background:rgba(240,192,64,.12);border:1px solid rgba(240,192,64,.35)}
-    .vm-lose .vm-score-card{background:rgba(80,112,144,.1);border:1px solid rgba(80,112,144,.3)}
-    .vm-score-val{font-size:26px;font-weight:700;font-family:'Share Tech Mono',monospace}
-    .vm-win .vm-score-val{color:#f0c040}
-    .vm-lose .vm-score-val{color:#507090}
-    .vm-score-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#507090;margin-top:2px}
-    .vm-msg{margin-top:14px;padding:9px 13px;border-radius:6px;font-size:13px;line-height:1.5;position:relative;z-index:2;opacity:0;animation:vm-slide-up .4s ease .78s forwards}
-    .vm-win .vm-msg{background:rgba(0,232,120,.07);border:1px solid rgba(0,232,120,.25);color:#00e878}
-    .vm-lose .vm-msg{background:rgba(80,112,144,.07);border:1px solid rgba(80,112,144,.2);color:#7aabcc}
-    .vm-divider{border:none;border-top:1px solid rgba(0,200,230,.08);margin:13px 0 9px;position:relative;z-index:2}
-    .vm-rank{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;position:relative;z-index:2;opacity:0;animation:vm-slide-up .3s ease var(--vd) forwards}
-    .vm-rank-num{font-size:11px;font-weight:700;min-width:20px;color:#507090}
-    .vm-rank-name{flex:1;text-align:left;color:#b8d8f0}
-    .vm-rank-name.vm-me{color:#f0c040;font-weight:700}
-    .vm-rank-pts{font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:700;color:#00d4ff}
-    .vm-close{margin-top:16px;width:100%;padding:9px;background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.3);color:#00d4ff;border-radius:5px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;position:relative;z-index:2;opacity:0;animation:vm-slide-up .4s ease 1.1s forwards;transition:background .15s}
-    .vm-close:hover{background:rgba(0,212,255,.15)}
-    @keyframes vm-slide-up{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+/* ALERT */
+.alert{padding:8px 12px;border-radius:6px;font-size:.85rem;margin-top:8px;display:none}
+.alert.show{display:block}
+.alert.ok{background:rgba(0,232,120,.1);border:1px solid var(--green);color:var(--green)}
+.alert.err{background:rgba(255,68,85,.1);border:1px solid var(--red);color:var(--red)}
+.alert.info{background:rgba(0,212,255,.08);border:1px solid var(--cyan);color:var(--cyan)}
 
-    .validate-grid-btn{width:100%;margin-top:12px;padding:12px;background:rgba(0,232,120,.12);border:2px solid var(--green);color:var(--green);border-radius:6px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:900;font-size:1rem;letter-spacing:2px;text-transform:uppercase;transition:all .2s}
-    .validate-grid-btn:hover{background:rgba(0,232,120,.25);box-shadow:0 0 16px rgba(0,232,120,.2)}
-    .validate-grid-btn:disabled{opacity:.3;cursor:not-allowed}
-    .validated-badge{width:100%;margin-top:12px;padding:11px;background:rgba(0,232,120,.1);border:2px solid var(--green);color:var(--green);border-radius:6px;font-family:'Rajdhani',sans-serif;font-weight:800;font-size:.95rem;letter-spacing:2px;text-transform:uppercase;text-align:center}
+/* GRID */
+.grid-wrap{overflow-x:auto}
+.game-grid{display:grid;grid-template-columns:22px repeat(10,28px);grid-template-rows:22px repeat(10,28px);gap:2px;margin:8px 0}
+.gc-header{display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3)}
+.gc{width:28px;height:28px;border-radius:3px;background:rgba(0,50,100,.3);border:1px solid rgba(26,47,74,.8);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.7rem;transition:all .15s;position:relative}
+.gc:hover{border-color:var(--cyan);background:rgba(0,100,180,.3)}
+.gc.placed-PA{background:rgba(240,192,64,.22);border-color:#f0c040}
+.gc.placed-CU{background:rgba(0,212,255,.2);border-color:#00d4ff}
+.gc.placed-CR{background:rgba(0,255,140,.18);border-color:#00ff8c}
+.gc.placed-SM{background:rgba(100,255,100,.15);border-color:#64ff64}
+.gc.placed-TP{background:rgba(255,136,68,.2);border-color:#ff8844}
+.gc.placed-bonus{background:rgba(204,136,255,.2);border-color:#cc88ff}
+.gc.placed-malus{background:rgba(255,68,85,.2);border-color:#ff4455}
+.gc.hit{background:rgba(255,100,30,.3);border-color:var(--orange)}
+.gc.miss{background:rgba(0,100,200,.15);border-color:rgba(0,100,200,.3)}
+.gc.sunk{background:rgba(255,68,85,.35);border-color:var(--red)}
+.gc.sv-water{background:rgba(0,60,120,.3);border-color:rgba(0,100,200,.5)}
+.gc.sv-hit{background:rgba(255,100,30,.3);border-color:var(--orange)}
+.gc.sv-sunk{background:rgba(255,68,85,.4);border-color:var(--red)}
+.gc.sv-bonus{background:rgba(204,136,255,.3);border-color:var(--purple)}
+.gc.sv-malus{background:rgba(255,68,85,.2);border-color:var(--red)}
 
-    /* ── START / ACTION BUTTONS ── */
-    .primary-btn{padding:11px 26px;background:var(--cyan);color:var(--bg);border:none;border-radius:5px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.92rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:background .15s}
-    .primary-btn:hover{background:var(--cyan2)}
-    .primary-btn:disabled{opacity:.3;cursor:not-allowed}
-    .primary-btn.gold{background:var(--gold);color:#111}
-    .primary-btn.gold:hover{background:#d4a830}
-    .primary-btn.gold:disabled{opacity:.3}
-    .danger-btn{padding:9px 20px;background:transparent;border:2px solid var(--red);color:var(--red);border-radius:5px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .15s}
-    .danger-btn:hover{background:rgba(255,68,85,.1)}
+/* SHIP PALETTE */
+.ship-palette{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.ship-btn{font-family:'Rajdhani',sans-serif;font-size:.78rem;font-weight:700;padding:5px 10px;border-radius:5px;border:1px solid;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px}
+.ship-btn.active{box-shadow:0 0 8px currentColor}
+.orient-btn{font-family:'Orbitron',monospace;font-size:.62rem;padding:5px 10px;border-radius:5px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer}
+.orient-btn.active{border-color:var(--cyan);color:var(--cyan)}
 
-    /* ── GRID EDITOR ── */
-    .grid-editor{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px}
-    .ge-title{font-family:'Orbitron',monospace;font-size:.7rem;color:var(--cyan);letter-spacing:2px;margin-bottom:14px}
-    .ge-layout{display:flex;gap:20px;flex-wrap:wrap}
-    .ge-grid-wrap{overflow-x:auto;flex-shrink:0}
-    .battle-grid{display:grid;grid-template-columns:22px repeat(10,28px);grid-template-rows:22px repeat(10,28px);gap:1px;user-select:none}
-    .gl{display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:.68rem;color:rgba(255,255,255,.75);font-weight:600}
-    .gc{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.18);border-radius:2px;cursor:pointer;transition:background .1s;display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.7)}
-    .gc:hover{background:rgba(0,212,255,.15)}
-    .gc.pv{background:rgba(0,232,120,.2);border-color:var(--green)}
-    .gc.px{background:rgba(255,68,85,.2);border-color:var(--red)}
-    .gc.placed-PA   {background:rgba(240,192,64,.35); border-color:#f0c040}
-    .gc.placed-CU   {background:rgba(0,212,255,.28);  border-color:#00d4ff}
-    .gc.placed-SM1  {background:rgba(127,255,144,.28);border-color:#7fff90}
-    .gc.placed-SM2  {background:rgba(180,100,255,.28);border-color:#b464ff}
-    .gc.placed-TP   {background:rgba(255,136,68,.28); border-color:#ff8844}
-    .gc.placed-bonus{background:rgba(200,136,255,.28);border-color:#cc88ff}
-    .gc.placed-malus{background:rgba(255,68,85,.28);  border-color:#ff4455}
-    /* readonly grid (no hover) */
-    .gc.readonly{cursor:default}
-    .gc.readonly:hover{background:rgba(255,255,255,.03)}
+/* TEAMS GRID (config) */
+.teams-grid-cfg{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:12px}
+.team-card-cfg{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px}
+.team-card-cfg.inactive{opacity:.5}
+.team-card-cfg h4{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
 
-    /* Palette */
-    .palette{flex:1;min-width:185px}
-    .pal-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:4px;border:1px solid var(--border);cursor:pointer;margin-bottom:4px;transition:all .15s;background:var(--bg2);font-size:.82rem;font-weight:700;color:#d0eeff}
-    .pal-item:hover{border-color:var(--cyan)}
-    .pal-item.sel{border-color:var(--cyan);background:rgba(0,212,255,.09)}
-    .pal-item.done{opacity:.55}
-    .pal-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
-    .pal-cells{display:flex;gap:2px;margin-left:auto}
-    .pal-cell{width:8px;height:8px;border-radius:1px}
-    .pal-count{font-size:.7rem;color:var(--text2);margin-left:auto}
-    .orient-row{display:flex;gap:5px;margin:8px 0 5px}
-    .orient-btn{flex:1;padding:5px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:.76rem;transition:all .15s}
-    .orient-btn.on{border-color:var(--cyan);color:var(--cyan)}
-    .erase-btn{width:100%;padding:6px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:.76rem;margin-top:4px;transition:all .15s}
-    .erase-btn:hover,.erase-btn.on{border-color:var(--red);color:var(--red)}
-    .clear-btn{width:100%;padding:6px;background:transparent;border:1px solid var(--muted);color:var(--muted);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:.74rem;margin-top:4px;transition:all .15s}
-    .clear-btn:hover{border-color:var(--red);color:var(--red)}
+/* CLASSEMENT TABLE */
+.rank-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.rank-table th{font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);letter-spacing:1px;padding:6px 8px;border-bottom:1px solid var(--border);text-align:center}
+.rank-table td{padding:7px 8px;border-bottom:1px solid var(--border2);text-align:center}
+.rank-table tr.my-team td{background:rgba(0,212,255,.08);color:var(--cyan)}
+.rank-table tr.opp-team td{background:rgba(255,68,85,.06)}
+.rank-num{font-family:'Orbitron',monospace;font-size:.7rem;color:var(--text3)}
+.pts{font-family:'Orbitron',monospace;font-weight:900;font-size:1rem;color:var(--gold)}
+.turn-chip{font-family:'Orbitron',monospace;font-size:.58rem;padding:2px 6px;border-radius:8px;background:rgba(122,171,204,.1);border:1px solid var(--border);color:var(--text3)}
 
-    /* ── ADMIN TOUR TAB ── */
-    .tour-matchup{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:14px;overflow:hidden}
-    .tm-head{display:flex;align-items:center;padding:10px 16px;background:var(--card2);border-bottom:1px solid var(--border);gap:8px}
-    .tm-title{font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;flex:1;color:var(--text)}
-    .tm-body{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
-    @media(max-width:540px){.tm-body{grid-template-columns:1fr}}
-    .tm-team{background:var(--bg2);padding:13px}
-    .tmt-name{font-weight:700;font-size:.92rem;color:var(--text);margin-bottom:3px}
-    .tmt-status{font-size:.78rem;color:var(--text2)}
-    .tmt-status.submitted{color:var(--green)}
-    .tmt-status.waiting{color:var(--gold)}
-    .shots-preview{margin-top:7px;display:flex;gap:5px;flex-wrap:wrap}
-    .shot-tag{padding:2px 8px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--cyan)}
-    .tour-actions{margin-top:18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+/* FLEET DISPLAY */
+.fleets-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.fleet-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px}
+.fleet-name{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--text);margin-bottom:8px}
+.ship-bar{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:.8rem}
+.ship-bar-cells{display:flex;gap:2px}
+.ship-cell{width:14px;height:14px;border-radius:2px;border:1px solid rgba(255,255,255,.15)}
+.ship-cell.ok{background:rgba(0,232,120,.4);border-color:var(--green)}
+.ship-cell.hit{background:rgba(255,100,30,.5);border-color:var(--orange)}
+.ship-cell.sunk-c{background:rgba(255,68,85,.5);border-color:var(--red)}
 
-    /* ── CAPTAIN SAISIE GRID ── */
-    .saisie-grid-wrap{overflow-x:auto}
-    .sg-layout{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
-    .sg-legend{min-width:170px}
-    /* cases saisie — sélection tour en cours */
-    .gc.sg-sel{background:rgba(0,212,255,.45);border-color:var(--cyan);box-shadow:0 0 6px rgba(0,212,255,.4)}
-    .gc.sg-sel:hover{background:rgba(0,212,255,.55)}
-    /* cases déjà tirées (résultats passés) */
-    .gc.sg-water{background:rgba(42,74,106,.55);border-color:var(--muted);cursor:default}
-    .gc.sg-water:hover{background:rgba(42,74,106,.55)}
-    .gc.sg-hit{background:rgba(255,136,0,.45);border-color:#ff8800;cursor:default}
-    .gc.sg-hit:hover{background:rgba(255,136,0,.45)}
-    .gc.sg-sunk{background:rgba(255,68,85,.55);border-color:var(--red);cursor:default}
-    .gc.sg-sunk:hover{background:rgba(255,68,85,.55)}
-    .gc.sg-bonus{background:rgba(200,136,255,.45);border-color:var(--purple);cursor:default}
-    .gc.sg-bonus:hover{background:rgba(200,136,255,.45)}
-    .gc.sg-malus{background:rgba(255,68,85,.35);border-color:var(--red);cursor:default}
-    .gc.sg-malus:hover{background:rgba(255,68,85,.35)}
-    /* cases tirs adversaire sur MA grille (onglet SUIVI) */
-    .gc.def-water{background:rgba(42,74,106,.55);border-color:var(--muted);cursor:default}
-    .gc.def-hit  {background:rgba(255,136,0,.45);border-color:#ff8800;cursor:default}
-    .gc.def-sunk {background:rgba(255,68,85,.55);border-color:var(--red);cursor:default}
-    .gc.def-bonus{background:rgba(200,136,255,.45);border-color:var(--purple);cursor:default}
-    .gc.def-malus{background:rgba(255,68,85,.35);border-color:var(--red);cursor:default}
-    .gc.def-my-ship{background:rgba(240,192,64,.18);border-color:rgba(240,192,64,.4)}
-    .gc.def-my-ship.def-hit{background:rgba(255,136,0,.55)}
-    .gc.def-my-ship.def-sunk{background:rgba(255,68,85,.7)}
-    .sg-counter{font-size:.82rem;font-weight:700;margin-bottom:10px;padding:7px 12px;border-radius:5px;border:1px solid var(--border);background:var(--card2);text-align:center}
-    .sg-counter.full{border-color:var(--cyan);color:var(--cyan)}
-    .sg-counter.empty{color:var(--text2)}
+/* HISTORY LOG */
+.hlog{max-height:350px;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.hlog-entry{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:.82rem}
+.hlog-turn{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);margin-bottom:4px}
 
-    /* ── CAPTAIN SAISIE ── */
-    .saisie-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px}
-    .sc-head{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
-    .sc-title{font-family:'Orbitron',monospace;font-size:.82rem;color:var(--cyan);font-weight:700}
-    .sc-sub{font-size:.82rem;color:var(--text);margin-top:3px;font-weight:500}
-    .shots-row{display:flex;gap:6px;margin-bottom:10px}
-    .shot-inp{flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:.95rem;text-align:center;padding:9px 3px;border-radius:4px;text-transform:uppercase;min-width:0}
-    .shot-inp:focus{outline:none;border-color:var(--cyan)}
-    .shot-inp::placeholder{color:rgba(0,212,255,.3)}
-    .shot-inp:disabled{opacity:.4;cursor:not-allowed}
-    .waiting-box{text-align:center;padding:20px;color:var(--gold)}
-    .waiting-box .wi{font-size:2rem;display:block;margin-bottom:8px}
-    .results-list{margin-top:10px}
-    .res-line{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border2);font-family:'Share Tech Mono',monospace;font-size:.74rem}
-    .res-coord{color:var(--cyan);min-width:32px}
-    .r-water{color:var(--muted)}
-    .r-hit{color:var(--orange)}
-    .r-sunk{color:var(--green);font-weight:700}
-    .r-bonus{color:var(--purple)}
-    .r-malus{color:var(--red)}
-    .res-pts{margin-left:auto;font-weight:700}
+/* SYNC PANEL */
+.sync-panel{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px}
+.sync-bar{font-family:'Orbitron',monospace;font-size:.62rem;padding:5px 10px;border-radius:5px;margin-bottom:8px}
+.sync-bar.ok{background:rgba(0,232,120,.1);color:var(--green)}
+.sync-bar.loading{background:rgba(0,212,255,.1);color:var(--cyan)}
+.sync-bar.err{background:rgba(255,68,85,.1);color:var(--red)}
 
-    /* ── CAPTAIN SUIVI ── */
-    .suivi-wrap{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px}
-    .suivi-layout{display:flex;gap:20px;flex-wrap:wrap}
-    .suivi-grid-wrap{overflow-x:auto;flex-shrink:0}
-    .suivi-legend{flex:1;min-width:150px}
-    .leg-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:4px;margin-bottom:5px;border:1px solid var(--border);font-size:.82rem}
-    .leg-dot{width:14px;height:14px;border-radius:2px;flex-shrink:0}
-    /* Suivi cell states */
-    .gc.sv-water{background:rgba(42,74,106,.55);border-color:var(--muted);cursor:default}
-    .gc.sv-water:hover{background:rgba(42,74,106,.55)}
-    .gc.sv-hit{background:rgba(255,136,0,.45);border-color:#ff8800;cursor:default}
-    .gc.sv-hit:hover{background:rgba(255,136,0,.45)}
-    .gc.sv-sunk{background:rgba(255,68,85,.55);border-color:var(--red);cursor:default}
-    .gc.sv-sunk:hover{background:rgba(255,68,85,.55)}
-    .gc.sv-bonus{background:rgba(200,136,255,.45);border-color:var(--purple);cursor:default}
-    .gc.sv-bonus:hover{background:rgba(200,136,255,.45)}
-    .gc.sv-malus{background:rgba(255,68,85,.35);border-color:var(--red);cursor:default}
-    .gc.sv-malus:hover{background:rgba(255,68,85,.35)}
-    .gc.sv-none{cursor:default}
-    .gc.sv-none:hover{background:rgba(255,255,255,.03)}
+/* SHOT ENTRY */
+.shot-entry{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:12px;margin-top:8px}
+.shot-inputs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.shot-coord{display:flex;gap:4px;align-items:center}
 
-    /* ── CLASSEMENT ── */
-    .ranking-wrap{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
-    table{width:100%;border-collapse:collapse}
-    th{font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
-    td{padding:11px 14px;border-bottom:1px solid var(--border2);font-size:.9rem;color:var(--text)}
-    tr:last-child td{border-bottom:none}
-    tr:hover td{background:var(--card2)}
-    .rk-num{font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--muted)}
-    .rk-1{color:var(--gold)} .rk-2{color:#b0c8d8} .rk-3{color:#cd7f32}
-    .score-val{font-family:'Orbitron',monospace;font-size:1.05rem;font-weight:700;color:var(--cyan)}
-    .bareme{margin-top:18px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:15px}
-    .bareme-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px;margin-top:10px}
-    .bareme-item{display:flex;align-items:center;gap:7px;font-size:.8rem}
-    .b-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
-    .b-pts{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:.8rem}
+/* BONUS BADGE */
+.bonus-global{background:rgba(245,200,66,.12);border:1px solid var(--gold);color:var(--gold);font-family:'Orbitron',monospace;font-size:.58rem;padding:3px 8px;border-radius:10px}
 
-    /* ── FLOTTES ── */
-    .flottes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:13px}
-    .flotte-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:15px}
-    .fc-title{font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;color:var(--cyan);letter-spacing:2px;margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid var(--border)}
-    .ship-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border2)}
-    .ship-row:last-child{border-bottom:none}
-    .sr-name{font-size:.82rem;font-weight:700;color:var(--text);min-width:108px}
-    .sr-name.sunk{text-decoration:line-through;color:var(--muted)}
-    .sr-cells{display:flex;gap:3px;flex:1}
-    .sr-cell{width:14px;height:14px;border-radius:2px;border:1px solid}
-    .sr-cell.ok{opacity:.18;background:transparent}
-    .sunk-badge{font-size:.6rem;padding:2px 5px;background:var(--red);color:white;border-radius:3px;font-weight:700;letter-spacing:1px}
-    .sr-count{font-size:.7rem;color:var(--gold)}
-    .fc-special{margin-top:7px;padding-top:7px;border-top:1px solid var(--border);font-size:.74rem;color:var(--text2)}
+/* DUEL STATUS CARDS */
+.duel-status-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+.duel-status-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.duel-status-card.my-duel{border-color:var(--cyan);background:rgba(0,212,255,.05)}
+.duel-turn-num{font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:var(--cyan);line-height:1}
+.duel-label{font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:2px;color:var(--gold);margin:4px 0}
 
-    /* misc */
-    .empty{text-align:center;color:var(--muted);padding:40px 20px;font-style:italic;font-size:.9rem}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .mt{margin-top:16px}
-  </style>
+/* TOGGLE */
+.toggle{width:34px;height:18px;border-radius:9px;background:var(--border);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s}
+.toggle.on{background:var(--green)}
+.toggle.on::after{left:18px}
+
+/* CAPTAIN URL */
+.url-box{font-family:'Orbitron',monospace;font-size:.58rem;word-break:break-all;background:var(--bg);border:1px solid var(--border2);border-radius:5px;padding:6px 8px;color:var(--text3);margin-top:4px;cursor:pointer}
+.url-box:hover{border-color:var(--cyan);color:var(--text2)}
+
+/* RESPONSIVE */
+@media(max-width:500px){
+  .game-grid{grid-template-columns:18px repeat(10,24px);grid-template-rows:18px repeat(10,24px)}
+  .gc{width:24px;height:24px;font-size:.62rem}
+  .gc-header{font-size:.48rem}
+  main{padding:8px}
+}
+</style>
 </head>
 <body>
-<div class="app">
-  <header>
-    <h1>⚓ TOUCHÉ COULÉ</h1>
-    <p>Suivi de partie — PPA</p>
-    <div id="role-badge"></div>
-    <a href="https://seboss44120.github.io/touche-coule-ppa/tuto.html" target="_blank"
-       style="display:inline-block;margin-top:8px;padding:4px 14px;background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.25);border-radius:4px;color:var(--cyan);font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:2px;text-decoration:none;text-transform:uppercase;transition:background .15s"
-       onmouseover="this.style.background='rgba(0,212,255,.15)'" onmouseout="this.style.background='rgba(0,212,255,.07)'">
-      📖 Guide d'utilisation
-    </a>
-  </header>
-  <div class="status-bar">
-    <div class="sdot" id="sdot"></div>
-    <div class="status-text" id="stext">Chargement…</div>
-    <div class="status-actions" id="sact"></div>
-    <span id="refresh-countdown" style="font-size:.7rem;color:var(--muted);font-family:'Share Tech Mono',monospace;flex-shrink:0"></span>
+
+<header>
+  <div>
+    <div class="logo-sub">⚓ PPA Tracker</div>
+    <div class="logo-title">TOUCHÉ COULÉ</div>
   </div>
-  <div class="tabs" id="tabs"></div>
-  <div id="tab-contents"></div>
-</div>
+  <div class="header-right">
+    <span id="hdrStatusTxt"></span>
+    <span id="roleBadge" class="role-badge admin">ADMIN</span>
+    <button class="btn btn-outline btn-sm" onclick="doRefresh()">↻</button>
+  </div>
+</header>
+
+<nav id="mainNav"></nav>
+<main id="mainContent"></main>
 
 <script>
-/* ════════════════════════════════════════
+/* ═══════════════════════════════════════════
    CONSTANTS
-════════════════════════════════════════ */
+═══════════════════════════════════════════ */
 const COLS = ['A','B','C','D','E','F','G','H','I','J'];
 const ROWS = [1,2,3,4,5,6,7,8,9,10];
-const SHIPS = {
-  PA:  {name:'Porte-Avion', size:5, color:'#f0c040', points:5},
-  CU:  {name:'Cuirassé',    size:4, color:'#00d4ff', points:4},
-  SM1: {name:'Sous-Marin 1',size:3, color:'#7fff90', points:3},
-  SM2: {name:'Sous-Marin 2',size:3, color:'#b464ff', points:3},
-  TP:  {name:'Torpilleur',  size:2, color:'#ff8844', points:2},
-};
-const SHIP_KEYS = ['PA','CU','SM1','SM2','TP'];
-const PAIRS = [[1,2],[3,4],[5,6]];
 
-/* ════════════════════════════════════════
+const SHIPS = {
+  PA:  { name:'Porte-avions', icon:'✈️', size:5, color:'#f0c040', points:5 },
+  CU:  { name:'Cuirassé',     icon:'⚔️', size:4, color:'#00d4ff', points:4 },
+  CR:  { name:'Croiseur',     icon:'🚢', size:3, color:'#00ff8c', points:3 },
+  SM:  { name:'Sous-marin',   icon:'🤿', size:3, color:'#64ff64', points:3 },
+  TP:  { name:'Torpilleur',   icon:'🚤', size:2, color:'#ff8844', points:2 },
+};
+const SHIP_KEYS = ['PA','CU','CR','SM','TP'];
+const TOTAL_CELLS = 17; // 5+4+3+3+2
+
+const DUELS_DEF = [
+  { id:'A', name:'Duel A', teams:[1,2] },
+  { id:'B', name:'Duel B', teams:[3,4] },
+  { id:'C', name:'Duel C', teams:[5,6] },
+];
+
+/* ═══════════════════════════════════════════
    ROLE DETECTION
-════════════════════════════════════════ */
-const _urlParams = new URLSearchParams(location.search);
+═══════════════════════════════════════════ */
+const _up = new URLSearchParams(location.search);
 const ROLE = (() => {
-  if (_urlParams.has('team')) {
-    const tid = parseInt(_urlParams.get('team'));
-    if (tid >= 1 && tid <= 6) return {type:'captain', teamId:tid};
+  if (_up.has('team')) {
+    const tid = parseInt(_up.get('team'));
+    if (tid >= 1 && tid <= 6) return { type:'captain', teamId:tid };
   }
-  return {type:'admin'};
+  return { type:'admin' };
 })();
 
-function baseUrl() { return location.origin + location.pathname; }
-function captainUrl(teamId) {
-  const binId = SYNC.binId, key = SYNC.apiKey;
-  let url = baseUrl() + '?team=' + teamId;
-  if (binId) url += '&bin=' + encodeURIComponent(binId);
-  if (key)   url += '&key=' + encodeURIComponent(key);
-  return url;
-}
-
-/* ════════════════════════════════════════
+/* ═══════════════════════════════════════════
    STATE
-════════════════════════════════════════ */
+═══════════════════════════════════════════ */
 function mkTeam(id) {
   return {
-    id, name:`Équipe ${id}`, captain:'', email:'', active: id <= 2,
+    id, name:`Équipe ${id}`, captain:'', active: true,
     grid:{}, shipCells:{}, bonusCells:[], malusCells:[],
-    hitGrid:{}, score:0, gridValidated:false,
+    hitGrid:{}, score:0
   };
 }
 
+function mkDuelState() {
+  return { turn:1, status:'ready', winner:null };
+}
+
 let S = {
-  started: false, turn: 1, winner: null,
-  pairWinners: {},    // {'1-2':winnerId, '3-4':winnerId, ...} — gagnant par paire
-  lastSunkEvents: [], // [{turn, attackerId, defenderId, shipKey}] — navires coulés au dernier tour
+  started: false,
+  currentTab: 'config',
+  globalBonus: null,       // teamId who received +5 global bonus
+  lastSubmitTime: {},      // teamId → timestamp (for tie-breaking)
+  duels: { A: mkDuelState(), B: mkDuelState(), C: mkDuelState() },
+  pendingShots: {},        // teamId → [coord, …]
+  shotHistory: {},         // teamId → [{coord,result,shipKey,points,turn,duelId}]
   teams: Array.from({length:6}, (_,i) => mkTeam(i+1)),
-  pendingShots: {},   // {teamId: [coord, ...]} — soumis, en attente de résolution
-  shotHistory: {},    // {teamId: [{coord, result, shipKey, turn, points}]}
-  // UI (non persisté)
-  tool:'PA', orient:'H', selTeam:0, currentTab:'config', selectedShots:[],
 };
 
-/* ════════════════════════════════════════
-   SYNC CONFIG (JSONBin.io)
-════════════════════════════════════════ */
+/* JSONBin sync config (stored in localStorage separately) */
 let SYNC = { apiKey:'', binId:'' };
-let syncStatus = { state:'idle', msg:'' }; // idle | loading | ok | error
+let syncStatus = { state:'idle', msg:'' };
 
-function loadSyncConfig() {
-  try {
-    const d = localStorage.getItem('tc4_sync');
-    if (d) { const p=JSON.parse(d); SYNC.apiKey=p.apiKey||''; SYNC.binId=p.binId||''; }
-    // Captain: read bin/key from URL
-    if (ROLE.type==='captain') {
-      const b=_urlParams.get('bin'), k=_urlParams.get('key');
-      if (b) SYNC.binId=b;
-      if (k) SYNC.apiKey=k;
-    }
-  } catch(e){}
+/* ═══════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════ */
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function getTeam(id) { return S.teams.find(t => t.id === id); }
+function oppId(id)   { return {1:2,2:1,3:4,4:3,5:6,6:5}[id]; }
+function getDuelDef(teamId)  { return DUELS_DEF.find(d => d.teams.includes(teamId)); }
+function getDuelId(teamId)   { return getDuelDef(teamId)?.id; }
+function getDuelState(id)    { return S.duels[id]; }
+function getDuelDefById(id)  { return DUELS_DEF.find(d => d.id === id); }
+
+function isComplete(team) {
+  return SHIP_KEYS.every(k => team.shipCells[k] && team.shipCells[k].length > 0);
 }
 
-function saveSyncConfig() {
-  try { localStorage.setItem('tc4_sync', JSON.stringify({apiKey:SYNC.apiKey, binId:SYNC.binId})); } catch(e){}
-}
-
-function gamePayload() {
-  return { started:S.started, turn:S.turn, winner:S.winner, pairWinners:S.pairWinners,
-    lastSunkEvents:S.lastSunkEvents,
-    teams:S.teams, pendingShots:S.pendingShots, shotHistory:S.shotHistory };
-}
-
-function applyPayload(sv) {
-  Object.assign(S, {
-    started: sv.started||false, turn: sv.turn||1, winner: sv.winner||null,
-    pairWinners: sv.pairWinners||{},
-    lastSunkEvents: sv.lastSunkEvents||[],
-    teams: sv.teams||S.teams,
-    pendingShots: sv.pendingShots||{},
-    shotHistory: sv.shotHistory||{},
+function allSunk(team) {
+  if (!team) return false;
+  return SHIP_KEYS.every(k => {
+    const cells = team.shipCells[k];
+    if (!cells || !cells.length) return true; // not placed → skip
+    return cells.every(c => team.hitGrid[c]);
   });
 }
 
-/* ════════════════════════════════════════
+function activeDuels() {
+  return DUELS_DEF.filter(d => {
+    const [a,b] = d.teams;
+    const ta = getTeam(a), tb = getTeam(b);
+    return ta.active && tb.active && isComplete(ta) && isComplete(tb);
+  });
+}
+
+function duelBothSubmitted(duelId) {
+  const def = getDuelDefById(duelId);
+  if (!def) return false;
+  const [a,b] = def.teams;
+  const ta = getTeam(a), tb = getTeam(b);
+  if (!ta.active || !tb.active) return false;
+  return S.pendingShots[a] && S.pendingShots[b];
+}
+
+function duelCanValidate(duelId) {
+  const ds = getDuelState(duelId);
+  if (!ds || ds.status === 'finished') return false;
+  return duelBothSubmitted(duelId);
+}
+
+function countResult(teamId, resultType) {
+  const hist = S.shotHistory[teamId] || [];
+  return hist.filter(h => h.result === resultType).length;
+}
+
+function teamDuelTurn(teamId) {
+  const duelId = getDuelId(teamId);
+  return duelId ? getDuelState(duelId).turn : 1;
+}
+
+/* ═══════════════════════════════════════════
+   GAME LOGIC
+═══════════════════════════════════════════ */
+function resolveSingleShot(attackerId, coord) {
+  const defId = oppId(attackerId);
+  const def   = getTeam(defId);
+  if (!def) return null;
+
+  def.hitGrid[coord] = true;
+
+  if (def.bonusCells.includes(coord)) {
+    getTeam(attackerId).score += 2;
+    return { coord, result:'bonus', points:2 };
+  }
+  if (def.malusCells.includes(coord)) {
+    getTeam(attackerId).score -= 2;
+    return { coord, result:'malus', points:-2 };
+  }
+
+  const shipKey = def.grid[coord];
+  if (shipKey) {
+    const ship = SHIPS[shipKey];
+    const allHit = def.shipCells[shipKey].every(c => def.hitGrid[c]);
+    if (allHit) {
+      const pts = ship.points;
+      getTeam(attackerId).score += pts;
+      return { coord, result:'sunk', shipKey, points:pts };
+    } else {
+      getTeam(attackerId).score += 1;
+      return { coord, result:'hit', shipKey, points:1 };
+    }
+  }
+  return { coord, result:'water', points:0 };
+}
+
+function processDuelTurn(duelId) {
+  const def = getDuelDefById(duelId);
+  const ds  = getDuelState(duelId);
+  if (!def || !ds) return;
+
+  const [a, b] = def.teams;
+
+  [a, b].forEach(attackerId => {
+    const coords = S.pendingShots[attackerId];
+    if (!coords) return;
+    if (!S.shotHistory[attackerId]) S.shotHistory[attackerId] = [];
+    coords.forEach(c => {
+      const r = resolveSingleShot(attackerId, c);
+      if (r) { r.turn = ds.turn; r.duelId = duelId; S.shotHistory[attackerId].push(r); }
+    });
+  });
+
+  delete S.pendingShots[a];
+  delete S.pendingShots[b];
+
+  if (ds.status === 'ready') ds.status = 'battle';
+
+  // Check duel winner
+  const ta = getTeam(a), tb = getTeam(b);
+  const aWon = allSunk(tb), bWon = allSunk(ta);
+  if (aWon || bWon) {
+    ds.status = 'finished';
+    if (aWon && bWon) ds.winner = ta.score >= tb.score ? a : b;
+    else if (aWon) ds.winner = a;
+    else ds.winner = b;
+
+    // Check global bonus (first fleet sunk across all duels)
+    if (S.globalBonus === null) {
+      // Who gets the bonus?
+      const candidates = [];
+      if (aWon) candidates.push(a);
+      if (bWon) candidates.push(b);
+      const winner = candidates.length === 1 ? candidates[0] : tieBreakBonus(a, b);
+      S.globalBonus = winner;
+      getTeam(winner).score += 5;
+    }
+  }
+
+  ds.turn++;
+  save();
+}
+
+function tieBreakBonus(idA, idB) {
+  // 1. Most bonus cells hit
+  const bA = countResult(idA, 'bonus'), bB = countResult(idB, 'bonus');
+  if (bA !== bB) return bA > bB ? idA : idB;
+  // 2. Fewest malus cells hit
+  const mA = countResult(idA, 'malus'), mB = countResult(idB, 'malus');
+  if (mA !== mB) return mA < mB ? idA : idB;
+  // 3. Earliest submission
+  const tA = S.lastSubmitTime[idA] || Infinity;
+  const tB = S.lastSubmitTime[idB] || Infinity;
+  return tA <= tB ? idA : idB;
+}
+
+function submitShots(teamId, coords) {
+  S.pendingShots[teamId] = coords;
+  S.lastSubmitTime[teamId] = Date.now();
+  save();
+}
+
+function cancelShots(teamId) {
+  delete S.pendingShots[teamId];
+  save();
+}
+
+/* ═══════════════════════════════════════════
    PERSISTENCE
-════════════════════════════════════════ */
+═══════════════════════════════════════════ */
+function gamePayload() {
+  return {
+    started: S.started,
+    duels: S.duels,
+    pendingShots: S.pendingShots,
+    shotHistory: S.shotHistory,
+    teams: S.teams,
+    globalBonus: S.globalBonus,
+    lastSubmitTime: S.lastSubmitTime,
+  };
+}
+
+function applyPayload(d) {
+  if (!d) return;
+  S.started       = d.started ?? false;
+  S.duels         = d.duels ?? { A:mkDuelState(), B:mkDuelState(), C:mkDuelState() };
+  // Ensure all duels exist
+  ['A','B','C'].forEach(id => { if (!S.duels[id]) S.duels[id] = mkDuelState(); });
+  S.pendingShots  = d.pendingShots ?? {};
+  S.shotHistory   = d.shotHistory ?? {};
+  S.teams         = d.teams ?? Array.from({length:6},(_,i)=>mkTeam(i+1));
+  S.globalBonus   = d.globalBonus ?? null;
+  S.lastSubmitTime= d.lastSubmitTime ?? {};
+}
+
 function saveLocal() {
-  try { localStorage.setItem('tc4', JSON.stringify(gamePayload())); } catch(e){}
+  try { localStorage.setItem('tc5', JSON.stringify(gamePayload())); } catch(e){}
 }
-
 function loadLocal() {
+  try { const d = localStorage.getItem('tc5'); if(d) applyPayload(JSON.parse(d)); } catch(e){}
+}
+function saveSyncConfig() {
+  try { localStorage.setItem('tc5sync', JSON.stringify(SYNC)); } catch(e){}
+}
+function loadSyncConfig() {
+  try { const d = localStorage.getItem('tc5sync'); if(d) SYNC = JSON.parse(d); } catch(e){}
+}
+
+async function saveToCloud() {
+  if (!SYNC.binId || !SYNC.apiKey) return;
   try {
-    const d = localStorage.getItem('tc4');
-    if (d) applyPayload(JSON.parse(d));
+    await fetch(`https://api.jsonbin.io/v3/b/${SYNC.binId}`, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':SYNC.apiKey,'X-Bin-Versioning':'false'},
+      body: JSON.stringify(gamePayload())
+    });
   } catch(e){}
-}
-
-/* ════════════════════════════════════════
-   MERGE-WRITE QUEUE
-   Chaque écriture cloud fait : lire → fusionner → écrire
-   Une seule écriture à la fois pour éviter les conflits
-════════════════════════════════════════ */
-let _writeQueue = Promise.resolve();  // file d'attente sérialisée
-let _pendingWrite = false;            // debounce : on ne cumule pas les doublons
-
-async function fetchCloudRaw() {
-  const headers = {'Content-Type':'application/json'};
-  if (SYNC.apiKey) headers['X-Master-Key'] = SYNC.apiKey;
-  const res = await fetch(`https://api.jsonbin.io/v3/b/${SYNC.binId}/latest`, {headers});
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const json = await res.json();
-  return json.record;
-}
-
-async function writeCloudRaw(payload) {
-  const res = await fetch(`https://api.jsonbin.io/v3/b/${SYNC.binId}`, {
-    method:'PUT',
-    headers:{'Content-Type':'application/json','X-Master-Key':SYNC.apiKey,'X-Bin-Versioning':'false'},
-    body: JSON.stringify(payload)
-  });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-}
-
-/* Merge : on ne remplace que les champs propres au rôle courant.
-   Capitaine : uniquement la case teams[myIdx] (grid, shipCells, bonusCells, malusCells).
-   Admin     : tout l'état (started, turn, pendingShots, scores…). */
-function mergeMyData(cloudRecord) {
-  const merged = JSON.parse(JSON.stringify(cloudRecord)); // deep copy
-  if (ROLE.type === 'captain') {
-    // Trouver l'index de mon équipe dans le record cloud
-    const myIdx = (merged.teams||[]).findIndex(t => t.id === ROLE.teamId);
-    const localTeam = S.teams.find(t => t.id === ROLE.teamId);
-    if (myIdx >= 0 && localTeam) {
-      // On fusionne uniquement les données de grille (pas hitGrid ni score, contrôlés par admin)
-      merged.teams[myIdx].name          = localTeam.name;
-      merged.teams[myIdx].captain       = localTeam.captain;
-      merged.teams[myIdx].email         = localTeam.email;
-      merged.teams[myIdx].grid          = localTeam.grid;
-      merged.teams[myIdx].shipCells     = localTeam.shipCells;
-      merged.teams[myIdx].bonusCells    = localTeam.bonusCells;
-      merged.teams[myIdx].malusCells    = localTeam.malusCells;
-      merged.teams[myIdx].gridValidated = localTeam.gridValidated;
-      // Tirs soumis par ce capitaine
-      if (S.pendingShots[ROLE.teamId]) {
-        merged.pendingShots = merged.pendingShots || {};
-        merged.pendingShots[ROLE.teamId] = S.pendingShots[ROLE.teamId];
-      }
-    }
-  } else {
-    // Admin : état complet, mais on préserve les gridValidated=true
-    // déjà posés par les capitaines dans le cloud (évite l'écrasement en cas de désynchronisation)
-    const cloudValidated = {};
-    (cloudRecord.teams||[]).forEach(t => { if (t.gridValidated) cloudValidated[t.id] = true; });
-    Object.assign(merged, gamePayload());
-    merged.teams.forEach(t => {
-      if (cloudValidated[t.id]) t.gridValidated = true;
-    });
-  }
-  return merged;
-}
-
-async function _doMergeWrite() {
-  if (!SYNC.binId || !SYNC.apiKey) return;
-  // Retry jusqu'à 3 fois en cas de conflit
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const cloud = await fetchCloudRaw();
-      const merged = mergeMyData(cloud);
-      await writeCloudRaw(merged);
-      // Réappliquer le record fusionné localement pour rester cohérent
-      applyPayload(merged);
-      saveLocal();
-      return; // succès
-    } catch(e) {
-      if (attempt === 3) throw e;
-      // Attente exponentielle avant retry (500ms, 1000ms)
-      await new Promise(r => setTimeout(r, attempt * 500));
-    }
-  }
-}
-
-function saveToCloud() {
-  if (!SYNC.binId || !SYNC.apiKey) return;
-  if (_pendingWrite) return; // une écriture est déjà planifiée
-  _pendingWrite = true;
-  // Debounce 300ms : regroupe les appels rapides (ex: placement case par case)
-  setTimeout(() => {
-    _pendingWrite = false;
-    _writeQueue = _writeQueue.then(() => _doMergeWrite()).catch(e => {
-      console.warn('Cloud write failed:', e);
-    });
-  }, 300);
 }
 
 async function loadFromCloud() {
   if (!SYNC.binId) return false;
-  syncStatus={state:'loading',msg:'Synchronisation…'};
-  renderSyncBar();
+  setSyncStatus('loading','Synchronisation…');
   try {
-    const record = await fetchCloudRaw();
-    applyPayload(record);
+    const h = {'Content-Type':'application/json'};
+    if (SYNC.apiKey) h['X-Master-Key'] = SYNC.apiKey;
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${SYNC.binId}/latest`,{headers:h});
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const json = await res.json();
+    applyPayload(json.record);
     saveLocal();
-    const now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    syncStatus={state:'ok', msg:`Synchronisé à ${now}`};
-    renderSyncBar();
+    const t = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    setSyncStatus('ok',`Sync ${t}`);
     return true;
   } catch(e) {
-    syncStatus={state:'error', msg:`Erreur sync : ${e.message}`};
-    renderSyncBar();
+    setSyncStatus('err','Erreur sync: '+e.message);
     return false;
   }
 }
 
-function renderSyncBar() {
-  const el = document.getElementById('sync-bar');
+function save() { saveLocal(); saveToCloud(); }
+
+function setSyncStatus(state, msg) {
+  syncStatus = {state, msg};
+  const el = document.getElementById('syncBar');
   if (!el) return;
-  const {state,msg} = syncStatus;
-  if (state==='idle') { el.innerHTML=''; return; }
-  const cls = state==='ok'?'ss-ok':state==='loading'?'ss-warn':'ss-err';
-  const icon = state==='loading'?'<span class="ss-spin">↻</span>':state==='ok'?'✅':'⚠️';
-  el.innerHTML=`<div class="sync-status ${cls}">${icon} ${msg}</div>`;
+  el.className = 'sync-bar ' + state;
+  el.textContent = msg;
+  el.style.display = state==='idle' ? 'none' : 'block';
 }
 
-function save() { saveLocal(); saveToCloud(); }
-function load() { loadLocal(); }
-
 async function createBin() {
-  const key = document.getElementById('sync-key-inp')?.value?.trim();
+  const key = document.getElementById('syncKeyInp')?.value?.trim();
   if (!key) { alert('Entrez votre clé API JSONBin.io'); return; }
-  const btn = document.getElementById('create-bin-btn');
+  const btn = document.getElementById('createBinBtn');
   if (btn) { btn.disabled=true; btn.textContent='Création…'; }
   try {
     const res = await fetch('https://api.jsonbin.io/v3/b', {
       method:'POST',
-      headers:{'Content-Type':'application/json','X-Master-Key':key,'X-Bin-Name':'TC-PPA'},
+      headers:{'Content-Type':'application/json','X-Master-Key':key,'X-Bin-Name':'TC-PPA-v5'},
       body: JSON.stringify(gamePayload())
     });
-    if (!res.ok) throw new Error('Clé API invalide ou erreur réseau (HTTP ' + res.status + ')');
+    if (!res.ok) throw new Error('HTTP '+res.status);
     const json = await res.json();
     SYNC.apiKey = key; SYNC.binId = json.metadata.id;
     saveSyncConfig();
-    syncStatus={state:'ok',msg:`Bin créé — ID : ${SYNC.binId}`};
-    renderTab('config');
+    setSyncStatus('ok',`Bin créé — ID: ${SYNC.binId}`);
+    renderTab(S.currentTab);
   } catch(e) {
-    alert('Erreur : ' + e.message);
+    alert('Erreur: '+e.message);
     if (btn) { btn.disabled=false; btn.textContent='Créer le Bin'; }
   }
 }
 
-async function saveBinId() {
-  const key = document.getElementById('sync-key-inp')?.value?.trim();
-  const bid = document.getElementById('sync-bin-inp')?.value?.trim();
-  if (!key || !bid) { alert('Renseignez la clé API et l\'ID du Bin'); return; }
+async function connectBin() {
+  const key = document.getElementById('syncKeyInp')?.value?.trim();
+  const bid = document.getElementById('syncBinInp')?.value?.trim();
+  if (!key||!bid) { alert('Renseignez la clé API et l\'ID du Bin'); return; }
   SYNC.apiKey=key; SYNC.binId=bid;
   saveSyncConfig();
-  await loadFromCloud();
-  renderTab('config');
+  const ok = await loadFromCloud();
+  if (ok) renderTab(S.currentTab);
 }
 
-async function clearAllData() {
-  if (!confirm('Effacer toutes les données (équipes, grilles, scores) ? Cette action est irréversible.')) return;
-  // 1. Annuler toute écriture en file d'attente pour éviter qu'elle réécrase l'effacement
-  _pendingWrite = false;
-  _writeQueue = Promise.resolve(); // vide la file
-  // 2. Réinitialiser l'état local
-  localStorage.removeItem('tc4');
-  S.started=false; S.turn=1; S.winner=null; S.pairWinners={}; S.pendingShots={}; S.shotHistory={}; S.lastSunkEvents=[];
-  S.teams=Array.from({length:6},(_,i)=>mkTeam(i+1));
-  saveLocal();
-  // 3. Écriture directe dans le cloud (sans merge, sans file d'attente)
-  if (SYNC.binId && SYNC.apiKey) {
-    try {
-      await writeCloudRaw(gamePayload());
-    } catch(e) { console.warn('Clear cloud write failed:', e); }
+function disconnectSync() {
+  if (!confirm('Déconnecter la synchronisation ?')) return;
+  SYNC={apiKey:'',binId:''}; syncStatus={state:'idle',msg:''};
+  saveSyncConfig(); renderTab(S.currentTab);
+}
+
+function captainUrl(teamId) {
+  let url = location.href.split('?')[0] + '?team=' + teamId;
+  if (SYNC.binId) url += '&bin=' + encodeURIComponent(SYNC.binId);
+  return url;
+}
+
+/* ═══════════════════════════════════════════
+   NAV SETUP
+═══════════════════════════════════════════ */
+const ADMIN_TABS = [
+  {id:'config',    label:'⚙️ Config'},
+  {id:'tour',      label:'🎯 Tour'},
+  {id:'classement',label:'🏆 Classement'},
+  {id:'flottes',   label:'⚓ Flottes'},
+  {id:'historique',label:'📋 Historique'},
+];
+const CAPTAIN_TABS = [
+  {id:'config',    label:'⚓ Grille'},
+  {id:'saisie',    label:'🎯 Tirs'},
+  {id:'classement',label:'🏆 Classement'},
+  {id:'suivi',     label:'📡 Suivi'},
+];
+
+function buildNav() {
+  const tabs = ROLE.type==='admin' ? ADMIN_TABS : CAPTAIN_TABS;
+  document.getElementById('mainNav').innerHTML = tabs.map(t =>
+    `<button data-tab="${t.id}" onclick="goTab('${t.id}')" ${S.currentTab===t.id?'class="active"':''}>${t.label}</button>`
+  ).join('');
+  const badge = document.getElementById('roleBadge');
+  if (ROLE.type==='captain') {
+    badge.className='role-badge captain';
+    const t=getTeam(ROLE.teamId);
+    badge.textContent=`CAP. ${t?t.name:'?'}`;
   }
-  renderTab(S.currentTab);
+
+  // Content divs
+  const main = document.getElementById('mainContent');
+  const tabIds = tabs.map(t=>t.id);
+  main.innerHTML = tabIds.map(id=>
+    `<div class="tab-content ${id===S.currentTab?'active':''}" id="tab-${id}"></div>`
+  ).join('');
 }
 
-/* ════════════════════════════════════════
-   HELPERS
-════════════════════════════════════════ */
-const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const coord = (ci,ri) => COLS[ci]+ROWS[ri];
-const getTeam = id => S.teams.find(t => t.id === id);
-const oppId = id => ({1:2,2:1,3:4,4:3,5:6,6:5}[id]);
-const activePairs = () => PAIRS.filter(([a,b]) => { const ta=getTeam(a),tb=getTeam(b); return ta&&tb&&ta.active&&tb.active&&!pairIsFinished(a,b); });
-const allPairs     = () => PAIRS.filter(([a,b]) => { const ta=getTeam(a),tb=getTeam(b); return ta&&tb&&ta.active&&tb.active; });
-const isComplete = t => SHIP_KEYS.every(k => t.shipCells[k]&&t.shipCells[k].length>0);
-const isShipSunk = (t,k) => { const c=t.shipCells[k]||[]; return c.length>0&&c.every(x=>t.hitGrid[x]); };
-const allSunk = t => SHIP_KEYS.every(k => isShipSunk(t,k));
-const allGridsReady = () => S.teams.filter(t=>t.active).every(t=>isComplete(t)&&t.gridValidated);
-const allPendingIn = () => {
-  const ids = activePairs().flat(); // paires non terminées uniquement
-  return ids.length>0 && ids.every(id => { const p=S.pendingShots[id]; return p&&p.length>0; });
-};
-const shotCoords = teamId => new Set((S.shotHistory[teamId]||[]).map(h=>h.coord));
-const pairKey = (a,b) => Math.min(a,b)+'-'+Math.max(a,b);
-const myPairWinner = () => {
-  if(ROLE.type!=='captain') return null;
-  return S.pairWinners[pairKey(ROLE.teamId, oppId(ROLE.teamId))]||null;
-};
-const pairIsFinished = (a,b) => !!S.pairWinners[pairKey(a,b)];
-
-/* ════════════════════════════════════════
-   PLACEMENT LOGIC
-════════════════════════════════════════ */
-function previewCells(ci,ri,tool,orient) {
-  if(['bonus','malus','eraser'].includes(tool)) return [coord(ci,ri)];
-  const size = SHIPS[tool].size;
-  const cells = [];
-  for(let i=0;i<size;i++){
-    if(orient==='H'){ if(ci+i>=10) return null; cells.push(coord(ci+i,ri)); }
-    else            { if(ri+i>=10) return null; cells.push(coord(ci,ri+i)); }
-  }
-  return cells;
-}
-
-function canPlace(team,tool,cells) {
-  if(!cells) return false;
-  if(tool==='bonus')  return team.bonusCells.length<2 && !team.grid[cells[0]];
-  if(tool==='malus')  return team.malusCells.length<2 && !team.grid[cells[0]];
-  if(tool==='eraser') return true;
-  const ex = team.shipCells[tool]||[];
-  return cells.every(c => !team.grid[c] || ex.includes(c));
-}
-
-function placeShip(teamIdx, ci, ri) {
-  if(S.started) return;
-  if(S.teams[teamIdx]?.gridValidated) return;
-  const team = S.teams[teamIdx];
-  const {tool,orient} = S;
-  const cells = previewCells(ci,ri,tool,orient);
-  if(!cells) return;
-
-  if(tool==='eraser') {
-    const c = coord(ci,ri);
-    const content = team.grid[c];
-    if(!content) return;
-    if(content==='bonus') team.bonusCells = team.bonusCells.filter(x=>x!==c);
-    else if(content==='malus') team.malusCells = team.malusCells.filter(x=>x!==c);
-    else { (team.shipCells[content]||[]).forEach(x=>{delete team.grid[x];}); team.shipCells[content]=[]; }
-    delete team.grid[c];
-    save(); renderTab(S.currentTab); return;
-  }
-  if(!canPlace(team,tool,cells)) return;
-  if(tool==='bonus') { team.grid[cells[0]]='bonus'; team.bonusCells.push(cells[0]); save(); renderTab(S.currentTab); return; }
-  if(tool==='malus') { team.grid[cells[0]]='malus'; team.malusCells.push(cells[0]); save(); renderTab(S.currentTab); return; }
-  (team.shipCells[tool]||[]).forEach(c=>{delete team.grid[c];});
-  team.shipCells[tool]=cells;
-  cells.forEach(c=>{team.grid[c]=tool;});
-  save(); renderTab(S.currentTab);
-}
-
-/* ════════════════════════════════════════
-   GAME LOGIC
-════════════════════════════════════════ */
-function resolveSingleShot(attackerId, rawCoord) {
-  const defender = getTeam(oppId(attackerId));
-  if(!defender) return null;
-  if(defender.hitGrid[rawCoord]) return {coord:rawCoord, result:'already', points:0, shipKey:null};
-  defender.hitGrid[rawCoord] = true;
-  const cell = defender.grid[rawCoord];
-  if(!cell)            return {coord:rawCoord, result:'water',  points:0,                    shipKey:null};
-  if(cell==='bonus')   return {coord:rawCoord, result:'bonus',  points:2,                    shipKey:null};
-  if(cell==='malus')   return {coord:rawCoord, result:'malus',  points:-2,                   shipKey:null};
-  if(isShipSunk(defender,cell)) return {coord:rawCoord, result:'sunk', points:SHIPS[cell].points, shipKey:cell};
-  return                        {coord:rawCoord, result:'hit',   points:0,                    shipKey:cell};
-}
-
-function processTour() {
-  const ids = activePairs().flat();
-  ids.forEach(attackerId => {
-    const shots = S.pendingShots[attackerId]||[];
-    if(!S.shotHistory[attackerId]) S.shotHistory[attackerId]=[];
-    let pts = 0;
-    shots.forEach(c => {
-      const r = resolveSingleShot(attackerId, c);
-      if(r) { r.turn=S.turn; S.shotHistory[attackerId].push(r); pts+=r.points||0; }
-    });
-    getTeam(attackerId).score += pts;
-  });
-  S.pendingShots = {};
-  // Collecter les navires coulés ce tour pour les animations
-  S.lastSunkEvents = [];
-  ids.forEach(attackerId => {
-    const history = S.shotHistory[attackerId]||[];
-    const thisTurn = history.filter(r => r.turn===S.turn && r.result==='sunk');
-    thisTurn.forEach(r => {
-      S.lastSunkEvents.push({
-        turn: S.turn, attackerId, defenderId: oppId(attackerId), shipKey: r.shipKey
-      });
-    });
-  });
-  // Détecter les gagnants par paire
-  checkAndSetPairWinners();
-  // Partie globalement terminée quand toutes les paires actives ont un gagnant
-  const allPairsActive = allPairs();
-  const allDone = allPairsActive.length>0 && allPairsActive.every(([a,b])=>pairIsFinished(a,b));
-  if(allDone) {
-    // Gagnant global = meilleur score parmi les gagnants de paire
-    const winners = Object.values(S.pairWinners);
-    S.winner = winners.sort((a,b)=>(getTeam(b)?.score||0)-(getTeam(a)?.score||0))[0];
-  }
-  S.turn++;
-  save();
-}
-
-function checkAndSetPairWinners() {
-  for(const [a,b] of activePairs()) {
-    const ta=getTeam(a), tb=getTeam(b);
-    const aWon = allSunk(tb); // a a coulé tous les navires de b
-    const bWon = allSunk(ta); // b a coulé tous les navires de a
-    if(aWon && bWon) {
-      // Double victoire simultanée : le meilleur score gagne
-      const w = ta.score>=tb.score ? a : b;
-      S.pairWinners[pairKey(a,b)] = w;
-    } else if(aWon) {
-      S.pairWinners[pairKey(a,b)] = a;
-    } else if(bWon) {
-      S.pairWinners[pairKey(a,b)] = b;
-    }
-  }
-}
-
-function submitCaptainShots(teamId, rawCoords) {
-  const already = shotCoords(teamId);
-  const errors=[], valid=[];
-  rawCoords.forEach(c => {
-    c = c.toUpperCase().trim();
-    if(!c) return;
-    if(!/^[A-J]([1-9]|10)$/.test(c)) { errors.push(`"${c}" invalide (ex: A1, J10)`); return; }
-    if(already.has(c)) { errors.push(`"${c}" déjà tiré`); return; }
-    if(valid.includes(c)) { errors.push(`"${c}" saisi deux fois`); return; }
-    valid.push(c);
-  });
-  if(errors.length) return {ok:false, errors};
-  if(!valid.length) return {ok:false, errors:['Entrez au moins une coordonnée']};
-  S.pendingShots[teamId] = valid;
-  save();
-  return {ok:true};
-}
-
-/* ════════════════════════════════════════
-   SUIVI CELL CLASS
-════════════════════════════════════════ */
-function suviClass(captainTeamId, co) {
-  const history = S.shotHistory[captainTeamId]||[];
-  const shot = history.find(h=>h.coord===co);
-  if(!shot) return 'sv-none';
-  if(shot.result==='water')  return 'sv-water';
-  if(shot.result==='bonus')  return 'sv-bonus';
-  if(shot.result==='malus')  return 'sv-malus';
-  if(shot.result==='sunk')   return 'sv-sunk';
-  if(shot.result==='hit') {
-    // Si le navire a finalement été coulé, mettre en rouge
-    const shipSunk = history.some(h=>h.shipKey===shot.shipKey&&h.result==='sunk');
-    return shipSunk ? 'sv-sunk' : 'sv-hit';
-  }
-  return 'sv-none';
-}
-
-/* ════════════════════════════════════════
-   STATUS BAR
-════════════════════════════════════════ */
-function updateStatus() {
-  const dot=document.getElementById('sdot');
-  const txt=document.getElementById('stext');
-  const act=document.getElementById('sact');
-  if(!dot) return;
-  let acts='';
-  const finishedPairs = Object.entries(S.pairWinners||{});
-  if(S.winner || (S.started && finishedPairs.length>0 && activePairs().length===0)) {
-    dot.className='sdot win';
-    if(finishedPairs.length===1) {
-      const w=getTeam(Object.values(S.pairWinners)[0]);
-      txt.innerHTML=`🏆 <strong>${esc(w?.name||'?')}</strong> a gagné sa paire`;
-    } else {
-      const names=finishedPairs.map(([,wId])=>getTeam(wId)?.name||'?').map(n=>esc(n)).join(', ');
-      txt.innerHTML=`🏆 Gagnants : <strong>${names}</strong>`;
-    }
-    if(ROLE.type==='admin') acts=`<button class="sbtn danger" onclick="resetGame()">Réinitialiser</button>`;
-  } else if(S.started) {
-    dot.className='sdot on';
-    const allIn = allPendingIn();
-    txt.textContent=`Tour ${S.turn} — ${allIn?'Tous les tirs soumis':'En attente des capitaines'}`;
-    if(ROLE.type==='admin') acts=`<button class="sbtn" onclick="refresh()">↻ Actualiser</button><button class="sbtn danger" onclick="resetGame()">Reset</button>`;
-  } else {
-    dot.className='sdot';
-    if(ROLE.type==='admin') txt.textContent='Partie non démarrée';
-    else txt.textContent='En attente du démarrage par l\'admin';
-    if(ROLE.type==='admin') acts=`<button class="sbtn" onclick="refresh()">↻ Actualiser</button>`;
-  }
-  if(ROLE.type==='captain') {
-    acts=`<button class="sbtn" onclick="refresh()">↻ Actualiser</button>`;
-  }
-  act.innerHTML=acts;
-}
-
-/* ════════════════════════════════════════
-   TAB ROUTING
-════════════════════════════════════════ */
 function goTab(t) {
   S.currentTab = t;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===t));
+  document.querySelectorAll('#mainNav button').forEach(b => b.classList.toggle('active', b.dataset.tab===t));
   document.querySelectorAll('.tab-content').forEach(e => e.classList.toggle('active', e.id===`tab-${t}`));
   renderTab(t);
 }
 
 function renderTab(t) {
-  updateStatus();
-  if(ROLE.type==='admin') {
-    if(t==='config')     renderAdminConfig();
-    if(t==='tour')       renderAdminTour();
-    if(t==='classement') renderClassement();
-    if(t==='flottes')    renderFlottes();
+  updateHeaderStatus();
+  if (ROLE.type==='admin') {
+    if (t==='config')     renderAdminConfig();
+    if (t==='tour')       renderAdminTour();
+    if (t==='classement') renderClassement();
+    if (t==='flottes')    renderFlottes();
+    if (t==='historique') renderHistorique();
   } else {
-    if(t==='config')     renderCaptainConfig();
-    if(t==='saisie')     renderCaptainSaisie();
-    if(t==='suivi')      renderCaptainSuivi();
-    if(t==='classement') renderClassement();
+    if (t==='config')     renderCaptainGrid();
+    if (t==='saisie')     renderCaptainSaisie();
+    if (t==='classement') renderClassement();
+    if (t==='suivi')      renderCaptainSuivi();
   }
 }
 
-async function refresh() {
+function updateHeaderStatus() {
+  const el = document.getElementById('hdrStatusTxt');
+  if (!el) return;
+  const sdot = `<span class="sdot ${S.started?'on':''}"></span>`;
+  if (!S.started) { el.innerHTML = sdot+'Configuration'; return; }
+  const activeDuelCount = DUELS_DEF.filter(d=>getDuelState(d.id).status!=='finished').length;
+  const finished = DUELS_DEF.filter(d=>getDuelState(d.id).status==='finished').length;
+  if (finished === DUELS_DEF.length) {
+    el.innerHTML = `<span class="sdot win"></span>Partie terminée`;
+  } else {
+    el.innerHTML = sdot+`${activeDuelCount} duel(s) en cours`;
+  }
+}
+
+async function doRefresh() {
   if (SYNC.binId) {
     const ok = await loadFromCloud();
-    if (ok) renderTab(S.currentTab);
-    else { loadLocal(); renderTab(S.currentTab); }
+    if (ok) { buildNav(); renderTab(S.currentTab); }
   } else {
-    loadLocal(); renderTab(S.currentTab);
+    loadLocal();
+    buildNav();
+    renderTab(S.currentTab);
   }
 }
 
-/* ════════════════════════════════════════
-   ██  ADMIN — SYNC PANEL
-════════════════════════════════════════ */
-function renderSyncPanel() {
-  const configured = !!(SYNC.binId && SYNC.apiKey);
-  const {state,msg} = syncStatus;
-  let statusHtml = '';
-  if (state!=='idle') {
-    const cls=state==='ok'?'ss-ok':state==='loading'?'ss-warn':'ss-err';
-    const icon=state==='loading'?'<span class="ss-spin">↻</span>':state==='ok'?'✅':'⚠️';
-    statusHtml=`<div class="sync-status ${cls}">${icon} ${msg}</div>`;
-  }
-
-  if (configured) {
-    return `<div class="sync-panel">
-      <div class="sync-title">📡 Synchronisation JSONBin.io
-        <span style="color:var(--green);font-size:.75rem;font-family:monospace;font-weight:400">✅ Connecté — Bin : ${esc(SYNC.binId)}</span>
-      </div>
-      ${statusHtml}
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <button class="sync-btn" onclick="refresh()">↻ Actualiser depuis le cloud</button>
-        <button class="clear-data-btn" onclick="clearAllData()">🗑 Effacer toutes les données</button>
-        <button class="clear-data-btn" style="border-color:var(--muted);color:var(--muted)" onclick="disconnectSync()">⊘ Déconnecter</button>
-      </div>
-    </div>`;
-  }
-
-  return `<div class="sync-panel">
-    <div class="sync-title">📡 Synchronisation multi-appareils (JSONBin.io)
-      <span style="color:var(--gold);font-size:.75rem;font-weight:400">⚠️ Non configuré — chaque appareil a ses propres données</span>
-    </div>
-    <div class="alert a-info" style="margin-bottom:10px;font-size:.8rem">
-      Pour que les capitaines sur d'autres appareils partagent les mêmes données, créez un compte gratuit sur
-      <strong>jsonbin.io</strong>, copiez votre <strong>Master Key</strong> depuis le tableau de bord, puis cliquez "Créer le Bin".
-    </div>
-    <div class="sync-row">
-      <input class="sync-inp" id="sync-key-inp" type="password" placeholder="Clé API (Master Key) JSONBin.io" value="${esc(SYNC.apiKey)}">
-      <input class="sync-inp" id="sync-bin-inp" type="text" placeholder="ID Bin existant (optionnel)" style="max-width:160px">
-      <button class="sync-btn" id="create-bin-btn" onclick="createBin()">Créer le Bin</button>
-      <button class="sync-btn" onclick="saveBinId()" style="border-color:var(--muted);color:var(--muted)">Utiliser existant</button>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px">
-      <button class="clear-data-btn" onclick="clearAllData()">🗑 Effacer les données locales</button>
-    </div>
-    ${statusHtml}
-  </div>`;
-}
-
-/* ════════════════════════════════════════
-   ██  ADMIN — CONFIG
-════════════════════════════════════════ */
+/* ═══════════════════════════════════════════
+   ADMIN — CONFIG
+═══════════════════════════════════════════ */
 function renderAdminConfig() {
   const el = document.getElementById('tab-config');
+  const locked = S.started;
+
   // Sync panel
-  let syncHtml = renderSyncPanel();
-  let h = `<p class="stitle">Équipes participantes</p><div class="teams-grid">`;
+  let syncHtml = `<div class="sync-panel">
+    <div class="card-title" style="font-size:1rem">☁️ Synchronisation JSONBin</div>`;
 
-  S.teams.forEach((team,i) => {
-    const full = isComplete(team);
-    const cnt = SHIP_KEYS.filter(k=>team.shipCells[k]&&team.shipCells[k].length>0).length;
-    const url = captainUrl(team.id);
-    const locked = S.started;
-
-    h += `<div class="team-card ${!team.active?'inactive':''}">
-      <div class="tc-head">
-        <span class="tc-num">ÉQUIPE ${team.id}</span>
-        <div class="toggle ${team.active?'on':''}" onclick="${locked?'':'toggleActive('+i+')'}" title="${locked?'Partie en cours':'Activer/désactiver'}" style="${locked?'cursor:not-allowed':''}"></div>
+  if (SYNC.binId) {
+    syncHtml += `<div id="syncBar" class="sync-bar ${syncStatus.state}" style="${syncStatus.state==='idle'?'display:none':''}">${syncStatus.msg}</div>
+      <div style="font-size:.78rem;color:var(--text2);margin-bottom:8px">
+        Bin connecté : <span style="font-family:monospace;color:var(--cyan)">${SYNC.binId.slice(0,12)}…</span>
       </div>
-      <input class="inp" type="text" value="${esc(team.name)}" placeholder="Nom de l'équipe"
-        ${locked?'disabled':''} onchange="setName(${i},this.value)">
-      <input class="inp sm" type="text" value="${esc(team.captain)}" placeholder="Capitaine"
-        ${locked?'disabled':''} onchange="setCap(${i},this.value)">
-      <input class="inp sm" type="email" value="${esc(team.email)}" placeholder="Email du capitaine"
-        ${locked?'disabled':''} onchange="setEmail(${i},this.value)">
-      <div class="grid-status ${team.gridValidated?'gs-ok':full?'gs-wait':'gs-wait'}">
-        <span class="gs-icon">${team.gridValidated?'✅':full?'🔓':'⏳'}</span>
-        <span class="gs-label">${team.gridValidated?'Grille validée':full?'Grille complète (non validée)':'En attente de la grille'}</span>
-        <span class="gs-detail" style="margin-left:auto">
-          ${full?`${cnt}/5 · ⭐${team.bonusCells.length} 💣${team.malusCells.length}`:`${cnt}/5`}
-        </span>
-      </div>
-      ${full&&!team.gridValidated?`<button onclick="adminForceValidate(${i})" style="width:100%;margin-top:6px;padding:6px;background:rgba(0,232,120,.12);border:1px solid var(--green);color:var(--green);border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:1px">✔ Valider la grille (admin)</button>`:''}
-      <div class="link-row">
-        <div class="link-url" title="${url}">${baseUrl()}?team=${team.id}</div>
-        <button class="icon-btn" onclick="copyUrl('${url}')" title="Copier le lien complet">📋</button>
-      </div>
-      <button class="send-btn" onclick="sendEmail(${i})" ${team.email?'':'disabled'} title="${team.email?'Envoyer par email':'Email du capitaine requis'}">
-        📧 Envoyer le lien au capitaine
-      </button>
-    </div>`;
-  });
-  h += `</div>`;
-
-  // Start button
-  if(!S.started) {
-    const allAct = S.teams.filter(t=>t.active);
-    const ok = allAct.length>=2 && allAct.every(t=>isComplete(t)&&t.gridValidated);
-    h += `<div class="row mt">
-      <button class="primary-btn" ${ok?'':'disabled'} onclick="startGame()">🚀 Démarrer la partie</button>
-      ${!ok?`<span style="color:var(--text2);font-size:.8rem">Toutes les grilles des équipes actives doivent être complètes</span>`:''}
-    </div>`;
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-cyan btn-sm" onclick="doRefresh()">↻ Actualiser</button>
+        <button class="btn btn-danger btn-sm" onclick="disconnectSync()">✗ Déconnecter</button>
+      </div>`;
   } else {
-    h += `<div class="alert a-warn mt">⚠️ Partie en cours — les équipes et configurations sont verrouillées.</div>`;
+    syncHtml += `<div id="syncBar" class="sync-bar" style="display:none"></div>
+      <div class="form-row">
+        <div class="form-group"><div class="form-label">Clé API</div>
+          <input id="syncKeyInp" type="password" placeholder="$2a$10$…" style="width:180px"></div>
+        <div class="form-group"><div class="form-label">Bin ID (si existant)</div>
+          <input id="syncBinInp" type="text" placeholder="6…" style="width:140px"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button id="createBinBtn" class="btn btn-gold btn-sm" onclick="createBin()">+ Créer le Bin</button>
+        <button class="btn btn-cyan btn-sm" onclick="connectBin()">↻ Connecter</button>
+      </div>`;
   }
+  syncHtml += `</div>`;
 
-  el.innerHTML = syncHtml + h;
+  // Teams grid
+  let teamsHtml = `<div class="card"><div class="card-title">🚢 Équipes & Capitaines</div>
+    <div class="teams-grid-cfg">`;
+
+  DUELS_DEF.forEach(def => {
+    teamsHtml += `<div style="margin-bottom:4px;font-family:'Orbitron',monospace;font-size:.6rem;color:var(--gold);letter-spacing:2px;grid-column:1/-1">— ${def.name} —</div>`;
+    def.teams.forEach(tid => {
+      const t = getTeam(tid);
+      const url = captainUrl(tid);
+      teamsHtml += `<div class="team-card-cfg ${t.active?'':'inactive'}">
+        <h4>ÉQUIPE ${tid}
+          <div class="toggle ${t.active?'on':''}" onclick="${locked?'':'toggleTeamActive('+tid+')'}" title="${locked?'Partie démarrée':'Activer/désactiver'}"></div>
+        </h4>
+        <div class="form-group" style="margin-bottom:6px">
+          <div class="form-label">Nom de l'équipe</div>
+          <input type="text" value="${esc(t.name)}" oninput="setTeamName(${tid},this.value)" placeholder="Équipe ${tid}" ${locked?'disabled':''}>
+        </div>
+        <div class="form-group" style="margin-bottom:8px">
+          <div class="form-label">Capitaine</div>
+          <input type="text" value="${esc(t.captain)}" oninput="setTeamCaptain(${tid},this.value)" placeholder="Nom du capitaine" ${locked?'disabled':''}>
+        </div>
+        <div class="form-label" style="margin-bottom:3px">Lien Capitaine</div>
+        <div class="url-box" onclick="copyUrl('${esc(url)}')" title="Cliquer pour copier">${url.length>60?url.slice(0,60)+'…':url}</div>
+      </div>`;
+    });
+  });
+
+  teamsHtml += `</div></div>`;
+
+  // Actions
+  let actions = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">`;
+  if (!S.started) {
+    actions += `<button class="btn btn-gold" onclick="startGame()">▶ Démarrer la partie</button>`;
+  } else {
+    actions += `<button class="btn btn-danger btn-sm" onclick="resetGame()">🔄 Réinitialiser</button>`;
+  }
+  actions += `</div>`;
+
+  // Fleet reminder
+  const reminder = `<div class="card"><div class="card-title" style="font-size:.9rem">📋 Barème</div>
+    <div style="font-size:.8rem;color:var(--text2);line-height:1.9">
+      🎯 +1 pt / touché &nbsp;·&nbsp; Navire coulé : +${SHIPS.TP.points}/${SHIPS.SM.points}/${SHIPS.CR.points}/${SHIPS.CU.points}/${SHIPS.PA.points} pts (TP/SM/CR/CU/PA)<br>
+      ⭐ +2 pts case Bonus &nbsp;·&nbsp; 💣 −2 pts case Malus &nbsp;·&nbsp; ⭐ <strong style="color:var(--gold)">+5 pts</strong> bonus 1er coulage global
+    </div>
+  </div>`;
+
+  el.innerHTML = syncHtml + teamsHtml + actions + reminder;
 }
 
-/* Admin config actions */
-function toggleActive(i) { if(S.started)return; S.teams[i].active=!S.teams[i].active; save(); renderAdminConfig(); }
-function setName(i,v)  { S.teams[i].name=v;    save(); }
-function setCap(i,v)   { S.teams[i].captain=v; save(); }
-function setEmail(i,v) { S.teams[i].email=v;   save(); }
-
+function toggleTeamActive(tid) {
+  const t = getTeam(tid); if(!t) return;
+  t.active = !t.active; save(); renderTab('config');
+}
+function setTeamName(tid, val) { const t=getTeam(tid); if(t){t.name=val;} }
+function setTeamCaptain(tid, val) { const t=getTeam(tid); if(t){t.captain=val;} }
 function copyUrl(url) {
-  navigator.clipboard.writeText(url).then(()=>{
-    alert('Lien copié : ' + url);
-  }).catch(()=>{ alert('Lien : ' + url); });
-}
-
-function sendEmail(teamIdx) {
-  const team = S.teams[teamIdx];
-  const url = captainUrl(team.id);
-  const subject = encodeURIComponent(`Touché Coulé PPA — Ton lien capitaine`);
-  const body = encodeURIComponent(
-    `Bonjour ${team.captain||team.name},\n\nVoici ton lien pour accéder à l'interface capitaine :\n${url}\n\nBonne chance !`
-  );
-  window.open(`mailto:${team.email}?subject=${subject}&body=${body}`);
+  navigator.clipboard.writeText(url).then(() => {
+    const a = document.createElement('div');
+    a.className='alert info show';a.textContent='✓ Lien copié !';
+    document.getElementById('tab-config').appendChild(a);
+    setTimeout(()=>a.remove(),2000);
+  });
 }
 
 function startGame() {
-  S.started=true; S.turn=1; S.winner=null; S.pairWinners={}; S.pendingShots={}; S.shotHistory={}; S.lastSunkEvents=[];
-  S.teams.forEach(t=>{ t.hitGrid={}; t.score=0; });
-  save(); renderTab(S.currentTab);
+  const actives = S.teams.filter(t=>t.active);
+  if (actives.length < 2) { alert('Activez au moins 2 équipes.'); return; }
+  const incomplete = actives.filter(t=>!isComplete(t));
+  if (incomplete.length) {
+    if (!confirm(`Attention : ${incomplete.map(t=>t.name).join(', ')} n'ont pas de grille complète. Continuer ?`)) return;
+  }
+  S.started = true;
+  save(); buildNav(); renderTab('tour');
 }
 
 function resetGame() {
-  if(!confirm('Réinitialiser toute la partie ? Les scores seront perdus.')) return;
-  S.started=false; S.turn=1; S.winner=null; S.pairWinners={}; S.pendingShots={}; S.shotHistory={}; S.lastSunkEvents=[];
-  S.teams.forEach(t=>{ t.hitGrid={}; t.score=0; });
-  save(); renderTab(S.currentTab);
+  if (!confirm('Réinitialiser toute la partie ? Les scores et historiques seront perdus.')) return;
+  S.started = false;
+  S.duels = { A:mkDuelState(), B:mkDuelState(), C:mkDuelState() };
+  S.pendingShots = {}; S.shotHistory = {};
+  S.globalBonus = null; S.lastSubmitTime = {};
+  S.teams.forEach(t => { t.hitGrid={}; t.score=0; });
+  save(); buildNav(); renderTab('config');
 }
 
-function adminForceValidate(teamIdx) {
-  const t = S.teams[teamIdx];
-  if (!t || !isComplete(t)) return;
-  t.gridValidated = true;
-  save();
-  renderAdminConfig();
-}
+/* ═══════════════════════════════════════════
+   ADMIN — TOUR (per duel)
+═══════════════════════════════════════════ */
+let _tourSel = {}; // duelId → teamId selected for shot entry
+let _tourCoords = {}; // duelId → [c1,c2,c3 inputs]
 
-function disconnectSync() {
-  if(!confirm('Déconnecter la synchronisation ? Les données locales sont conservées.')) return;
-  SYNC={apiKey:'',binId:''}; syncStatus={state:'idle',msg:''};
-  saveSyncConfig(); renderTab('config');
-}
-
-/* ════════════════════════════════════════
-   ██  ADMIN — TOUR
-════════════════════════════════════════ */
 function renderAdminTour() {
-  const el = document.getElementById('tab-tour');
-  if(!S.started && !S.winner) {
-    el.innerHTML=`<div class="alert a-warn">⚠️ La partie n'est pas encore démarrée. Allez dans Config pour préparer les grilles et démarrer.</div>`; return;
-  }
-  // Afficher les paires déjà terminées
-  const finishedEntries = Object.entries(S.pairWinners||{});
-  const activePairsNow = activePairs();
-  let h = `<p class="stitle">Tour ${S.turn} — État des soumissions</p>`;
-
-  finishedEntries.forEach(([key, wId])=>{
-    const w=getTeam(wId);
-    h+=`<div class="alert a-ok" style="margin-bottom:8px">🏆 Paire ${esc(key.replace('-',' vs '))} — <strong>${esc(w?.name||'?')}</strong> a coulé toute la flotte adverse.</div>`;
-  });
-
-  if(!activePairsNow.length && finishedEntries.length) { el.innerHTML=h; return; }
-  if(!activePairsNow.length) { el.innerHTML=`<div class="alert a-warn">Aucune paire active.</div>`; return; }
-
-  activePairsNow.forEach(([aId,bId]) => {
-    const ta=getTeam(aId), tb=getTeam(bId);
-    h += renderTourMatchup(ta, tb);
-  });
-
-  const allIn = allPendingIn();
-  h += `<div class="tour-actions">
-    <button class="primary-btn gold" ${allIn?'':'disabled'} onclick="doTourSuivant()">⏭ Tour Suivant</button>
-    ${!allIn?`<span style="color:var(--text2);font-size:.82rem">En attente que toutes les équipes soumettent leurs tirs</span>`:`<span style="color:var(--green);font-size:.82rem">✅ Tous les tirs sont soumis — vous pouvez passer au tour suivant</span>`}
-  </div>`;
-
-  el.innerHTML = h;
-}
-
-function renderTourMatchup(ta, tb) {
-  return `<div class="tour-matchup">
-    <div class="tm-head">
-      <div class="tm-title">${esc(ta.name)} <span style="color:var(--muted);font-size:.6rem">VS</span> ${esc(tb.name)}</div>
-    </div>
-    <div class="tm-body">
-      ${renderTourTeam(ta)} ${renderTourTeam(tb)}
-    </div>
-  </div>`;
-}
-
-function renderTourTeam(team) {
-  const pending = S.pendingShots[team.id];
-  const submitted = !!(pending && pending.length);
-  const shotsHtml = submitted
-    ? pending.map(c=>`<span class="shot-tag">${c}</span>`).join('')
-    : '';
-  return `<div class="tm-team">
-    <div class="tmt-name">⚡ ${esc(team.name)}</div>
-    ${submitted
-      ? `<div class="tmt-status submitted">✅ Tirs soumis</div><div class="shots-preview">${shotsHtml}</div>`
-      : `<div class="tmt-status waiting">⏳ En attente des tirs…</div>`
-    }
-  </div>`;
-}
-
-function doTourSuivant() {
-  if(!allPendingIn()) return;
-  processTour();
-  renderTab('tour');
-  // Aussi actualiser classement et flottes si déjà ouverts
-}
-
-/* ════════════════════════════════════════
-   ██  CAPTAIN — CONFIG (grille)
-════════════════════════════════════════ */
-function renderCaptainConfig() {
-  const el = document.getElementById('tab-config');
-  const teamIdx = S.teams.findIndex(t=>t.id===ROLE.teamId);
-  const team = S.teams[teamIdx];
-  if(!team) { el.innerHTML=`<div class="alert a-err">Équipe introuvable.</div>`; return; }
-
-  if(S.started) {
-    el.innerHTML = `
-      <div class="alert a-warn">⚠️ La partie est démarrée — la grille est verrouillée.</div>
-      ${renderGridReadOnly(team)}`;
+  if (!S.started) {
+    document.getElementById('tab-tour').innerHTML = `<div class="card"><p style="color:var(--text3)">La partie n'est pas encore démarrée.</p></div>`;
     return;
   }
+  const el = document.getElementById('tab-tour');
+  let h = '';
 
-  const validated = !!team.gridValidated;
-  let h = `<p class="stitle">Ma grille — ${esc(team.name)}</p>`;
+  DUELS_DEF.forEach(def => {
+    const ds = getDuelState(def.id);
+    const [a, b] = def.teams;
+    const ta = getTeam(a), tb = getTeam(b);
+    if (!ta.active || !tb.active) return;
 
-  if (validated) {
-    // Grille verrouillée après validation
-    h += `<div class="validated-badge">✅ Grille validée et transmise à l'admin</div>`;
-    h += renderGridReadOnly(team);
-    h += `<div class="alert a-info mt" style="margin-top:10px">La grille est verrouillée. Contactez l'admin si vous souhaitez la modifier.</div>`;
-  } else {
-    h += renderGridEditor(team, teamIdx);
-    const complete = isComplete(team);
-    const cnt = SHIP_KEYS.filter(k=>team.shipCells[k]&&team.shipCells[k].length>0).length;
-    if (complete) {
-      h += `<button class="validate-grid-btn" onclick="validateGrid(${teamIdx})">✔ Valider ma grille</button>`;
-      h += `<div class="alert a-ok mt" style="margin-top:8px">✅ Grille complète — cliquez <strong>Valider</strong> pour la transmettre à l'admin.</div>`;
-    } else {
-      h += `<button class="validate-grid-btn" disabled>✔ Valider ma grille</button>`;
-      h += `<div class="alert a-info mt" style="margin-top:8px">🚧 ${cnt}/5 navires placés. Complétez la grille avant de valider.</div>`;
-    }
-  }
-  el.innerHTML = h;
-  if (!validated) attachGridEvents(team, teamIdx);
-}
+    const statusLabel = {ready:'Prête',battle:'Bataille en cours',finished:'Combat terminé'}[ds.status];
+    const statusCls   = ds.status;
+    const bothIn      = duelBothSubmitted(def.id);
+    const canVal      = duelCanValidate(def.id);
 
-function renderGridReadOnly(team) {
-  let h = `<div class="grid-editor"><div class="ge-title">🗺️ Grille — ${esc(team.name)}</div>
-    <div class="battle-grid">`;
-  h += `<div class="gl"></div>`;
-  COLS.forEach(c=>{h+=`<div class="gl">${c}</div>`;});
-  ROWS.forEach((row,ri)=>{
-    h+=`<div class="gl">${row}</div>`;
-    COLS.forEach((col,ci)=>{
-      const co=col+row, content=team.grid[co];
-      const cls=`gc readonly${content?` placed-${content}`:''}`;
-      h+=`<div class="${cls}">${content?({bonus:'⭐',malus:'💣'}[content]||''):''}`;
-      h+=`</div>`;
-    });
-  });
-  h+=`</div></div>`;
-  return h;
-}
-
-function renderGridEditor(team, tIdx) {
-  const {tool,orient} = S;
-  let h = `<div class="grid-editor"><div class="ge-title">🗺️ Positionner mes navires</div>
-    <div class="ge-layout">
-      <div class="ge-grid-wrap"><div class="battle-grid" id="bgrid">`;
-
-  h += `<div class="gl"></div>`;
-  COLS.forEach(c=>{h+=`<div class="gl">${c}</div>`;});
-  ROWS.forEach((row,ri)=>{
-    h+=`<div class="gl">${row}</div>`;
-    COLS.forEach((col,ci)=>{
-      const co=col+row, content=team.grid[co];
-      const cls=`gc${content?` placed-${content}`:''}`;
-      h+=`<div class="${cls}" data-ci="${ci}" data-ri="${ri}" data-co="${co}">${content?({bonus:'⭐',malus:'💣'}[content]||content):''}`;
-      h+=`</div>`;
-    });
-  });
-  h+=`</div></div>`;
-
-  // Palette
-  h+=`<div class="palette">`;
-  SHIP_KEYS.forEach(key=>{
-    const ship=SHIPS[key];
-    const done=!!(team.shipCells[key]&&team.shipCells[key].length);
-    const dots=Array.from({length:ship.size}).map(()=>`<div class="pal-cell" style="background:${ship.color};opacity:.7"></div>`).join('');
-    h+=`<div class="pal-item ${tool===key?'sel':''} ${done?'done':''}" onclick="setTool('${key}')">
-      <div class="pal-dot" style="background:${ship.color}"></div>
-      <span>${ship.name}</span>
-      <div class="pal-cells">${dots}</div>
-      ${done?`<span style="color:var(--green);font-size:.75rem">✓</span>`:''}
-    </div>`;
-  });
-  h+=`<div class="pal-item ${tool==='bonus'?'sel':''}" onclick="setTool('bonus')">
-    <div class="pal-dot" style="background:#cc88ff"></div>
-    <span>Case Bonus ⭐</span><span class="pal-count">${team.bonusCells.length}/2</span>
-  </div>
-  <div class="pal-item ${tool==='malus'?'sel':''}" onclick="setTool('malus')">
-    <div class="pal-dot" style="background:#ff4455"></div>
-    <span>Case Malus 💣</span><span class="pal-count">${team.malusCells.length}/2</span>
-  </div>`;
-
-  if(!['bonus','malus','eraser'].includes(tool)){
-    h+=`<div class="orient-row">
-      <button class="orient-btn ${orient==='H'?'on':''}" onclick="setOrient('H')">↔ Horiz.</button>
-      <button class="orient-btn ${orient==='V'?'on':''}" onclick="setOrient('V')">↕ Vert.</button>
-    </div>`;
-  }
-  h+=`<button class="erase-btn ${tool==='eraser'?'on':''}" onclick="setTool('eraser')">🗑️ Effacer</button>
-    <button class="clear-btn" onclick="clearGrid(${tIdx})">⚠️ Vider la grille</button>
-  </div></div></div>`;
-
-  return h;
-}
-
-function attachGridEvents(team, tIdx) {
-  const grid = document.getElementById('bgrid');
-  if(!grid) return;
-  let prev=[];
-  const clearPrev=()=>{ prev.forEach(co=>{ const e=document.getElementById(`gc-${co}`); if(e){e.classList.remove('pv','px');} }); prev=[]; };
-
-  grid.querySelectorAll('.gc').forEach(cell=>{
-    cell.id=`gc-${cell.dataset.co}`;
-    cell.addEventListener('mouseenter',()=>{
-      clearPrev();
-      if(S.tool==='eraser') return;
-      const cells=previewCells(+cell.dataset.ci,+cell.dataset.ri,S.tool,S.orient);
-      if(!cells) return;
-      const valid=canPlace(team,S.tool,cells);
-      cells.forEach(co=>{ const e=document.getElementById(`gc-${co}`); if(e){e.classList.add(valid?'pv':'px'); prev.push(co);} });
-    });
-    cell.addEventListener('mouseleave',clearPrev);
-    cell.addEventListener('click',()=>{ if(S.started)return; placeShip(tIdx,+cell.dataset.ci,+cell.dataset.ri); });
-  });
-}
-
-function setTool(t) { S.tool=t; renderTab(S.currentTab); }
-function setOrient(o) { S.orient=o; renderTab(S.currentTab); }
-function clearGrid(tIdx) {
-  const t=S.teams[tIdx];
-  t.grid={}; t.shipCells={}; t.bonusCells=[]; t.malusCells=[]; t.gridValidated=false;
-  save(); renderTab(S.currentTab);
-}
-
-function validateGrid(tIdx) {
-  const t = S.teams[tIdx];
-  if (!isComplete(t)) return;
-  t.gridValidated = true;
-  save();
-  renderTab(S.currentTab);
-}
-
-/* ════════════════════════════════════════
-   ██  CAPTAIN — SAISIE (grille interactive)
-════════════════════════════════════════ */
-function sgCellClass(co) {
-  // Tirs déjà résolus (historique)
-  const history = S.shotHistory[ROLE.teamId]||[];
-  const shot = history.find(h=>h.coord===co);
-  if(shot) {
-    if(shot.result==='water') return 'sg-water';
-    if(shot.result==='bonus') return 'sg-bonus';
-    if(shot.result==='malus') return 'sg-malus';
-    if(shot.result==='sunk')  return 'sg-sunk';
-    if(shot.result==='hit') {
-      const sunk=history.some(h=>h.shipKey===shot.shipKey&&h.result==='sunk');
-      return sunk?'sg-sunk':'sg-hit';
-    }
-  }
-  // En attente soumis ce tour
-  const pending=S.pendingShots[ROLE.teamId]||[];
-  if(pending.includes(co)) return 'sg-sel';
-  // Sélectionné localement (pas encore soumis)
-  if(S.selectedShots.includes(co)) return 'sg-sel';
-  return '';
-}
-
-function sgCellIcon(co) {
-  const history=S.shotHistory[ROLE.teamId]||[];
-  const shot=history.find(h=>h.coord===co);
-  if(!shot) {
-    if(S.selectedShots.includes(co)||(S.pendingShots[ROLE.teamId]||[]).includes(co))
-      return (S.selectedShots.indexOf(co)+1||((S.pendingShots[ROLE.teamId]||[]).indexOf(co)+1)).toString();
-    return '';
-  }
-  if(shot.result==='water') return '🌊';
-  if(shot.result==='bonus') return '⭐';
-  if(shot.result==='malus') return '💣';
-  if(shot.result==='sunk')  return '💀';
-  if(shot.result==='hit')   return '💥';
-  return '';
-}
-
-function toggleShotCell(co) {
-  const history=S.shotHistory[ROLE.teamId]||[];
-  const pending=S.pendingShots[ROLE.teamId]||[];
-  // Déjà tiré ou soumis ce tour → pas de changement
-  if(history.find(h=>h.coord===co)) return;
-  if(pending.includes(co)) return;
-  const idx=S.selectedShots.indexOf(co);
-  if(idx>=0) { S.selectedShots.splice(idx,1); }
-  else if(S.selectedShots.length<3) { S.selectedShots.push(co); }
-  renderCaptainSaisie();
-}
-
-function renderCaptainSaisie() {
-  const el = document.getElementById('tab-saisie');
-  const team = getTeam(ROLE.teamId);
-  const opp = getTeam(oppId(ROLE.teamId));
-
-  if(!S.started) {
-    el.innerHTML=`<div class="alert a-warn">⏳ La partie n'est pas encore démarrée. L'admin doit démarrer la partie.</div>`; return;
-  }
-  // Déclencher les modales de navires coulés au début du rendu
-  checkAndShowSunkModals();
-  // Déclencher la modale de victoire si la paire est terminée
-  checkAndShowVictoryModal();
-  const pairWin = myPairWinner();
-  if(pairWin) {
-    const w=getTeam(pairWin);
-    el.innerHTML=`<div class="alert ${pairWin===ROLE.teamId?'a-ok':'a-err'}">
-      ${pairWin===ROLE.teamId?'🏆 Vous avez coulé toute la flotte adverse — Bravo !':'💀 <strong>'+esc(w?.name||'?')+'</strong> a coulé votre flotte.'}
-    </div>`; return;
-  }
-
-  const pending = S.pendingShots[ROLE.teamId]||[];
-  const submitted = pending.length>0;
-  const history = S.shotHistory[ROLE.teamId]||[];
-
-  // Réinitialiser la sélection si soumis ou si nouveau tour
-  if(submitted) S.selectedShots=[];
-
-  let h = `<div class="saisie-card">
-    <div class="sc-head">
-      <div class="sc-title">Tour ${S.turn} — Mes tirs</div>
-      <div class="sc-sub">Tirs dirigés sur la grille de : <strong>${esc(opp?opp.name:'adversaire')}</strong></div>
-    </div>`;
-
-  // Bandeau d'état : soumis en attente OU compteur de sélection
-  if(submitted) {
-    const shotsHtml=pending.map(c=>`<span class="shot-tag">${c}</span>`).join('');
-    h+=`<div class="alert a-warn" style="margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <span>⏳ <strong>Tirs soumis</strong> — en attente de validation par l'admin</span>
-      <div class="shots-preview">${shotsHtml}</div>
-    </div>`;
-  } else {
-    const sel=S.selectedShots;
-    const cntCls=sel.length===3?'full':'empty';
-    h+=`<div class="sg-counter ${cntCls}">${sel.length}/3 tir${sel.length>1?'s':''} sélectionné${sel.length>1?'s':''}
-      ${sel.length>0?`— <span style="font-family:'Share Tech Mono',monospace;color:var(--cyan)">${sel.join(', ')}</span>`:''}
-    </div>`;
-  }
-
-  // Grille TOUJOURS visible — montre l'historique complet + tour en cours
-  h+=`<div class="sg-layout">
-    <div class="saisie-grid-wrap">
-      <div class="battle-grid" id="sgrid">`;
-
-  h+=`<div class="gl"></div>`;
-  COLS.forEach(c=>{h+=`<div class="gl">${c}</div>`;});
-  ROWS.forEach((row,ri)=>{
-    h+=`<div class="gl">${row}</div>`;
-    COLS.forEach((col,ci)=>{
-      const co=col+row;
-      const cls=sgCellClass(co);
-      const icon=sgCellIcon(co);
-      const alreadyFired=!!history.find(h2=>h2.coord===co)||pending.includes(co);
-      const clickable=!alreadyFired&&!submitted;
-      h+=`<div class="gc ${cls}" style="${!clickable?'cursor:default':''}"
-        data-co="${co}"
-        onclick="${clickable?`toggleShotCell('${co}')`:''}"
-        title="${co}">${icon}</div>`;
-    });
-  });
-  h+=`</div></div>`;
-
-  // Légende + actions
-  h+=`<div class="sg-legend">
-    <p class="stitle" style="margin-bottom:8px">Légende</p>
-    <div class="leg-item"><div class="leg-dot" style="background:rgba(0,212,255,.45);border:1px solid var(--cyan)"></div><span>Tir sélectionné</span></div>
-    <div class="leg-item"><div class="leg-dot" style="background:rgba(42,74,106,.55);border:1px solid var(--muted)"></div><span>Coup dans l'eau</span></div>
-    <div class="leg-item"><div class="leg-dot" style="background:rgba(255,136,0,.45);border:1px solid #ff8800"></div><span>Navire touché</span></div>
-    <div class="leg-item"><div class="leg-dot" style="background:rgba(255,68,85,.55);border:1px solid var(--red)"></div><span>Navire coulé</span></div>
-    <div class="leg-item"><div class="leg-dot" style="background:rgba(200,136,255,.45);border:1px solid var(--purple)"></div><span>Case Bonus</span></div>
-    <div class="leg-item"><div class="leg-dot" style="background:rgba(255,68,85,.35);border:1px solid var(--red)"></div><span>Case Malus</span></div>
-    ${!submitted?`<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
-      <button class="primary-btn" style="width:100%;margin-bottom:6px;transition:all .2s;${S.selectedShots.length===3?'box-shadow:0 0 18px rgba(0,212,255,.35)':''}" ${S.selectedShots.length===3?'':'disabled'} onclick="doSubmitShots()">
-        ${S.selectedShots.length===3?'✔ VALIDER MES TIRS':`🎯 VALIDER (${S.selectedShots.length}/3)`}
-      </button>
-      ${S.selectedShots.length>0&&S.selectedShots.length<3?`<div style="font-size:.78rem;color:var(--gold);text-align:center;margin:4px 0 6px;font-weight:600">⚠ Sélectionnez encore ${3-S.selectedShots.length} case${3-S.selectedShots.length>1?'s':''} pour valider</div>`:''}
-      ${S.selectedShots.length>0?`<button class="clear-btn" style="width:100%" onclick="S.selectedShots=[];renderCaptainSaisie()">✕ Réinitialiser</button>`:''}
-    </div>`:''}
-  </div></div>`;
-
-  // Résultats du dernier tour résolu
-  const lastTurnResults=history.filter(h=>h.turn===S.turn-1);
-  if(lastTurnResults.length) {
-    h+=`<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px">
-      <p class="stitle" style="margin-bottom:10px">Résultats du tour ${S.turn-1}</p>
-      <div class="results-list">`;
-    let tot=0;
-    lastTurnResults.forEach(r=>{
-      const cls=`r-${r.result==='sunk'?'sunk':r.result==='hit'?'hit':r.result==='water'?'water':r.result==='bonus'?'bonus':r.result==='malus'?'malus':'water'}`;
-      tot+=r.points||0;
-      h+=`<div class="res-line">
-        <span class="res-coord">${r.coord}</span>
-        <span class="${cls}">${fmtResult(r,false)}</span>
-        ${r.points?`<span class="res-pts" style="color:${r.points>0?'var(--green)':'var(--red)'}">${r.points>0?'+':''}${r.points}</span>`:''}
-      </div>`;
-    });
-    h+=`</div>`;
-    if(tot) h+=`<div style="text-align:right;font-weight:700;margin-top:7px;color:${tot>0?'var(--green)':'var(--red)'}">
-      Total tour ${S.turn-1} : ${tot>0?'+':''}${tot} pts</div>`;
-    h+=`</div>`;
-  }
-
-  h+=`</div>`;
-  el.innerHTML=h;
-}
-
-function doSubmitShots() {
-  if(S.selectedShots.length!==3) return;
-  showConfirmShotsModal([...S.selectedShots], () => {
-    const coords=[...S.selectedShots];
-    const res=submitCaptainShots(ROLE.teamId,coords);
-    if(!res.ok){ alert(res.errors.join('\n')); return; }
-    S.selectedShots=[];
-    renderCaptainSaisie();
-  });
-}
-
-function showConfirmShotsModal(coords, onConfirm) {
-  document.querySelectorAll('.confirm-shots-overlay').forEach(e=>e.remove());
-  const overlay=document.createElement('div');
-  overlay.className='confirm-shots-overlay';
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(3,8,16,.88);z-index:9998;display:flex;align-items:center;justify-content:center;animation:fadein-overlay .2s ease';
-  const coordsHtml=coords.map(c=>`<span style="display:inline-block;padding:6px 16px;background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.45);border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:1.15rem;color:var(--cyan);font-weight:700;letter-spacing:2px">${c}</span>`).join('');
-  overlay.innerHTML=`
-    <div style="background:#0a1828;border:2px solid rgba(0,212,255,.35);border-radius:12px;padding:28px 28px 22px;width:300px;text-align:center;position:relative">
-      <div style="font-size:2rem;margin-bottom:8px">🎯</div>
-      <div style="font-family:'Orbitron',monospace;font-size:.65rem;letter-spacing:3px;color:var(--text2);text-transform:uppercase;margin-bottom:14px">Confirmer les tirs</div>
-      <div style="display:flex;justify-content:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">${coordsHtml}</div>
-      <div style="font-size:.82rem;color:var(--text2);margin-bottom:20px;line-height:1.5">Ces 3 cases seront soumises à l'admin.<br>Cette action est <strong style="color:var(--gold)">irréversible</strong>.</div>
-      <div style="display:flex;gap:10px">
-        <button id="cs-cancel" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:5px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:1px;text-transform:uppercase;transition:all .15s" onmouseover="this.style.borderColor='var(--text)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">✕ Annuler</button>
-        <button id="cs-confirm" style="flex:1;padding:10px;background:rgba(0,212,255,.15);border:2px solid var(--cyan);color:var(--cyan);border-radius:5px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:1px;text-transform:uppercase;transition:all .15s" onmouseover="this.style.background='rgba(0,212,255,.28)'" onmouseout="this.style.background='rgba(0,212,255,.15)'">✔ Confirmer</button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
-  overlay.querySelector('#cs-cancel').onclick=()=>overlay.remove();
-  overlay.querySelector('#cs-confirm').onclick=()=>{ overlay.remove(); onConfirm(); };
-  // Fermer sur clic extérieur
-  overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
-}
-
-/* ════════════════════════════════════════
-   MODALE VICTOIRE
-════════════════════════════════════════ */
-let _shownVictoryPair = null; // clé de paire pour laquelle on a déjà affiché
-let _victoryConfettiRAF = null;
-
-function launchVictoryConfetti() {
-  const canvas = document.getElementById('victory-confetti');
-  if(!canvas) return;
-  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-  const ctx = canvas.getContext('2d');
-  const colors = ['#f0c040','#00d4ff','#ff4455','#00e878','#cc88ff','#ff8844'];
-  const pieces = Array.from({length:130}, ()=>({
-    x:Math.random()*canvas.width, y:-10-Math.random()*200,
-    vx:(Math.random()-.5)*3.5, vy:2+Math.random()*3.5,
-    size:5+Math.random()*7, color:colors[Math.floor(Math.random()*colors.length)],
-    rot:Math.random()*360, vrot:(Math.random()-.5)*9,
-    shape:Math.random()<.5?'rect':'circle',
-  }));
-  function frame(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    pieces.forEach(p=>{
-      p.x+=p.vx; p.y+=p.vy; p.rot+=p.vrot; p.vy+=.04;
-      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
-      ctx.fillStyle=p.color; ctx.globalAlpha=Math.max(0,1-p.y/canvas.height*.8);
-      if(p.shape==='rect') ctx.fillRect(-p.size/2,-p.size/4,p.size,p.size/2);
-      else{ctx.beginPath();ctx.arc(0,0,p.size/2,0,Math.PI*2);ctx.fill();}
-      ctx.restore();
-    });
-    _victoryConfettiRAF=requestAnimationFrame(frame);
-  }
-  frame();
-  setTimeout(()=>{
-    cancelAnimationFrame(_victoryConfettiRAF);
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-  },4500);
-}
-
-function showVictoryModal(iWon, winnerTeam, myTeam, allTeams) {
-  // Nettoyer une éventuelle modale existante
-  document.querySelectorAll('.victory-overlay').forEach(el=>el.remove());
-  const sorted = [...allTeams].sort((a,b)=>b.score-a.score);
-  const overlay = document.createElement('div');
-  overlay.className = 'victory-overlay';
-  const ranksHtml = sorted.map((t,i)=>`
-    <div class="vm-rank" style="--vd:${0.85+i*.08}s">
-      <span class="vm-rank-num">#${i+1}</span>
-      <span class="vm-rank-name ${t.id===ROLE.teamId?'vm-me':''}">${esc(t.name)}${t.id===ROLE.teamId?' ◀':''}</span>
-      <span class="vm-rank-pts">${t.score} pts</span>
-    </div>`).join('');
-  overlay.innerHTML = `
-    <canvas id="victory-confetti"></canvas>
-    <div class="victory-modal ${iWon?'vm-win':'vm-lose'}">
-      <div class="vm-halo"></div>
-      <span class="vm-icon">${iWon?'🏆':'⚓'}</span>
-      <div class="vm-result">${iWon?'Victoire !':'Défaite'}</div>
-      <div class="vm-team">${iWon ? esc(myTeam.name) : esc(winnerTeam.name)+' a gagné'}</div>
-      <div class="vm-score-wrap">
-        <div class="vm-score-card">
-          <div class="vm-score-val">${myTeam.score} pts</div>
-          <div class="vm-score-lbl">Votre score final</div>
+    h += `<div class="duel-panel">
+      <div class="duel-header">
+        <div>
+          <div class="duel-name">⚓ ${def.name}</div>
+          <div class="duel-turn">Tour ${ds.turn}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="status-badge ${statusCls}">${statusLabel}</span>
+          ${ds.winner ? `<span style="font-size:.72rem;color:var(--gold)">🏆 ${esc(getTeam(ds.winner)?.name||'')}</span>` : ''}
+          ${S.globalBonus && (a===S.globalBonus||b===S.globalBonus) ? `<span class="bonus-global">⭐ Bonus +5</span>` : ''}
         </div>
       </div>
-      <div class="vm-msg">${iWon
-        ? '🎉 Félicitations ! Vous avez coulé toute la flotte adverse et remporté votre paire !'
-        : 'Bien joué malgré tout ! Consultez le classement pour voir où vous vous situez.'
-      }</div>
-      <hr class="vm-divider">
-      ${ranksHtml}
-      <button class="vm-close" onclick="this.closest('.victory-overlay').remove()">Continuer</button>
-    </div>`;
-  document.body.appendChild(overlay);
-  if(iWon) setTimeout(launchVictoryConfetti, 400);
-}
+      <div class="duel-body">`;
 
-function checkAndShowVictoryModal() {
-  if(ROLE.type!=='captain') return;
-  const pk = pairKey(ROLE.teamId, oppId(ROLE.teamId));
-  if(!S.pairWinners[pk]) return;         // paire pas encore terminée
-  if(_shownVictoryPair === pk) return;   // déjà affichée pour cette paire
-  _shownVictoryPair = pk;
-  const winnerId  = S.pairWinners[pk];
-  const iWon      = winnerId === ROLE.teamId;
-  const winnerTeam = getTeam(winnerId);
-  const myTeam    = getTeam(ROLE.teamId);
-  const allActive = S.teams.filter(t=>t.active);
-  showVictoryModal(iWon, winnerTeam, myTeam, allActive);
-}
-
-/* ════════════════════════════════════════
-   MODALE NAVIRE COULÉ
-════════════════════════════════════════ */
-let _sunkQueue = [];   // file des modales à afficher
-let _shownSunkTurn = -1; // dernier tour pour lequel on a affiché
-
-function buildSunkSparks(container) {
-  container.innerHTML = '';
-  const colors = ['#ff4455','#ff8800','#f0c040','#ff6644'];
-  for(let i=0;i<12;i++){
-    const s=document.createElement('div');
-    s.className='sunk-spark';
-    s.style.cssText=`--a:${i*30}deg;background:${colors[i%4]};animation-delay:${0.08+(i%3)*0.07}s`;
-    container.appendChild(s);
-  }
-}
-
-function showSunkModal(event, onClose) {
-  // event: {attackerId, defenderId, shipKey, isAttacker}
-  const isAtk = event.isAttacker;
-  const ship   = SHIPS[event.shipKey];
-  const opp    = isAtk ? getTeam(event.defenderId) : getTeam(event.attackerId);
-  const overlay = document.createElement('div');
-  overlay.className = 'sunk-overlay';
-  overlay.innerHTML = `
-    <div class="sunk-modal ${isAtk?'attacker':'defender'}">
-      <div class="sunk-ring sunk-ring-1"></div>
-      <div class="sunk-ring sunk-ring-2"></div>
-      <div class="sunk-ring sunk-ring-3"></div>
-      <div class="sunk-sparks" id="sunk-sparks-inner"></div>
-      <div class="sunk-ripple sunk-ripple-1"></div>
-      <div class="sunk-ripple sunk-ripple-2"></div>
-      <div class="sunk-ripple sunk-ripple-3"></div>
-      <div class="sunk-label">${isAtk ? 'Navire coulé !' : 'Navire perdu !'}</div>
-      <span class="sunk-anchor">⚓</span>
-      <div class="sunk-shipname">${esc(ship?.name||event.shipKey)}</div>
-      <div class="sunk-pts">${isAtk ? '+'+ship.points+' pts' : '−'+ship.points+' pts adversaire'}</div>
-      <hr class="sunk-divider">
-      <div class="sunk-by-label">${isAtk ? 'Coulé par' : 'Coulé par'}</div>
-      <div class="sunk-by-name">${esc(isAtk ? (getTeam(event.attackerId)?.name||'?') : (opp?.name||'?'))}</div>
-      <button class="sunk-close" id="sunk-close-btn">Continuer</button>
-    </div>`;
-  document.body.appendChild(overlay);
-  buildSunkSparks(overlay.querySelector('#sunk-sparks-inner'));
-  overlay.querySelector('#sunk-close-btn').onclick = () => {
-    overlay.remove();
-    if(onClose) onClose();
-  };
-}
-
-function showSunkQueue(events) {
-  if(!events||!events.length) return;
-  let idx=0;
-  function next() {
-    if(idx>=events.length) return;
-    showSunkModal(events[idx++], next);
-  }
-  next();
-}
-
-function checkAndShowSunkModals() {
-  if(ROLE.type!=='captain') return;
-  const events = (S.lastSunkEvents||[]).filter(e =>
-    e.turn === S.turn-1 && (e.attackerId===ROLE.teamId || e.defenderId===ROLE.teamId)
-  );
-  if(!events.length) return;
-  // Ne montrer qu'une fois par tour
-  if(_shownSunkTurn >= S.turn-1) return;
-  _shownSunkTurn = S.turn-1;
-  const toShow = events.map(e => ({...e, isAttacker: e.attackerId===ROLE.teamId}));
-  showSunkQueue(toShow);
-}
-
-function fmtResult(r, showShip=true) {
-  if(r.result==='water') return '🌊 Coup dans l\'eau';
-  if(r.result==='hit')   return showShip ? `💥 Touché ! (${SHIPS[r.shipKey]?.name||r.shipKey})` : '💥 Touché !';
-  if(r.result==='sunk')  return showShip ? `💀 Coulé ! ${SHIPS[r.shipKey]?.name||r.shipKey}`    : '💀 Navire coulé !';
-  if(r.result==='bonus') return '⭐ Case Bonus !';
-  if(r.result==='malus') return '💣 Case Malus !';
-  return r.result;
-}
-
-/* ════════════════════════════════════════
-   ██  CAPTAIN — SUIVI (tirs adversaire sur MA grille)
-════════════════════════════════════════ */
-function defCellClass(myTeam, co) {
-  // Classe pour afficher les tirs de l'adversaire sur ma grille
-  const oppHistory = S.shotHistory[oppId(ROLE.teamId)]||[];
-  const shot = oppHistory.find(h=>h.coord===co);
-  const isMyShip = !!myTeam.grid[co] && myTeam.grid[co]!=='bonus' && myTeam.grid[co]!=='malus';
-  if(!shot) return isMyShip ? 'def-my-ship' : '';
-  if(shot.result==='water')  return 'def-water';
-  if(shot.result==='bonus')  return 'def-bonus';
-  if(shot.result==='malus')  return 'def-malus';
-  if(shot.result==='sunk')   return 'def-sunk';
-  if(shot.result==='hit') {
-    const sunk=oppHistory.some(h=>h.shipKey===shot.shipKey&&h.result==='sunk');
-    return sunk?'def-sunk':'def-hit';
-  }
-  return '';
-}
-
-function defCellIcon(myTeam, co) {
-  const oppHistory = S.shotHistory[oppId(ROLE.teamId)]||[];
-  const shot = oppHistory.find(h=>h.coord===co);
-  if(!shot) return myTeam.grid[co]==='bonus'?'⭐':myTeam.grid[co]==='malus'?'💣':'';
-  if(shot.result==='water') return '🌊';
-  if(shot.result==='bonus') return '⭐';
-  if(shot.result==='malus') return '💣';
-  if(shot.result==='sunk')  return '💀';
-  if(shot.result==='hit') {
-    const sunk=oppHistory.some(h=>h.shipKey===shot.shipKey&&h.result==='sunk');
-    return sunk?'💀':'💥';
-  }
-  return '';
-}
-
-function renderCaptainSuivi() {
-  const el = document.getElementById('tab-suivi');
-  const myTeam = getTeam(ROLE.teamId);
-  const opp = getTeam(oppId(ROLE.teamId));
-  const oppHistory = S.shotHistory[oppId(ROLE.teamId)]||[];
-
-  if(!S.started) {
-    el.innerHTML=`<div class="alert a-warn">La partie n'est pas encore démarrée.</div>`; return;
-  }
-
-  // ── FIN DE PARTIE : révéler la grille adverse ──────────────────────
-  const pairWin = myPairWinner();
-  if(pairWin && opp) {
-    const iWon = pairWin===ROLE.teamId;
-    let h = `<div class="alert ${iWon?'a-ok':'a-err'}" style="margin-bottom:16px">
-      ${iWon?'🏆 Vous avez gagné cette paire !':'💀 Vous avez perdu cette paire.'}
-    </div>`;
-    h += `<p class="stitle">Grille de ${esc(opp.name)} — Révélée</p>
-      <div class="suivi-wrap"><div class="suivi-layout"><div class="suivi-grid-wrap">
-        <div class="battle-grid">`;
-    h += `<div class="gl"></div>`;
-    COLS.forEach(c=>{h+=`<div class="gl">${c}</div>`;});
-    ROWS.forEach((row,ri)=>{
-      h+=`<div class="gl">${row}</div>`;
-      COLS.forEach((col,ci)=>{
-        const co=col+row;
-        const cell=opp.grid[co];
-        const myShot=(S.shotHistory[ROLE.teamId]||[]).find(s=>s.coord===co);
-        let cls='', icon='', extra='';
-        if(cell && cell!=='bonus' && cell!=='malus') {
-          // Navire adverse
-          const shipSunk=isShipSunk(opp,cell);
-          if(shipSunk) {
-            cls='gc def-sunk'; icon='💀';
-          } else {
-            // Non coulé → vert
-            cls='gc'; extra=`background:rgba(0,232,120,.25);border-color:var(--green)`;
-          }
-        } else if(cell==='bonus') { cls='gc placed-bonus'; icon='⭐'; }
-        else if(cell==='malus')  { cls='gc placed-malus'; icon='💣'; }
-        else if(myShot&&myShot.result==='water') { cls='gc def-water'; icon='🌊'; }
-        else { cls='gc'; }
-        h+=`<div class="${cls}" style="${extra}" title="${co}">${icon}</div>`;
+    if (ds.status === 'finished') {
+      h += `<p style="color:var(--text2);font-size:.85rem">Combat terminé — ${esc(getTeam(ds.winner)?.name||'?')} remporte ce duel.</p>`;
+    } else {
+      // Team rows
+      [a, b].forEach(tid => {
+        const team = getTeam(tid);
+        const shots = S.pendingShots[tid];
+        const hasSub = !!shots;
+        h += `<div class="team-row">
+          <div class="team-row-info">
+            <div class="team-row-name">${esc(team.name)}</div>
+            <div class="team-row-captain">${team.captain ? 'Cap. '+esc(team.captain) : 'vs '+esc(getTeam(oppId(tid)).name)}</div>
+            ${hasSub ? `<div style="font-size:.72rem;color:var(--green);margin-top:2px">Tirs : ${shots.join(' · ')}</div>` : ''}
+          </div>
+          <div style="display:flex;gap:5px;align-items:center">
+            <span class="shot-status ${hasSub?'done':'pending'}">${hasSub?'✓ Soumis':'⏳ Attente'}</span>
+            ${hasSub ? `<button class="btn btn-danger btn-xs" onclick="cancelShotsAdmin(${tid})">✗</button>` : ''}
+          </div>
+        </div>`;
       });
-    });
-    h+=`</div></div>`;
-    // Légende révélation
-    h+=`<div class="suivi-legend">
-      <p class="stitle" style="margin-bottom:8px">Légende</p>
-      <div class="leg-item"><div class="leg-dot" style="background:rgba(0,232,120,.25);border:1px solid var(--green)"></div><span>Navire intact (non coulé)</span></div>
-      <div class="leg-item"><div class="leg-dot" style="background:rgba(255,68,85,.55);border:1px solid var(--red)"></div><span>Navire coulé 💀</span></div>
-      <div class="leg-item"><div class="leg-dot" style="background:rgba(200,136,255,.28);border:1px solid #cc88ff"></div><span>Case Bonus</span></div>
-      <div class="leg-item"><div class="leg-dot" style="background:rgba(255,68,85,.28);border:1px solid #ff4455"></div><span>Case Malus</span></div>
-    </div></div></div>`;
-    el.innerHTML=h;
-    return;
-  }
 
-  const tiradesRecues = oppHistory.length;
+      // Shot entry form
+      const selTeam = _tourSel[def.id] || a;
+      h += `<div class="shot-entry">
+        <div class="stitle" style="margin-bottom:8px">Saisir les tirs (admin)</div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Équipe</div>
+            <select onchange="_tourSel['${def.id}']=parseInt(this.value);renderTab('tour')">
+              ${[a,b].map(tid=>`<option value="${tid}" ${tid===selTeam?'selected':''}>${esc(getTeam(tid).name)}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div style="font-size:.72rem;color:var(--text3);margin-bottom:6px">3 coordonnées (ex: A1, J10)</div>
+        <div class="shot-inputs">
+          ${[0,1,2].map(i=>`<div class="shot-coord">
+            <select id="selC_${def.id}_${i}">
+              ${COLS.map(c=>`<option>${c}</option>`).join('')}
+            </select>
+            <select id="selR_${def.id}_${i}">
+              ${ROWS.map(r=>`<option>${r}</option>`).join('')}
+            </select>
+          </div>`).join('')}
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-cyan btn-sm" onclick="adminSubmitShots('${def.id}')">📥 Enregistrer</button>
+        </div>
+        <div id="shotAlert_${def.id}" class="alert"></div>
+      </div>
 
-  let h = `<p class="stitle">Tirs de ${esc(opp?opp.name:"l'adversaire")} sur ma grille</p>
-    <div class="suivi-wrap">
-      <div class="suivi-layout">
-        <div class="suivi-grid-wrap">
-          <div class="battle-grid">`;
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-gold ${canVal?'':'disabled'}" ${canVal?'':'disabled'} onclick="adminValidateDuel('${def.id}')">
+          ✓ Valider le tour du ${def.name}
+        </button>
+        ${!bothIn ? `<span style="font-size:.75rem;color:var(--text3)">En attente des 2 équipes</span>` : ''}
+      </div>`;
+    }
 
-  h+=`<div class="gl"></div>`;
-  COLS.forEach(c=>{h+=`<div class="gl">${c}</div>`;});
-  ROWS.forEach((row,ri)=>{
-    h+=`<div class="gl">${row}</div>`;
-    COLS.forEach((col,ci)=>{
-      const co=col+row;
-      const cls=defCellClass(myTeam,co);
-      const icon=defCellIcon(myTeam,co);
-      h+=`<div class="gc ${cls}" title="${co}">${icon}</div>`;
-    });
+    h += `</div></div>`;
   });
 
-  h+=`</div></div>
-    <div class="suivi-legend">
-      <p class="stitle" style="margin-bottom:8px">Légende</p>
-      <div class="leg-item"><div class="leg-dot" style="background:rgba(240,192,64,.18);border:1px solid rgba(240,192,64,.4)"></div><span>Mon navire (intact)</span></div>
-      <div class="leg-item"><div class="leg-dot" style="background:rgba(42,74,106,.55);border:1px solid var(--muted)"></div><span>Coup dans l'eau</span></div>
-      <div class="leg-item"><div class="leg-dot" style="background:rgba(255,136,0,.45);border:1px solid #ff8800"></div><span>Mon navire touché</span></div>
-      <div class="leg-item"><div class="leg-dot" style="background:rgba(255,68,85,.55);border:1px solid var(--red)"></div><span>Mon navire coulé</span></div>
-      <div class="leg-item"><div class="leg-dot" style="background:rgba(200,136,255,.45);border:1px solid var(--purple)"></div><span>Case Bonus</span></div>
-      <div class="leg-item"><div class="leg-dot" style="background:rgba(255,68,85,.35);border:1px solid var(--red)"></div><span>Case Malus</span></div>
-      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
-        <p style="font-size:.72rem;color:var(--text2);margin-bottom:5px">Tirs reçus : <strong style="color:var(--red)">${tiradesRecues}</strong></p>
-        <p style="font-size:.72rem;color:var(--text2)">Navires coulés : <strong style="color:var(--red)">${SHIP_KEYS.filter(k=>isShipSunk(myTeam,k)).length} / 5</strong></p>
-      </div>
-    </div>
-  </div></div>`;
-
-  // Historique des tirs adversaires reçus
-  if(oppHistory.length) {
-    h+=`<div style="margin-top:16px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:15px">
-      <p class="stitle">Historique des tirs reçus</p>
-      <div class="results-list">`;
-    [...oppHistory].reverse().slice(0,20).forEach(r=>{
-      const cls=`r-${r.result==='sunk'?'sunk':r.result==='hit'?'hit':r.result==='water'?'water':r.result==='bonus'?'bonus':r.result==='malus'?'malus':'water'}`;
-      // Nom du navire uniquement si coulé
-      const label = r.result==='sunk'
-        ? `💀 Coulé ! ${SHIPS[r.shipKey]?.name||r.shipKey}`
-        : fmtResult(r, false);
-      h+=`<div class="res-line">
-        <span style="color:var(--muted);font-size:.7rem;min-width:45px">T${r.turn}</span>
-        <span class="res-coord">${r.coord}</span>
-        <span class="${cls}">${label}</span>
-      </div>`;
-    });
-    h+=`</div></div>`;
-  }
-
-  el.innerHTML=h;
+  el.innerHTML = h || `<div class="card"><p style="color:var(--text3)">Aucun duel actif.</p></div>`;
 }
 
-/* ════════════════════════════════════════
-   ██  COMMUN — CLASSEMENT
-════════════════════════════════════════ */
+function adminSubmitShots(duelId) {
+  const def = getDuelDefById(duelId);
+  const selTeam = _tourSel[duelId] || def.teams[0];
+  const coords = [];
+  const seen = new Set();
+  let err = '';
+
+  for (let i=0; i<3; i++) {
+    const c = (document.getElementById(`selC_${duelId}_${i}`)?.value||'').trim();
+    const r = (document.getElementById(`selR_${duelId}_${i}`)?.value||'').trim();
+    const coord = c + r;
+    if (!coord || coord==='undefined') { err='Coordonnée invalide'; break; }
+    if (seen.has(coord)) { err=`Doublon : ${coord}`; break; }
+    const alreadyHit = S.shotHistory[selTeam]?.some(h=>h.coord===coord);
+    if (alreadyHit) { err=`${coord} déjà tiré`; break; }
+    seen.add(coord); coords.push(coord);
+  }
+
+  const alertEl = document.getElementById(`shotAlert_${duelId}`);
+  if (err) {
+    if (alertEl) { alertEl.className='alert err show'; alertEl.textContent=err; }
+    return;
+  }
+  submitShots(selTeam, coords);
+  if (alertEl) { alertEl.className='alert ok show'; alertEl.textContent=`✓ Tirs de ${getTeam(selTeam).name} enregistrés : ${coords.join(', ')}`; }
+  setTimeout(()=>renderTab('tour'), 600);
+}
+
+function cancelShotsAdmin(teamId) {
+  cancelShots(teamId);
+  renderTab('tour');
+}
+
+function adminValidateDuel(duelId) {
+  if (!duelCanValidate(duelId)) return;
+  processDuelTurn(duelId);
+  renderTab('tour');
+}
+
+/* ═══════════════════════════════════════════
+   CLASSEMENT (admin + captain)
+═══════════════════════════════════════════ */
 function renderClassement() {
   const el = document.getElementById('tab-classement');
   if (!el) return;
-  const active = S.teams.filter(t=>t.active).sort((a,b)=>b.score-a.score);
-  if(!active.length){ el.innerHTML=`<div class="alert a-warn">La partie n'est pas encore démarrée.</div>`; return; }
+  const myTeamId = ROLE.type==='captain' ? ROLE.teamId : null;
+  const myDuelId = myTeamId ? getDuelId(myTeamId) : null;
 
-  const isCaptain = ROLE.type==='captain';
-  const myId  = isCaptain ? ROLE.teamId : null;
-  const myOpp = isCaptain ? oppId(ROLE.teamId) : null;
-
-  // Légende captain
-  let legendHtml = '';
-  if (isCaptain) {
-    legendHtml = `<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;font-size:.78rem">
-      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:rgba(0,212,255,.18);border:2px solid var(--cyan);display:inline-block"></span> Mon équipe</span>
-      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:rgba(255,68,85,.12);border:2px solid var(--red);display:inline-block"></span> Mon adversaire</span>
+  // ── Duel status cards ──
+  let duelsHtml = `<div class="stitle" style="margin-bottom:8px">Statut des duels</div>
+    <div class="duel-status-grid">`;
+  DUELS_DEF.forEach(def => {
+    const ds = getDuelState(def.id);
+    const [a,b] = def.teams;
+    const ta = getTeam(a), tb = getTeam(b);
+    const isMy = def.id === myDuelId;
+    const statusLabel = {ready:'Prête',battle:'Bataille en cours',finished:'Combat terminé'}[ds.status];
+    const bonusTeam = S.globalBonus && (a===S.globalBonus||b===S.globalBonus) ? getTeam(S.globalBonus) : null;
+    duelsHtml += `<div class="duel-status-card ${isMy?'my-duel':''}">
+      <div class="duel-label">${def.name}</div>
+      <div class="duel-turn-num">${ds.turn>1?ds.turn-1:0}</div>
+      <div style="font-size:.7rem;color:var(--text3);margin-bottom:6px">tour${(ds.turn-1)>1?'s':''} joué${(ds.turn-1)>1?'s':''}</div>
+      <span class="status-badge ${ds.status}">${statusLabel}</span>
+      <div style="margin-top:5px;font-size:.72rem;color:var(--text2)">${esc(ta.name)} vs ${esc(tb.name)}</div>
+      ${bonusTeam ? `<div class="bonus-global" style="margin-top:5px">⭐ 1er coulage : ${esc(bonusTeam.name)}</div>` : ''}
     </div>`;
-  }
+  });
+  duelsHtml += `</div>`;
 
-  let h = `<p class="stitle">Classement — Tour ${S.started?S.turn:1}</p>${legendHtml}
-    <div class="ranking-wrap"><table><thead><tr>
-      <th>#</th><th>Équipe</th><th>Capitaine</th><th>Score</th><th>Coulés</th><th>Perdus</th><th style="color:var(--purple)">Bonus</th><th style="color:var(--red)">Malus</th>
-    </tr></thead><tbody>`;
+  // ── Global ranking ──
+  const sorted = [...S.teams].filter(t=>t.active).sort((a,b)=>b.score-a.score);
+  let rankHtml = `<div class="card"><div class="card-title">🏆 Classement Général</div><div style="overflow-x:auto">
+    <table class="rank-table">
+      <thead><tr>
+        <th>Rg</th><th style="text-align:left">Équipe</th><th>Duel</th>
+        <th>Pts</th><th>Tour</th><th>Coulés</th><th>Touchés</th><th>Bonus</th><th>Malus</th>
+        ${S.globalBonus!==null?'<th>⭐</th>':''}
+      </tr></thead><tbody>`;
 
-  active.forEach((team,i)=>{
-    const rank=i+1, rk=rank<=3?`rk-${rank}`:'';
-    const opp=getTeam(oppId(team.id));
-    const sunkBy=opp?SHIP_KEYS.filter(k=>isShipSunk(opp,k)).length:0;
-    const sunkOf=SHIP_KEYS.filter(k=>isShipSunk(team,k)).length;
-    const isMe  = isCaptain && team.id===myId;
-    const isOpp = isCaptain && team.id===myOpp;
-    const teamHistory = S.shotHistory[team.id]||[];
-    const bonusTouches = teamHistory.filter(r=>r.result==='bonus').length;
-    const malusTouches = teamHistory.filter(r=>r.result==='malus').length;
-
-    // Style de ligne
-    let rowStyle = '';
-    let nameSuffix = '';
-    if (isMe) {
-      rowStyle = 'background:rgba(0,212,255,.1);border-left:3px solid var(--cyan)';
-      nameSuffix = `<span style="font-size:.68rem;color:var(--cyan);font-weight:700;margin-left:6px">◀ MOI</span>`;
-    } else if (isOpp) {
-      rowStyle = 'background:rgba(255,68,85,.08);border-left:3px solid var(--red)';
-      nameSuffix = `<span style="font-size:.68rem;color:var(--red);font-weight:700;margin-left:6px">⚔ ADV</span>`;
-    }
-
-    h+=`<tr style="${rowStyle}">
-      <td><span class="rk-num ${rk}">${rank}</span></td>
-      <td><strong>${esc(team.name)}</strong>${nameSuffix}</td>
-      <td style="color:var(--text2)">${esc(team.captain||'—')}</td>
-      <td><span class="score-val" style="${isMe?'color:var(--cyan)':isOpp?'color:var(--red)':''}">${team.score}</span></td>
-      <td style="color:var(--green)">${sunkBy} / 5</td>
-      <td style="color:var(--red)">${sunkOf} / 5</td>
-      <td style="color:var(--purple);text-align:center">${bonusTouches>0?'+'+bonusTouches*2+' pts ('+bonusTouches+'×)':'—'}</td>
-      <td style="color:var(--red);text-align:center">${malusTouches>0?'-'+malusTouches*2+' pts ('+malusTouches+'×)':'—'}</td>
+  sorted.forEach((team, i) => {
+    const isMe  = team.id === myTeamId;
+    const isOpp = myTeamId && team.id === oppId(myTeamId);
+    const hist  = S.shotHistory[team.id] || [];
+    const sunk  = hist.filter(h=>h.result==='sunk').length;
+    const hit   = hist.filter(h=>h.result==='hit').length;
+    const bonus = hist.filter(h=>h.result==='bonus').length;
+    const malus = hist.filter(h=>h.result==='malus').length;
+    const duelDef = getDuelDef(team.id);
+    const ds = getDuelState(getDuelId(team.id));
+    const tourAffiche = ds.turn > 1 ? ds.turn-1 : '—';
+    const isGlobalBonus = S.globalBonus === team.id;
+    rankHtml += `<tr class="${isMe?'my-team':isOpp?'opp-team':''}">
+      <td><span class="rank-num">#${i+1}</span></td>
+      <td style="text-align:left;font-weight:700">${esc(team.name)}</td>
+      <td><span class="turn-chip">${duelDef?.name||'?'}</span></td>
+      <td><span class="pts">${team.score}</span></td>
+      <td><span class="turn-chip">${tourAffiche}</span></td>
+      <td style="color:var(--red)">${sunk}</td>
+      <td style="color:var(--orange)">${hit}</td>
+      <td style="color:var(--purple)">${bonus}</td>
+      <td style="color:var(--red)">${malus}</td>
+      ${S.globalBonus!==null?`<td>${isGlobalBonus?'⭐':''}</td>`:''}
     </tr>`;
   });
+  rankHtml += `</tbody></table></div></div>`;
 
-  h+=`</tbody></table></div>`;
+  el.innerHTML = duelsHtml + rankHtml;
+}
 
-  // Encart duel pour captain
-  if (isCaptain) {
-    const myTeam  = getTeam(myId);
-    const oppTeam = getTeam(myOpp);
-    if (myTeam && oppTeam) {
-      const myPos  = active.findIndex(t=>t.id===myId)+1;
-      const oppPos = active.findIndex(t=>t.id===myOpp)+1;
-      const diff   = myTeam.score - oppTeam.score;
-      h+=`<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-top:16px;
-          background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px">
-        <div style="text-align:center">
-          <div style="font-family:'Orbitron',monospace;font-size:.62rem;color:var(--cyan);letter-spacing:2px;margin-bottom:5px">MON ÉQUIPE</div>
-          <div style="font-weight:700;font-size:1rem;color:var(--text)">${esc(myTeam.name)}</div>
-          <div style="font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;color:var(--cyan)">${myTeam.score}</div>
-          <div style="font-size:.72rem;color:var(--text2)">pts · #${myPos}</div>
-        </div>
-        <div style="text-align:center;color:var(--muted);font-family:'Orbitron',monospace;font-size:.7rem">
-          <div style="font-size:1.2rem;margin-bottom:4px">⚔</div>
-          <div style="font-size:.9rem;color:${diff>0?'var(--green)':diff<0?'var(--red)':'var(--muted)'}">
-            ${diff>0?'+'+diff:diff===0?'=':diff}
-          </div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-family:'Orbitron',monospace;font-size:.62rem;color:var(--red);letter-spacing:2px;margin-bottom:5px">ADVERSAIRE</div>
-          <div style="font-weight:700;font-size:1rem;color:var(--text)">${esc(oppTeam.name)}</div>
-          <div style="font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;color:var(--red)">${oppTeam.score}</div>
-          <div style="font-size:.72rem;color:var(--text2)">pts · #${oppPos}</div>
-        </div>
-      </div>`;
-    }
+/* ═══════════════════════════════════════════
+   ADMIN — FLOTTES
+═══════════════════════════════════════════ */
+function renderFlottes() {
+  const el = document.getElementById('tab-flottes');
+  let h = `<div class="stitle" style="margin-bottom:8px">État des flottes</div><div class="fleets-wrap">`;
+
+  S.teams.filter(t=>t.active).forEach(team => {
+    const duelId = getDuelId(team.id);
+    h += `<div class="fleet-card">
+      <div class="fleet-name">${esc(team.name)}</div>
+      <div style="font-size:.7rem;color:var(--text3);margin-bottom:8px">vs ${esc(getTeam(oppId(team.id))?.name||'?')}</div>`;
+    SHIP_KEYS.forEach(key => {
+      const ship = SHIPS[key];
+      const cells = team.shipCells[key] || [];
+      if (!cells.length) { h += `<div class="ship-bar"><span>${ship.icon}</span><span style="color:var(--text3);font-size:.75rem">Non placé</span></div>`; return; }
+      const allSunkShip = cells.every(c => team.hitGrid[c]);
+      h += `<div class="ship-bar">
+        <span title="${ship.name}">${ship.icon}</span>
+        <div class="ship-bar-cells">`;
+      cells.forEach(c => {
+        const cls = allSunkShip ? 'sunk-c' : team.hitGrid[c] ? 'hit' : 'ok';
+        h += `<div class="ship-cell ${cls}" title="${c}"></div>`;
+      });
+      h += `</div>${allSunkShip?'<span style="color:var(--red);font-size:.72rem">💀</span>':''}</div>`;
+    });
+    h += `</div>`;
+  });
+  h += `</div>`;
+  el.innerHTML = h;
+}
+
+/* ═══════════════════════════════════════════
+   ADMIN — HISTORIQUE
+═══════════════════════════════════════════ */
+function renderHistorique() {
+  const el = document.getElementById('tab-historique');
+  let entries = [];
+
+  S.teams.filter(t=>t.active).forEach(team => {
+    (S.shotHistory[team.id]||[]).forEach(shot => {
+      entries.push({ ...shot, attackerName: team.name, defenderName: getTeam(oppId(team.id))?.name||'?' });
+    });
+  });
+
+  if (!entries.length) {
+    el.innerHTML = `<div class="card"><p style="color:var(--text3)">Aucun tir enregistré.</p></div>`;
+    return;
   }
 
-  h+=`<div class="bareme"><p class="stitle">Barème des points</p><div class="bareme-grid">`;
-  Object.entries(SHIPS).forEach(([k,s])=>{
-    h+=`<div class="bareme-item"><div class="b-dot" style="background:${s.color}"></div><span>${s.name} coulé</span><span class="b-pts" style="color:var(--cyan)">${s.points} pts</span></div>`;
+  // Group by duelId + turn
+  const groups = {};
+  entries.forEach(e => {
+    const key = `${e.duelId}-${e.turn}`;
+    if (!groups[key]) groups[key] = { duelId:e.duelId, turn:e.turn, shots:[] };
+    groups[key].shots.push(e);
   });
-  h+=`<div class="bareme-item"><div class="b-dot" style="background:#cc88ff"></div><span>Case Bonus</span><span class="b-pts" style="color:var(--green)">+2 pts</span></div>
-    <div class="bareme-item"><div class="b-dot" style="background:#ff4455"></div><span>Case Malus</span><span class="b-pts" style="color:var(--red)">-2 pts</span></div>
-  </div></div>`;
+
+  const sortedGroups = Object.values(groups).sort((a,b)=>a.duelId.localeCompare(b.duelId)||b.turn-a.turn);
+
+  let h = `<div class="card"><div class="card-title">📋 Historique des tirs</div><div class="hlog">`;
+  sortedGroups.forEach(g => {
+    h += `<div class="hlog-entry">
+      <div class="hlog-turn">Duel ${g.duelId} — Tour ${g.turn}</div>`;
+    g.shots.forEach(s => {
+      const resText = {water:'🌊 Eau',hit:`💥 Touché (${SHIPS[s.shipKey]?.name||'?'})`,sunk:`💀 Coulé : ${SHIPS[s.shipKey]?.name||'?'}`,bonus:'⭐ Bonus',malus:'💣 Malus'}[s.result]||s.result;
+      const col = {water:'var(--text3)',hit:'var(--orange)',sunk:'var(--red)',bonus:'var(--purple)',malus:'var(--red)'}[s.result]||'var(--text)';
+      h += `<div style="font-size:.8rem;padding:2px 0">
+        <span style="color:var(--text2)">${esc(s.attackerName)}</span> → <span style="color:${col}">${s.coord} : ${resText}</span>
+        ${s.points?`<span style="color:var(--gold);font-size:.72rem"> (+${s.points}pts)</span>`:''}
+      </div>`;
+    });
+    h += `</div>`;
+  });
+  h += `</div>
+
+  <div style="margin-top:12px">
+    <button class="btn btn-danger btn-sm" onclick="undoLastDuelTurn()">↩ Annuler le dernier tour d'un duel</button>
+  </div>
+  </div>`;
+
+  // Duel selector for undo
+  h += `<div class="card" id="undoPanel" style="display:none">
+    <div class="stitle">Choisir le duel</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${DUELS_DEF.map(d=>`<button class="btn btn-danger btn-sm" onclick="undoDuel('${d.id}')">Duel ${d.id}</button>`).join('')}
+    </div>
+  </div>`;
 
   el.innerHTML = h;
 }
 
-/* ════════════════════════════════════════
-   ██  COMMUN — FLOTTES
-════════════════════════════════════════ */
-function renderFlottes() {
-  const el = document.getElementById('tab-flottes');
-  const active = S.teams.filter(t=>t.active);
-  if(!active.length){ el.innerHTML=`<div class="empty">Aucune équipe active</div>`; return; }
+function undoLastDuelTurn() {
+  const panel = document.getElementById('undoPanel');
+  if (panel) panel.style.display = panel.style.display==='none' ? 'block' : 'none';
+}
 
-  let h = `<p class="stitle">État des flottes</p><div class="flottes-grid">`;
-  active.forEach(team=>{
-    h+=`<div class="flotte-card">
-      <div class="fc-title">${esc(team.name)}${team.captain?` — ${esc(team.captain)}`:''}</div>`;
-    SHIP_KEYS.forEach(key=>{
-      const ship=SHIPS[key], cells=team.shipCells[key]||[];
-      if(!cells.length){
-        h+=`<div class="ship-row"><span class="sr-name" style="color:var(--muted)">${ship.name}</span><span style="font-size:.7rem;color:var(--muted)">Non placé</span></div>`;
-        return;
-      }
-      const sunk=isShipSunk(team,key), hits=cells.filter(c=>team.hitGrid[c]).length;
-      h+=`<div class="ship-row">
-        <span class="sr-name ${sunk?'sunk':''}">${ship.name}</span>
-        <div class="sr-cells">${cells.map(c=>{
-          const h2=team.hitGrid[c];
-          return `<div class="sr-cell ${h2?(sunk?'sunk':'hit'):'ok'}" style="${h2?`background:${ship.color};`:''}border-color:${ship.color}"></div>`;
-        }).join('')}</div>
-        ${sunk?'<span class="sunk-badge">COULÉ</span>':hits>0?`<span class="sr-count">${hits}/${cells.length}</span>`:''}
-      </div>`;
+function undoDuel(duelId) {
+  const ds = getDuelState(duelId);
+  const def = getDuelDefById(duelId);
+  if (!ds || !def) return;
+  if (ds.turn <= 1) { alert('Aucun tour à annuler pour ce duel.'); return; }
+  if (!confirm(`Annuler le tour ${ds.turn-1} du Duel ${duelId} ?`)) return;
+
+  const prevTurn = ds.turn - 1;
+  const [a, b] = def.teams;
+
+  [a,b].forEach(tid => {
+    const hist = S.shotHistory[tid] || [];
+    const toRemove = hist.filter(h=>h.turn===prevTurn && h.duelId===duelId);
+    toRemove.forEach(h => {
+      getTeam(tid).score -= h.points || 0;
+      const defTeam = getTeam(oppId(tid));
+      if (defTeam) delete defTeam.hitGrid[h.coord];
     });
-    if(team.bonusCells.length||team.malusCells.length){
-      h+=`<div class="fc-special">`;
-      team.bonusCells.forEach(c=>{ h+=`<span style="margin-right:10px">⭐ ${c}: ${team.hitGrid[c]?'<span style="color:var(--purple)">Activé</span>':'Intact'}</span>`; });
-      team.malusCells.forEach(c=>{ h+=`<span style="margin-right:10px">💣 ${c}: ${team.hitGrid[c]?'<span style="color:var(--red)">Activé</span>':'Intact'}</span>`; });
-      h+=`</div>`;
-    }
-    h+=`</div>`;
+    S.shotHistory[tid] = hist.filter(h=>!(h.turn===prevTurn && h.duelId===duelId));
   });
-  h+=`</div>`;
+
+  // Undo global bonus if it was awarded this turn
+  if (S.globalBonus !== null) {
+    const bonusTeam = getTeam(S.globalBonus);
+    if (bonusTeam && getDuelId(S.globalBonus)===duelId) {
+      bonusTeam.score -= 5;
+      S.globalBonus = null;
+    }
+  }
+
+  ds.turn--;
+  if (ds.turn === 1) ds.status = 'ready';
+  else ds.status = 'battle';
+  ds.winner = null;
+
+  save(); renderTab('historique');
+}
+
+/* ═══════════════════════════════════════════
+   CAPTAIN — GRID PLACEMENT
+═══════════════════════════════════════════ */
+let _tool = 'PA';
+let _orient = 'H';
+let _bonusCount = 0;
+let _malusCount = 0;
+
+function renderCaptainGrid() {
+  const el = document.getElementById('tab-config');
+  const team = getTeam(ROLE.teamId);
+  if (!team) { el.innerHTML='<p style="color:var(--red)">Équipe introuvable</p>'; return; }
+
+  if (S.started) {
+    el.innerHTML = `<div class="card"><p style="color:var(--text2)">La partie a démarré — placement verrouillé.</p></div>`;
+    return;
+  }
+
+  const complete = isComplete(team);
+  const placedCount = SHIP_KEYS.filter(k=>team.shipCells[k]&&team.shipCells[k].length>0).length;
+  _bonusCount = team.bonusCells.length;
+  _malusCount = team.malusCells.length;
+
+  let h = `<div class="card">
+    <div class="card-title">⚓ Placement de la flotte — ${esc(team.name)}</div>
+    ${complete?'<div class="alert ok show" style="margin-bottom:8px">✓ Flotte complète et prête au combat !</div>':''}
+    <div class="stitle" style="margin-bottom:6px">Sélection de l'outil</div>
+    <div class="ship-palette">`;
+
+  SHIP_KEYS.forEach(key => {
+    const ship = SHIPS[key];
+    const placed = !!(team.shipCells[key]&&team.shipCells[key].length>0);
+    const active = _tool===key;
+    h += `<div class="ship-btn ${active?'active':''}" style="color:${ship.color};border-color:${ship.color}${placed?';opacity:.7':''}" onclick="_tool='${key}';renderTab('config')">
+      ${ship.icon} ${ship.name} (${ship.size}) ${placed?'✓':''}
+    </div>`;
+  });
+
+  // Bonus/Malus tools
+  h += `<div class="ship-btn ${_tool==='bonus'?'active':''}" style="color:var(--purple);border-color:var(--purple)" onclick="_tool='bonus';renderTab('config')">
+    ⭐ Bonus (${_bonusCount}/2)</div>
+  <div class="ship-btn ${_tool==='malus'?'active':''}" style="color:var(--red);border-color:var(--red)" onclick="_tool='malus';renderTab('config')">
+    💣 Malus (${_malusCount}/2)</div>
+  <div class="orient-btn ${_orient==='H'?'active':''}" onclick="_orient='H';renderTab('config')">H</div>
+  <div class="orient-btn ${_orient==='V'?'active':''}" onclick="_orient='V';renderTab('config')">V</div>
+  </div>`;
+
+  // Grid
+  h += `<div class="grid-wrap"><div class="game-grid">
+    <div class="gc-header"></div>`;
+  COLS.forEach(c=>h+=`<div class="gc-header">${c}</div>`);
+  ROWS.forEach(ri=>{
+    h+=`<div class="gc-header">${ri}</div>`;
+    COLS.forEach((col,ci)=>{
+      const coord=col+ri;
+      let cls='gc';
+      const ship=team.grid[coord];
+      if(ship && SHIP_KEYS.includes(ship)) cls+=' placed-'+ship;
+      else if(ship==='bonus') cls+=' placed-bonus';
+      else if(ship==='malus') cls+=' placed-malus';
+      const icon=ship?{PA:'✈️',CU:'⚔️',CR:'🚢',SM:'🤿',TP:'🚤',bonus:'⭐',malus:'💣'}[ship]||'':'';
+      h+=`<div class="${cls}" onclick="placeCell('${coord}')" title="${coord}">${icon}</div>`;
+    });
+  });
+  h+=`</div></div>`;
+
+  h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+    <button class="btn btn-danger btn-sm" onclick="clearGrid()">🗑️ Effacer tout</button>
+    <button class="btn btn-outline btn-sm" onclick="clearShip()">Effacer navire sélectionné</button>
+  </div>`;
+
+  h+=`</div>`; // card
   el.innerHTML=h;
 }
 
-/* ════════════════════════════════════════
+function placeCell(coord) {
+  const team=getTeam(ROLE.teamId); if(!team) return;
+  if(S.started) return;
+
+  if(_tool==='bonus'){
+    if(team.bonusCells.includes(coord)){team.bonusCells=team.bonusCells.filter(c=>c!==coord);delete team.grid[coord];}
+    else if(team.bonusCells.length<2){team.bonusCells.push(coord);team.grid[coord]='bonus';}
+    save();renderTab('config');return;
+  }
+  if(_tool==='malus'){
+    if(team.malusCells.includes(coord)){team.malusCells=team.malusCells.filter(c=>c!==coord);delete team.grid[coord];}
+    else if(team.malusCells.length<2){team.malusCells.push(coord);team.grid[coord]='malus';}
+    save();renderTab('config');return;
+  }
+
+  const ship=SHIPS[_tool]; if(!ship) return;
+  // Try to place ship starting at coord
+  const ci=COLS.indexOf(coord[0]);
+  const ri=ROWS.indexOf(parseInt(coord.slice(1)));
+  if(ci<0||ri<0) return;
+
+  const cells=[];
+  for(let i=0;i<ship.size;i++){
+    if(_orient==='H'){if(ci+i>=10)return;cells.push(COLS[ci+i]+ROWS[ri]);}
+    else{if(ri+i>=10)return;cells.push(COLS[ci]+ROWS[ri+i]);}
+  }
+  // Check conflicts
+  for(const c of cells){
+    const existing=team.grid[c];
+    if(existing&&existing!==_tool&&existing!=='bonus'&&existing!=='malus') return;
+  }
+  // Remove old placement
+  if(team.shipCells[_tool]){team.shipCells[_tool].forEach(c=>{if(!team.bonusCells.includes(c)&&!team.malusCells.includes(c))delete team.grid[c];});}
+  // Place new
+  team.shipCells[_tool]=cells;
+  cells.forEach(c=>team.grid[c]=_tool);
+  save();renderTab('config');
+}
+
+function clearGrid() {
+  const team=getTeam(ROLE.teamId); if(!team) return;
+  team.grid={}; team.shipCells={}; team.bonusCells=[]; team.malusCells=[];
+  _bonusCount=0;_malusCount=0;
+  save();renderTab('config');
+}
+
+function clearShip() {
+  const team=getTeam(ROLE.teamId); if(!team) return;
+  if(_tool==='bonus'){team.bonusCells.forEach(c=>delete team.grid[c]);team.bonusCells=[];}
+  else if(_tool==='malus'){team.malusCells.forEach(c=>delete team.grid[c]);team.malusCells=[];}
+  else{if(team.shipCells[_tool]){team.shipCells[_tool].forEach(c=>delete team.grid[c]);delete team.shipCells[_tool];}}
+  save();renderTab('config');
+}
+
+/* ═══════════════════════════════════════════
+   CAPTAIN — SAISIE TIRS
+═══════════════════════════════════════════ */
+function renderCaptainSaisie() {
+  const el = document.getElementById('tab-saisie');
+  const teamId = ROLE.teamId;
+  const team = getTeam(teamId);
+  const duelId = getDuelId(teamId);
+  const ds = getDuelState(duelId);
+
+  if (!S.started) {
+    el.innerHTML=`<div class="card"><p style="color:var(--text3)">En attente du démarrage par l'admin.</p></div>`;
+    return;
+  }
+  if (ds.status==='finished') {
+    el.innerHTML=`<div class="card"><p style="color:var(--gold)">🏁 Le Duel ${duelId} est terminé.</p></div>`;
+    return;
+  }
+
+  const already = S.pendingShots[teamId];
+  const alreadyHit = new Set((S.shotHistory[teamId]||[]).map(h=>h.coord));
+
+  let h = `<div class="card">
+    <div class="card-title">🎯 Saisir vos tirs — Duel ${duelId} · Tour ${ds.turn}</div>`;
+
+  if (already) {
+    h += `<div class="alert ok show">✓ Tirs soumis : ${already.join(' · ')}<br>En attente de validation par l'admin.</div>
+      <button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="captainCancelShots()">✗ Annuler ma soumission</button>`;
+  } else {
+    h += `<div class="stitle" style="margin-bottom:6px">3 tirs à saisir (Duel ${duelId} — Tour ${ds.turn})</div>
+      <div class="shot-inputs">
+        ${[0,1,2].map(i=>`<div class="shot-coord">
+          <select id="capC${i}">${COLS.map(c=>`<option>${c}</option>`).join('')}</select>
+          <select id="capR${i}">${ROWS.map(r=>`<option>${r}</option>`).join('')}</select>
+        </div>`).join('')}
+      </div>
+      <div id="capAlert" class="alert"></div>
+      <button class="btn btn-gold" style="margin-top:8px" onclick="captainSubmitShots()">📥 Soumettre mes tirs</button>`;
+  }
+
+  h += `</div>`;
+
+  // Suivi grid (shots fired)
+  const hist = S.shotHistory[teamId] || [];
+  if (hist.length) {
+    h += `<div class="card"><div class="card-title" style="font-size:.9rem">📡 Mes tirs précédents</div>
+      <div class="grid-wrap"><div class="game-grid">
+        <div class="gc-header"></div>`;
+    COLS.forEach(c=>h+=`<div class="gc-header">${c}</div>`);
+    ROWS.forEach(ri=>{
+      h+=`<div class="gc-header">${ri}</div>`;
+      COLS.forEach((col)=>{
+        const coord=col+ri;
+        const shot=hist.find(h=>h.coord===coord);
+        let cls='gc',icon='';
+        if(shot){
+          if(shot.result==='water'){cls+=' sv-water';icon='🌊';}
+          else if(shot.result==='hit'||shot.result==='sunk'){
+            const sunk=hist.some(h=>h.shipKey===shot.shipKey&&h.result==='sunk');
+            cls+=sunk?' sv-sunk':' sv-hit';icon=sunk?'💀':'💥';
+          }
+          else if(shot.result==='bonus'){cls+=' sv-bonus';icon='⭐';}
+          else if(shot.result==='malus'){cls+=' sv-malus';icon='💣';}
+        }
+        h+=`<div class="${cls}" title="${coord}">${icon}</div>`;
+      });
+    });
+    h+=`</div></div></div></div>`;
+  }
+
+  el.innerHTML=h;
+}
+
+function captainSubmitShots() {
+  const teamId=ROLE.teamId;
+  const coords=[],seen=new Set();
+  const alreadyHit=new Set((S.shotHistory[teamId]||[]).map(h=>h.coord));
+  let err='';
+
+  for(let i=0;i<3;i++){
+    const c=(document.getElementById(`capC${i}`)?.value||'').trim();
+    const r=(document.getElementById(`capR${i}`)?.value||'').trim();
+    const coord=c+r;
+    if(seen.has(coord)){err=`Doublon : ${coord}`;break;}
+    if(alreadyHit.has(coord)){err=`${coord} déjà tiré`;break;}
+    seen.add(coord);coords.push(coord);
+  }
+
+  const alertEl=document.getElementById('capAlert');
+  if(err){if(alertEl){alertEl.className='alert err show';alertEl.textContent=err;}return;}
+  submitShots(teamId,coords);
+  renderTab('saisie');
+}
+
+function captainCancelShots() {
+  cancelShots(ROLE.teamId);
+  renderTab('saisie');
+}
+
+/* ═══════════════════════════════════════════
+   CAPTAIN — SUIVI (grille reçue)
+═══════════════════════════════════════════ */
+function renderCaptainSuivi() {
+  const el=document.getElementById('tab-suivi');
+  const teamId=ROLE.teamId;
+  const team=getTeam(teamId);
+  if(!team){el.innerHTML='<p>?</p>';return;}
+
+  const duelId=getDuelId(teamId);
+  const ds=getDuelState(duelId);
+
+  // Tirs reçus
+  const oppHistory=S.shotHistory[oppId(teamId)]||[];
+
+  let h=`<div class="card">
+    <div class="card-title">📡 Ma défense — Duel ${duelId} · Tour ${ds.turn}</div>
+    <div style="font-size:.8rem;color:var(--text2);margin-bottom:8px">Tirs reçus : ${oppHistory.length} (${oppHistory.filter(h=>h.result!=='water').length} touché(s))</div>`;
+
+  // My grid with hits shown
+  h+=`<div class="grid-wrap"><div class="game-grid">
+    <div class="gc-header"></div>`;
+  COLS.forEach(c=>h+=`<div class="gc-header">${c}</div>`);
+  ROWS.forEach(ri=>{
+    h+=`<div class="gc-header">${ri}</div>`;
+    COLS.forEach((col)=>{
+      const coord=col+ri;
+      const shipKey=team.grid[coord];
+      const isHit=team.hitGrid[coord];
+      let cls='gc',icon='';
+      if(isHit){
+        if(shipKey&&SHIP_KEYS.includes(shipKey)){
+          const allHit=team.shipCells[shipKey]?.every(c=>team.hitGrid[c]);
+          cls+=allHit?' sunk':' hit';icon=allHit?'💀':'💥';
+        } else if(shipKey==='bonus'){cls+=' sv-bonus';icon='⭐';}
+        else if(shipKey==='malus'){cls+=' sv-malus';icon='💣';}
+        else{cls+=' miss';icon='🌊';}
+      } else if(shipKey&&SHIP_KEYS.includes(shipKey)){
+        cls+=' placed-'+shipKey;
+        icon={PA:'✈️',CU:'⚔️',CR:'🚢',SM:'🤿',TP:'🚤'}[shipKey]||'';
+      } else if(shipKey==='bonus'){cls+=' placed-bonus';icon='⭐';}
+      else if(shipKey==='malus'){cls+=' placed-malus';icon='💣';}
+      h+=`<div class="${cls}" title="${coord}">${icon}</div>`;
+    });
+  });
+  h+=`</div></div>`;
+
+  // History of received shots (hide ship name if not sunk)
+  if(oppHistory.length){
+    h+=`<div class="stitle" style="margin-top:10px;margin-bottom:4px">Tirs ennemis reçus</div>`;
+    const recent=[...oppHistory].reverse().slice(0,15);
+    recent.forEach(s=>{
+      const txt={water:'🌊 Coup dans l\'eau',hit:'💥 Touché !',sunk:`💀 Coulé ! (${SHIPS[s.shipKey]?.name||'?'})`,bonus:'⭐ Bonus touché',malus:'💣 Malus touché'}[s.result]||s.result;
+      const col={water:'var(--text3)',hit:'var(--orange)',sunk:'var(--red)',bonus:'var(--purple)',malus:'var(--red)'}[s.result];
+      h+=`<div style="font-size:.78rem;padding:2px 0;color:${col}">Tour ${s.turn} — ${s.coord} : ${txt}</div>`;
+    });
+  }
+
+  h+=`</div>`;
+
+  // Fleet status
+  h+=`<div class="card"><div class="card-title" style="font-size:.9rem">⚓ État de ma flotte</div>`;
+  SHIP_KEYS.forEach(key=>{
+    const ship=SHIPS[key];
+    const cells=team.shipCells[key]||[];
+    if(!cells.length)return;
+    const allSunkShip=cells.every(c=>team.hitGrid[c]);
+    h+=`<div class="ship-bar">
+      <span>${ship.icon} ${ship.name}</span>
+      <div class="ship-bar-cells">`;
+    cells.forEach(c=>{
+      const cls=allSunkShip?'sunk-c':team.hitGrid[c]?'hit':'ok';
+      h+=`<div class="ship-cell ${cls}" title="${c}"></div>`;
+    });
+    h+=`</div>${allSunkShip?'<span style="color:var(--red)">💀 Coulé</span>':''}</div>`;
+  });
+  h+=`</div>`;
+
+  el.innerHTML=h;
+}
+
+/* ═══════════════════════════════════════════
+   CAPTAIN CONFIG — Connection info
+═══════════════════════════════════════════ */
+// The captain config is the grid tab above. But if they come from a URL
+// with a bin parameter, load that first.
+async function captainLoadBin() {
+  const binFromUrl = _up.get('bin');
+  if (binFromUrl && !SYNC.binId) {
+    SYNC.binId = binFromUrl;
+    // Captain uses read-only (no apiKey)
+  }
+  if (SYNC.binId) {
+    const ok = await loadFromCloud();
+    return ok;
+  }
+  return false;
+}
+
+/* ═══════════════════════════════════════════
    INIT
-════════════════════════════════════════ */
+═══════════════════════════════════════════ */
 async function init() {
   loadSyncConfig();
+
+  if (ROLE.type === 'captain') {
+    // Check URL for bin ID
+    const binFromUrl = _up.get('bin');
+    if (binFromUrl) { SYNC.binId = binFromUrl; saveSyncConfig(); }
+  }
+
   if (SYNC.binId) {
     const ok = await loadFromCloud();
     if (!ok) loadLocal();
@@ -2002,61 +1468,22 @@ async function init() {
     loadLocal();
   }
 
-  // Role badge
-  const badge = document.getElementById('role-badge');
-  if(ROLE.type==='admin') {
-    badge.innerHTML=`<span class="role-badge role-admin">⚙️ Interface Admin</span>`;
-  } else {
-    const team=getTeam(ROLE.teamId);
-    badge.innerHTML=`<span class="role-badge role-captain">🚢 Interface Capitaine — ${esc(team?team.name:`Équipe ${ROLE.teamId}`)}</span>`;
+  // Ensure duel state structure
+  ['A','B','C'].forEach(id => { if (!S.duels[id]) S.duels[id] = mkDuelState(); });
+
+  buildNav();
+  renderTab(S.currentTab);
+
+  // Auto-refresh for captain every 30s
+  if (ROLE.type === 'captain' && SYNC.binId) {
+    setInterval(async () => {
+      const ok = await loadFromCloud();
+      if (ok) renderTab(S.currentTab);
+    }, 30000);
   }
-
-  // Build tabs
-  const tabsEl=document.getElementById('tabs');
-  const contEl=document.getElementById('tab-contents');
-  const tabDefs = ROLE.type==='admin'
-    ? [{id:'config',label:'⚙️ Config'},{id:'tour',label:'🎯 Tour'},{id:'classement',label:'🏆 Classement'},{id:'flottes',label:'⚓ Flottes'}]
-    : [{id:'config',label:'🗺️ Ma Grille'},{id:'saisie',label:'🎯 Mes Tirs'},{id:'suivi',label:'📡 Suivi'},{id:'classement',label:'🏆 Classement'}];
-
-  tabsEl.innerHTML = tabDefs.map(t=>`<button class="tab-btn" data-tab="${t.id}" onclick="goTab('${t.id}')">${t.label}</button>`).join('');
-  contEl.innerHTML = tabDefs.map(t=>`<div id="tab-${t.id}" class="tab-content"></div>`).join('');
-
-  goTab(tabDefs[0].id);
 }
 
 init();
-
-/* ════════════════════════════════════════
-   AUTO-REFRESH toutes les 20 secondes
-   avec compteur visible dans la status bar
-════════════════════════════════════════ */
-const AUTO_REFRESH_INTERVAL = 20; // secondes
-let _refreshCountdown = AUTO_REFRESH_INTERVAL;
-
-function updateCountdown() {
-  const el = document.getElementById('refresh-countdown');
-  if (!el) return;
-  const urgent = _refreshCountdown <= 5;
-  el.style.color = urgent ? 'var(--cyan)' : 'var(--muted)';
-  el.textContent = `↻ ${_refreshCountdown}s`;
-}
-
-setInterval(async () => {
-  _refreshCountdown--;
-  updateCountdown();
-  if (_refreshCountdown <= 0) {
-    _refreshCountdown = AUTO_REFRESH_INTERVAL;
-    // Avec cloud : fetch depuis JSONBin
-    if (SYNC.binId) {
-      const ok = await loadFromCloud();
-      if (ok) renderTab(S.currentTab);
-    } else {
-      // Sans cloud : relit localStorage (utile si même appareil, onglets multiples)
-      loadLocal();
-      renderTab(S.currentTab);
-    }
-  }
-}, 1000);
 </script>
 </body>
 </html>
