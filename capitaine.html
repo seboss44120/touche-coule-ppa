@@ -249,7 +249,10 @@ function isLockActive() { return VERROU&&!isLockExpired(); }
 function canPlaceShips(){ return isLockMine()&&!GRILLE?.is_ready; }
 function isGrilleComplete(){
   const sc=GRILLE?.ship_cells||{};
-  return SHIP_KEYS.every(k=>sc[k]?.length>0);
+  const shipsOk=SHIP_KEYS.every(k=>sc[k]?.length>0);
+  const bonusOk=(GRILLE?.bonus_cells||[]).length===2;
+  const malusOk=(GRILLE?.malus_cells||[]).length===2;
+  return shipsOk&&bonusOk&&malusOk;
 }
 function getShipFootprint(coord,shipKey,orientation){
   const ci=COLS.indexOf(coord[0]);
