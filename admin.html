@@ -233,12 +233,18 @@ const SHIPS = {
   SM: { name:'Sous-marin',   icon:'🤿', size:3, points:3 },
   TP: { name:'Torpilleur',   icon:'🚤', size:2, points:2 },
 };
-const DUEL_DEFS = [
+const ALL_DUEL_DEFS = [
   { id:'A', nums:[1,2] },
   { id:'B', nums:[3,4] },
   { id:'C', nums:[5,6] },
 ];
 const NUM_OPP = {1:2,2:1,3:4,4:3,5:6,6:5};
+
+// Retourne uniquement les duels actifs selon le nb_groupes de la partie
+function getDuelDefs() {
+  const nb = PARTIE?.nb_groupes || 3;
+  return ALL_DUEL_DEFS.slice(0, nb);
+}
 
 /* ════════════════════════════════════════════════════════
    SUPABASE CLIENT
@@ -271,7 +277,7 @@ function getDuelState(letter) {
   return PARTIE?.duels?.[letter] || { turn:1, status:'ready', winner:null };
 }
 function duelBothSubmitted(duelId) {
-  const def = DUEL_DEFS.find(d => d.id === duelId);
+  const def = ALL_DUEL_DEFS.find(d => d.id === duelId);
   if (!def) return false;
   return def.nums.every(n => {
     const e = getEquipeByNum(n);
@@ -471,8 +477,9 @@ function updateHeaderStatus() {
   const el = document.getElementById('hdrStatus');
   if (!el || !PARTIE) { if(el) el.innerHTML=`<span class="sdot"></span>Aucune partie`; return; }
   const on = PARTIE.started;
-  const finished = DUEL_DEFS.filter(d => getDuelState(d.id).status==='finished').length;
-  if (finished === DUEL_DEFS.length && PARTIE.started) {
+  const defs = getDuelDefs();
+  const finished = defs.filter(d => getDuelState(d.id).status==='finished').length;
+  if (finished === defs.length && PARTIE.started) {
     el.innerHTML = `<span class="sdot win"></span>Partie terminée`;
   } else {
     el.innerHTML = `<span class="sdot ${on?'on':''}"></span>${on ? 'Partie en cours' : 'Configuration'}`;
@@ -496,7 +503,34 @@ function renderConfig() {
             <div class="form-label">Nom de la partie</div>
             <input id="partieNomInp" type="text" placeholder="PPA Session 1" style="width:100%">
           </div>
-          <button class="btn btn-gold" style="margin-top:8px" onclick="creerPartie()">
+          <div class="form-group">
+            <div class="form-label">Mode de jeu</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+              <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;background:var(--bg3);border:1px solid var(--cyan);border-radius:6px">
+                <input type="radio" name="modeJeu" value="duel_equipes" checked style="margin-top:3px;accent-color:var(--cyan)">
+                <span>
+                  <strong style="color:var(--cyan)">Duel équipes</strong><br>
+                  <span style="font-size:.8rem;color:var(--text2)">Groupes de 2 équipes en duel simultané et indépendant</span>
+                </span>
+              </label>
+              <label style="display:flex;align-items:flex-start;gap:10px;opacity:.4;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px">
+                <input type="radio" name="modeJeu" value="tournoi" disabled style="margin-top:3px">
+                <span>
+                  <strong style="color:var(--text3)">Tournoi individuel</strong><br>
+                  <span style="font-size:.8rem;color:var(--text3)">À venir</span>
+                </span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Nombre de groupes (Duel équipes)</div>
+            <select id="nbGroupesInp" style="width:100%">
+              <option value="1">1 groupe — 2 équipes, 1 duel</option>
+              <option value="2">2 groupes — 4 équipes, 2 duels</option>
+              <option value="3" selected>3 groupes — 6 équipes, 3 duels</option>
+            </select>
+          </div>
+          <button class="btn btn-gold" style="margin-top:8px;width:100%" onclick="creerPartie()">
             ▶ Créer la partie
           </button>
           <div id="createAlert" class="alert"></div>
@@ -507,12 +541,12 @@ function renderConfig() {
 
   const locked = PARTIE.started;
 
-  // Équipes
+  // Équipes — uniquement les duels actifs de cette partie
   let teamsHtml = `<div class="card">
     <div class="card-title">🚢 Équipes & Capitaines</div>
     <div class="teams-grid-cfg">`;
 
-  DUEL_DEFS.forEach(def => {
+  getDuelDefs().forEach(def => {
     teamsHtml += `<div style="grid-column:1/-1;font-family:'Orbitron',monospace;font-size:.6rem;
       color:var(--gold);letter-spacing:2px;margin-bottom:4px">— Duel ${def.id} —</div>`;
 
@@ -584,24 +618,32 @@ function renderConfig() {
 /* ── Config helpers ── */
 async function creerPartie() {
   const nom = (document.getElementById('partieNomInp')?.value||'').trim() || 'Partie PPA';
+  const nbGroupes = parseInt(document.getElementById('nbGroupesInp')?.value || '3');
   const alert = document.getElementById('createAlert');
   alert.className = 'alert info show'; alert.textContent = 'Création…';
 
   try {
+    // Duels initiaux selon nb_groupes
+    const duels = {};
+    ALL_DUEL_DEFS.slice(0, nbGroupes).forEach(d => {
+      duels[d.id] = { turn:1, status:'ready', winner:null };
+    });
+
     // 1. Créer la partie
     const { data: partie, error: pErr } = await sb.from('parties')
-      .insert({ nom, started: false })
+      .insert({ nom, started: false, nb_groupes: nbGroupes, mode: 'duel_equipes', duels })
       .select().single();
     if (pErr) throw pErr;
 
-    // 2. Créer les 6 équipes
-    const equipes = DUEL_DEFS.flatMap(def =>
+    // 2. Créer uniquement les équipes des groupes actifs
+    const activeGroups = ALL_DUEL_DEFS.slice(0, nbGroupes);
+    const equipes = activeGroups.flatMap(def =>
       def.nums.map(num => ({ partie_id: partie.id, numero: num, nom: `Équipe ${num}`, duel_id: def.id }))
     );
     const { data: eqs, error: eErr } = await sb.from('equipes').insert(equipes).select();
     if (eErr) throw eErr;
 
-    // 3. Créer les 6 grilles vides
+    // 3. Créer les grilles vides pour chaque équipe
     const grilles = eqs.map(e => ({ equipe_id: e.id, partie_id: partie.id }));
     const { error: gErr } = await sb.from('grilles').insert(grilles);
     if (gErr) throw gErr;
@@ -660,11 +702,8 @@ async function startGame() {
 async function resetGame() {
   if (!confirm('Réinitialiser toute la partie ? Scores, tirs et placements seront perdus.')) return;
 
-  const duels = {
-    A: { turn:1, status:'ready', winner:null },
-    B: { turn:1, status:'ready', winner:null },
-    C: { turn:1, status:'ready', winner:null },
-  };
+  const duels = {};
+  getDuelDefs().forEach(d => { duels[d.id] = { turn:1, status:'ready', winner:null }; });
 
   await Promise.all([
     sb.from('parties').update({ started:false, duels, global_bonus_team_id:null }).eq('id', PARTIE.id),
@@ -707,7 +746,7 @@ function renderTour() {
 
   let h = '';
 
-  DUEL_DEFS.forEach(def => {
+  getDuelDefs().forEach(def => {
     const ds = getDuelState(def.id);
     const [n1, n2] = def.nums;
     const e1 = getEquipeByNum(n1);
@@ -806,7 +845,7 @@ async function adminCancelShots(equipeId) {
 }
 
 async function adminSubmitShots(duelId) {
-  const def = DUEL_DEFS.find(d => d.id === duelId);
+  const def = ALL_DUEL_DEFS.find(d => d.id === duelId);
   const selNum = _tourSel[duelId] || def.nums[0];
   const e = getEquipeByNum(selNum);
   if (!e) return;
@@ -845,7 +884,7 @@ async function adminValidateDuel(duelId) {
   if (!duelBothSubmitted(duelId)) return;
   if (!confirm(`Valider le tour du Duel ${duelId} ?`)) return;
 
-  const def = DUEL_DEFS.find(d => d.id === duelId);
+  const def = ALL_DUEL_DEFS.find(d => d.id === duelId);
   const [n1, n2] = def.nums;
   const e1 = getEquipeByNum(n1);
   const e2 = getEquipeByNum(n2);
@@ -976,7 +1015,7 @@ function renderClassement() {
   if (!el) return;
 
   let duelsHtml = `<div class="duel-status-grid">`;
-  DUEL_DEFS.forEach(def => {
+  getDuelDefs().forEach(def => {
     const ds = getDuelState(def.id);
     const [n1, n2] = def.nums;
     const t1 = getEquipeByNum(n1); const t2 = getEquipeByNum(n2);
@@ -1134,7 +1173,7 @@ function renderHistorique() {
   <div class="card" id="undoPanel" style="display:none">
     <div class="stitle">Choisir le duel à annuler</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      ${DUEL_DEFS.map(d=>`<button class="btn btn-danger btn-sm" onclick="undoDuel('${d.id}')">Duel ${d.id}</button>`).join('')}
+      ${getDuelDefs().map(d=>`<button class="btn btn-danger btn-sm" onclick="undoDuel('${d.id}')">Duel ${d.id}</button>`).join('')}
     </div>
   </div>`;
 
@@ -1152,7 +1191,7 @@ async function undoDuel(duelId) {
   if (!confirm(`Annuler le tour ${ds.turn-1} du Duel ${duelId} ?`)) return;
 
   const prevTurn = ds.turn - 1;
-  const def = DUEL_DEFS.find(d => d.id === duelId);
+  const def = ALL_DUEL_DEFS.find(d => d.id === duelId);
   const [n1, n2] = def.nums;
   const e1 = getEquipeByNum(n1); const e2 = getEquipeByNum(n2);
   const g1 = getGrilleByEquipeId(e1.id); const g2 = getGrilleByEquipeId(e2.id);
