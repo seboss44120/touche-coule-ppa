@@ -493,7 +493,9 @@ function renderGrille(){
   // Bannière verrou
   let lockHtml='';
   if(isReady){
-    lockHtml=`<div class="lock-banner ready">✅ Placement validé — En attente du démarrage de la partie</div>`;
+    lockHtml= PARTIE?.started
+      ?`<div class="lock-banner ready">✅ Placement validé — Partie en cours</div>`
+      :`<div class="lock-banner ready">✅ Placement validé — En attente du démarrage par l'administrateur</div>`;
   }else if(lockMine){
     lockHtml=`<div class="lock-banner mine">🎮 <strong>${esc(MY_PSEUDO)}</strong>, tu as la main
       <button class="btn btn-danger btn-sm" onclick="libererLaMain()">Libérer</button></div>`;
@@ -732,6 +734,7 @@ function renderTirs(){
       const coord=col+ri;
       const isSel=selShots.includes(coord);
       const isFired=firedSet.has(coord);
+      const isPending=pending&&pending.includes(coord);
       const past=shotHistory.find(s=>s.coord===coord);
       let cls='gc',icon='';
       if(isFired){
@@ -739,26 +742,39 @@ function renderTirs(){
         cls+=r==='hit'?' sv-hit':r==='sunk'?' sv-sunk':r==='bonus'?' sv-bonus':r==='malus'?' sv-malus':' sv-water';
         icon=r==='hit'?'💥':r==='sunk'?'💀':r==='bonus'?'⭐':r==='malus'?'💣':'🌊';
         cls+=' no-action';
-      }else if(isSel){cls+=' sel-shot';icon='🎯';}
-      gridHtml+=`<div class="${cls}" ${isFired?'':` onclick="toggleShot('${coord}')"`} title="${coord}">${icon}</div>`;
+      }else if(isPending){cls+=' sel-shot no-action';icon='📡';}
+      else if(isSel){cls+=' sel-shot';icon='🎯';}
+      gridHtml+=`<div class="${cls}" ${isFired||isPending||pending?'':` onclick="toggleShot('${coord}')"`} title="${coord}">${icon}</div>`;
     });
   });
   gridHtml+=`</div></div>`;
 
-  const canSubmit=selShots.length===3;
-  el.innerHTML=`<div class="card">
-    <div class="card-title">🎯 Saisie des tirs — Duel ${EQUIPE.duel_id} · Tour ${ds.turn}</div>
-    <p style="font-size:.82rem;color:var(--text2);margin-bottom:4px">Sélectionne <strong>3 cases</strong> à attaquer.</p>
-    <div style="margin-bottom:8px;font-size:.82rem;min-height:20px">
-      ${selShots.length>0?`Cases : ${selShots.map(c=>`<strong style="color:var(--gold)">${c}</strong>`).join(' · ')}`:`<span style="color:var(--text3)">Clique sur la grille</span>`}
+  // Bouton selon état de soumission
+  let submitHtml='';
+  if(pending){
+    submitHtml=`<div class="lock-banner ready" style="margin-top:10px;margin-bottom:8px">
+      📡 Tirs soumis : ${pending.map(c=>`<strong>${c}</strong>`).join(' · ')} — En attente de l'admin
     </div>
-    ${gridHtml}
-    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-gold disabled" disabled>✓ SOUMIS</button>
+      <button class="btn btn-danger btn-sm" onclick="annulerTirs()">✗ Annuler les tirs</button>
+    </div>`;
+  }else{
+    const canSubmit=selShots.length===3;
+    submitHtml=`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
       <button class="btn btn-gold ${canSubmit?'':'disabled'}" ${canSubmit?'':'disabled'} onclick="ouvrirConfirm()">
         📡 Soumettre ${selShots.length}/3
       </button>
       ${selShots.length>0?`<button class="btn btn-outline btn-sm" onclick="selShots=[];renderTab('tirs')">✗ Effacer</button>`:''}
-    </div>
+    </div>`;
+  }
+
+  el.innerHTML=`<div class="card">
+    <div class="card-title">🎯 Saisie des tirs — Duel ${EQUIPE.duel_id} · Tour ${ds.turn}</div>
+    ${!pending?`<p style="font-size:.82rem;color:var(--text2);margin-bottom:4px">Sélectionne <strong>3 cases</strong> à attaquer. N'importe quel membre peut soumettre.</p>`:''}
+    ${!pending&&selShots.length>0?`<div style="margin-bottom:8px;font-size:.82rem">Cases : ${selShots.map(c=>`<strong style="color:var(--gold)">${c}</strong>`).join(' · ')}</div>`:''}
+    ${gridHtml}
+    ${submitHtml}
   </div>`;
 }
 
