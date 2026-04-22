@@ -391,15 +391,18 @@ function startGrillesPolling() {
     grilles.forEach(g => {
       const idx = ALL_GRILLES.findIndex(ag => ag.id === g.id);
       if (idx >= 0) {
-        if (JSON.stringify(ALL_GRILLES[idx].shots_pending) !== JSON.stringify(g.shots_pending) ||
-            JSON.stringify(ALL_GRILLES[idx].is_ready) !== JSON.stringify(g.is_ready)) {
+        // Comparer le grille entier pour détecter tout changement
+        if (JSON.stringify(ALL_GRILLES[idx]) !== JSON.stringify(g)) {
           ALL_GRILLES[idx] = g;
           changed = true;
         }
+      } else {
+        ALL_GRILLES.push(g);
+        changed = true;
       }
     });
     if (changed) renderTab(currentTab);
-  }, 10000);
+  }, 8000); // 8 secondes pour réactivité
 }
 
 /* ════════════════════════════════════════════════════════
@@ -590,11 +593,19 @@ function renderConfig() {
   teamsHtml += `</div></div>`;
 
   // Actions
-  let actionsHtml = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">`;
+  const activeEquipes = ALL_EQUIPES.filter(e=>e.active);
+  const readyCount = activeEquipes.filter(e => getGrilleByEquipeId(e.id)?.is_ready).length;
+  const allReady = activeEquipes.length >= 2 && readyCount === activeEquipes.length;
+
+  let actionsHtml = `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">`;
   if (!locked) {
-    const canStart = ALL_EQUIPES.filter(e=>e.active).length >= 2;
-    actionsHtml += `<button class="btn btn-gold ${canStart?'':'disabled'}" ${canStart?'':'disabled'}
+    actionsHtml += `<button class="btn btn-gold ${allReady?'':'disabled'}" ${allReady?'':'disabled'}
       onclick="startGame()">▶ Démarrer la partie</button>`;
+    if (!allReady) {
+      actionsHtml += `<span style="font-size:.78rem;color:var(--text3)">
+        ${readyCount}/${activeEquipes.length} grille${readyCount>1?'s':''} validée${readyCount>1?'s':''}
+      </span>`;
+    }
   } else {
     actionsHtml += `<button class="btn btn-danger btn-sm" onclick="resetGame()">🔄 Réinitialiser</button>`;
   }
