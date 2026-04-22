@@ -65,7 +65,7 @@ select option{background:var(--bg2)}
 .gc.placed-PA{background:rgba(240,192,64,.22);border-color:#f0c040}
 .gc.placed-CU{background:rgba(0,212,255,.2);border-color:#00d4ff}
 .gc.placed-CR{background:rgba(0,255,140,.18);border-color:#00ff8c}
-.gc.placed-SM{background:rgba(100,255,100,.15);border-color:#64ff64}
+.gc.placed-SM{background:rgba(255,120,200,.18);border-color:#ff78c8}
 .gc.placed-TP{background:rgba(255,136,68,.2);border-color:#ff8844}
 .gc.placed-bonus{background:rgba(204,136,255,.2);border-color:#cc88ff}
 .gc.placed-malus{background:rgba(255,68,85,.2);border-color:#ff4455}
@@ -185,7 +185,7 @@ const SHIPS = {
   PA:{name:'Porte-avions',icon:'✈️',size:5,color:'#f0c040',points:5},
   CU:{name:'Cuirassé',    icon:'⚔️',size:4,color:'#00d4ff',points:4},
   CR:{name:'Croiseur',    icon:'🚢',size:3,color:'#00ff8c',points:3},
-  SM:{name:'Sous-marin',  icon:'🤿',size:3,color:'#64ff64',points:3},
+  SM:{name:'Sous-marin',  icon:'🤿',size:3,color:'#ff78c8',points:3},
   TP:{name:'Torpilleur',  icon:'🚤',size:2,color:'#ff8844',points:2},
 };
 const NUM_OPP = {1:2,2:1,3:4,4:3,5:6,6:5};
@@ -216,7 +216,6 @@ let pollTimer   = null;
 // Placement
 let selShip  = null;
 let orient   = 'H';
-let hovCoord = null;
 
 // Tirs
 let selShots      = [];
@@ -502,15 +501,7 @@ function renderGrille(){
     </div>`;
   }
 
-  // Cases survolées
-  let hovCells=[];
-  let hovValid=false;
-  if(canEdit&&selShip&&hovCoord){
-    const fp=getShipFootprint(hovCoord,selShip,orient);
-    if(fp){hovCells=fp;hovValid=fp.every(c=>!gridData[c]||gridData[c]===selShip);}
-  }
-
-  // Grille
+  // Grille — pas de preview hover (évite le re-render sur survol qui bloque le clic)
   let gridHtml=`<div class="grid-wrap"><div class="game-grid"><div class="gc-header"></div>`;
   COLS.forEach(c=>gridHtml+=`<div class="gc-header">${c}</div>`);
   ROWS.forEach(ri=>{
@@ -518,15 +509,13 @@ function renderGrille(){
     COLS.forEach(col=>{
       const coord=col+ri;
       const shipKey=gridData[coord];
-      const isHov=hovCells.includes(coord);
       let cls='gc',icon='';
-      if(isHov){cls+=hovValid?' hov-valid':' hov-invalid';}
-      else if(shipKey&&SHIP_KEYS.includes(shipKey)){cls+=' placed-'+shipKey;icon=SHIPS[shipKey].icon;}
+      if(shipKey&&SHIP_KEYS.includes(shipKey)){cls+=' placed-'+shipKey;icon=SHIPS[shipKey].icon;}
       else if(shipKey==='bonus'){cls+=' placed-bonus';icon='⭐';}
       else if(shipKey==='malus'){cls+=' placed-malus';icon='💣';}
       if(!canEdit)cls+=' no-action';
       const ev=canEdit
-        ?`onclick="placeShip('${coord}')" onmouseenter="onHover('${coord}')" onmouseleave="onHoverOut()" oncontextmenu="eraseCell(event,'${coord}')"`:'';
+        ?`onclick="placeShip('${coord}')" oncontextmenu="eraseCell(event,'${coord}')"`:'';
       gridHtml+=`<div class="${cls}" ${ev} title="${coord}">${icon}</div>`;
     });
   });
@@ -564,10 +553,8 @@ function renderGrille(){
   </div>${fleetHtml}`;
 }
 
-function selectShip(k){selShip=selShip===k?null:k;hovCoord=null;renderTab('grille');}
-function setOrient(o){orient=o;hovCoord=null;renderTab('grille');}
-function onHover(coord){hovCoord=coord;renderTab('grille');}
-function onHoverOut(){hovCoord=null;renderTab('grille');}
+function selectShip(k){selShip=selShip===k?null:k;renderTab('grille');}
+function setOrient(o){orient=o;renderTab('grille');}
 
 async function placeShip(coord){
   if(!selShip||!canPlaceShips())return;
