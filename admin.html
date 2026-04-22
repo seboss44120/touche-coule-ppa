@@ -343,6 +343,7 @@ async function init() {
 
   await loadAllData();
   setupRealtime();
+  startGrillesPolling();
   buildNav();
   renderTab(currentTab);
 }
@@ -368,6 +369,31 @@ async function loadAllData() {
 async function doRefresh() {
   await loadAllData();
   renderTab(currentTab);
+}
+
+/* Polling grilles toutes les 10s
+   Les mises à jour via RPC SECURITY DEFINER (côté capitaine)
+   ne déclenchent pas le Realtime admin — on poll en complément */
+let _pollTimer = null;
+function startGrillesPolling() {
+  if (_pollTimer) clearInterval(_pollTimer);
+  _pollTimer = setInterval(async () => {
+    if (!PARTIE) return;
+    const { data: grilles } = await sb.from('grilles').select('*').eq('partie_id', PARTIE.id);
+    if (!grilles) return;
+    let changed = false;
+    grilles.forEach(g => {
+      const idx = ALL_GRILLES.findIndex(ag => ag.id === g.id);
+      if (idx >= 0) {
+        if (JSON.stringify(ALL_GRILLES[idx].shots_pending) !== JSON.stringify(g.shots_pending) ||
+            JSON.stringify(ALL_GRILLES[idx].is_ready) !== JSON.stringify(g.is_ready)) {
+          ALL_GRILLES[idx] = g;
+          changed = true;
+        }
+      }
+    });
+    if (changed) renderTab(currentTab);
+  }, 10000);
 }
 
 /* ════════════════════════════════════════════════════════
@@ -539,6 +565,7 @@ function renderConfig() {
     actionsHtml += `<button class="btn btn-danger btn-sm" onclick="resetGame()">🔄 Réinitialiser</button>`;
   }
   actionsHtml += `<button class="btn btn-outline btn-sm" onclick="creerNouvellePartie()">🆕 Nouvelle partie</button>`;
+  actionsHtml += `<button class="btn btn-danger btn-sm" onclick="supprimerPartie()" title="Supprime définitivement la partie et toutes ses données">🗑️ Supprimer la partie</button>`;
   actionsHtml += `</div>`;
 
   // Barème
@@ -592,6 +619,18 @@ function creerNouvellePartie() {
   PARTIE = null;
   ALL_EQUIPES = [];
   ALL_GRILLES = [];
+  renderTab('config');
+}
+
+async function supprimerPartie() {
+  if (!confirm(`Supprimer définitivement la partie "${PARTIE.nom}" ?\n\nToutes les équipes, grilles et historiques seront effacés. Cette action est irréversible.`)) return;
+  const { error } = await sb.from('parties').delete().eq('id', PARTIE.id);
+  if (error) { alert('Erreur : ' + error.message); return; }
+  PARTIE = null;
+  ALL_EQUIPES = [];
+  ALL_GRILLES = [];
+  currentTab = 'config';
+  buildNav();
   renderTab('config');
 }
 
