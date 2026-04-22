@@ -351,12 +351,23 @@ function startPolling(){
   if(pollTimer)clearInterval(pollTimer);
   pollTimer=setInterval(async()=>{
     if(!EQUIPE)return;
-    const {data:grille}=await sb.rpc('cap_get_grille',{p_token:TEAM_TOKEN});
-    const newG=grille?.[0]||null;
-    if(JSON.stringify(newG)!==JSON.stringify(GRILLE)){
-      GRILLE=newG;
-      renderTab(currentTab);
-    }
+    try{
+      const [grilleRes,partieRes,equipesRes]=await Promise.all([
+        sb.rpc('cap_get_grille',{p_token:TEAM_TOKEN}),
+        sb.from('parties').select('*').eq('id',EQUIPE.partie_id).single(),
+        sb.from('equipes').select('*'),
+      ]);
+      let changed=false;
+      const newG=grilleRes.data?.[0]||null;
+      if(JSON.stringify(newG)!==JSON.stringify(GRILLE)){GRILLE=newG;changed=true;}
+      if(partieRes.data&&JSON.stringify(partieRes.data)!==JSON.stringify(PARTIE)){PARTIE=partieRes.data;changed=true;}
+      if(equipesRes.data){
+        const nS=JSON.stringify(equipesRes.data.map(e=>e.score));
+        const oS=JSON.stringify(ALL_EQUIPES.map(e=>e.score));
+        if(nS!==oS){ALL_EQUIPES=equipesRes.data;changed=true;}
+      }
+      if(changed)renderTab(currentTab);
+    }catch(e){console.error('Poll:',e);}
   },POLL_INTERVAL);
 }
 
