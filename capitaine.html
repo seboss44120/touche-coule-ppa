@@ -148,6 +148,21 @@ select option{background:var(--bg2)}
   </div>
 </div>
 
+<!-- Modal confirmation placement -->
+<div id="placementModal" class="modal-overlay" style="display:none">
+  <div class="confirm-modal">
+    <h3>⚓ Confirmer la grille</h3>
+    <p style="font-size:.88rem;color:var(--text2);margin-bottom:16px">
+      Confirmez-vous votre placement ?<br>
+      <span style="font-size:.78rem;color:var(--text3)">Cette action est irréversible — la grille sera verrouillée.</span>
+    </p>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-outline" style="flex:1" onclick="document.getElementById('placementModal').style.display='none'">Annuler</button>
+      <button class="btn btn-gold" style="flex:1" onclick="confirmerValidation()">✓ Oui, valider</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal confirmation tirs -->
 <div id="confirmModal" class="modal-overlay" style="display:none">
   <div class="confirm-modal">
@@ -214,8 +229,8 @@ let currentTab  = 'grille';
 let pollTimer   = null;
 
 // Placement
-let selShip  = null;
-let orient   = 'H';
+let selTool = null; // clé navire OU 'bonus' OU 'malus'
+let orient  = 'H';
 
 // Tirs
 let selShots      = [];
@@ -481,23 +496,34 @@ function renderGrille(){
       <button class="btn btn-gold btn-sm" onclick="prendreLaMain()">Prendre la main</button></div>`;
   }
 
-  // Palette navires
+  // Palette navires + bonus/malus
   let paletteHtml='';
   if(canEdit){
+    const bonusCells=GRILLE.bonus_cells||[];
+    const malusCells=GRILLE.malus_cells||[];
     paletteHtml=`<div class="ship-palette">`;
     SHIP_KEYS.forEach(k=>{
       const ship=SHIPS[k];
       const placed=shipCells[k]?.length>0;
-      paletteHtml+=`<button class="ship-btn ${selShip===k?'active':''} ${placed?'placed-done':''}"
+      paletteHtml+=`<button class="ship-btn ${selTool===k?'active':''} ${placed?'placed-done':''}"
         style="color:${ship.color};border-color:${ship.color}"
-        onclick="selectShip('${k}')">${ship.icon} ${ship.name} (${ship.size}) ${placed?'✓':''}</button>`;
+        onclick="selectTool('${k}')">${ship.icon} ${ship.name} (${ship.size}) ${placed?'✓':''}</button>`;
     });
+    paletteHtml+=`<button class="ship-btn ${selTool==='bonus'?'active':''}"
+      style="color:#f5c842;border-color:#f5c842"
+      onclick="selectTool('bonus')">❤️ Bonus (${bonusCells.length}/2)</button>`;
+    paletteHtml+=`<button class="ship-btn ${selTool==='malus'?'active':''}"
+      style="color:#ff4455;border-color:#ff4455"
+      onclick="selectTool('malus')">💣 Malus (${malusCells.length}/2)</button>`;
     paletteHtml+=`</div>
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-      <button class="orient-btn ${orient==='H'?'active':''}" onclick="setOrient('H')">→ Horizontal</button>
-      <button class="orient-btn ${orient==='V'?'active':''}" onclick="setOrient('V')">↓ Vertical</button>
-      ${selShip?`<span style="font-size:.78rem;color:var(--text2)">Placer ${SHIPS[selShip].icon} <strong>${SHIPS[selShip].name}</strong> · Clic droit pour effacer</span>`
-               :`<span style="font-size:.78rem;color:var(--text3)">Sélectionne un navire</span>`}
+      ${selTool&&SHIP_KEYS.includes(selTool)?`
+        <button class="orient-btn ${orient==='H'?'active':''}" onclick="setOrient('H')">→ Horizontal</button>
+        <button class="orient-btn ${orient==='V'?'active':''}" onclick="setOrient('V')">↓ Vertical</button>
+        <span style="font-size:.78rem;color:var(--text2)">Placer ${SHIPS[selTool].icon} <strong>${SHIPS[selTool].name}</strong> · Clic droit pour effacer</span>`
+      :selTool==='bonus'?`<span style="font-size:.78rem;color:#f5c842">Clic pour poser/retirer un ❤️ Bonus (max 2) · Clic droit pour effacer</span>`
+      :selTool==='malus'?`<span style="font-size:.78rem;color:#ff4455">Clic pour poser/retirer un 💣 Malus (max 2) · Clic droit pour effacer</span>`
+      :`<span style="font-size:.78rem;color:var(--text3)">Sélectionne un navire ou une case spéciale</span>`}
     </div>`;
   }
 
@@ -511,11 +537,11 @@ function renderGrille(){
       const shipKey=gridData[coord];
       let cls='gc',icon='';
       if(shipKey&&SHIP_KEYS.includes(shipKey)){cls+=' placed-'+shipKey;icon=SHIPS[shipKey].icon;}
-      else if(shipKey==='bonus'){cls+=' placed-bonus';icon='⭐';}
+      else if(shipKey==='bonus'){cls+=' placed-bonus';icon='❤️';}
       else if(shipKey==='malus'){cls+=' placed-malus';icon='💣';}
       if(!canEdit)cls+=' no-action';
       const ev=canEdit
-        ?`onclick="placeShip('${coord}')" oncontextmenu="eraseCell(event,'${coord}')"`:'';
+        ?`onclick="placeCell('${coord}')" oncontextmenu="eraseCell(event,'${coord}')"`:'';
       gridHtml+=`<div class="${cls}" ${ev} title="${coord}">${icon}</div>`;
     });
   });
@@ -526,13 +552,16 @@ function renderGrille(){
   if(canEdit){
     const complete=isGrilleComplete();
     actionsHtml=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-      <button class="btn btn-gold ${complete?'':'disabled'}" ${complete?'':'disabled'} onclick="validerPlacement()">✓ Valider le placement</button>
+      <button class="btn btn-gold ${complete?'':'disabled'}" ${complete?'':'disabled'}
+        onclick="document.getElementById('placementModal').style.display='flex'">✓ Valider le placement</button>
       <button class="btn btn-outline btn-sm" onclick="reinitGrid()">🔄 Réinitialiser</button>
     </div>
     ${!complete?`<p style="font-size:.78rem;color:var(--text3);margin-top:6px">Place tous les navires pour valider.</p>`:''}`;
   }
 
-  // Checklist flotte
+  // Checklist flotte + bonus/malus
+  const bonusCellsCheck=GRILLE.bonus_cells||[];
+  const malusCellsCheck=GRILLE.malus_cells||[];
   let fleetHtml=`<div class="card"><div class="card-title" style="font-size:.9rem">📋 Navires à placer</div>`;
   SHIP_KEYS.forEach(k=>{
     const ship=SHIPS[k];
@@ -545,6 +574,12 @@ function renderGrille(){
         ${placed?`<span style="color:var(--text3);font-size:.72rem">(${cells.join(', ')})</span>`:''}
       </span></div>`;
   });
+  fleetHtml+=`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border2)">
+    <div class="ship-bar"><span style="color:#f5c842">❤️ Bonus : ${bonusCellsCheck.length}/2
+      ${bonusCellsCheck.length>0?`<span style="color:var(--text3);font-size:.72rem">(${bonusCellsCheck.join(', ')})</span>`:''}</span></div>
+    <div class="ship-bar"><span style="color:#ff4455">💣 Malus : ${malusCellsCheck.length}/2
+      ${malusCellsCheck.length>0?`<span style="color:var(--text3);font-size:.72rem">(${malusCellsCheck.join(', ')})</span>`:''}</span></div>
+  </div>`;
   fleetHtml+=`</div>`;
 
   el.innerHTML=`<div class="card">
@@ -553,22 +588,58 @@ function renderGrille(){
   </div>${fleetHtml}`;
 }
 
-function selectShip(k){selShip=selShip===k?null:k;renderTab('grille');}
+function selectTool(k){selTool=selTool===k?null:k;renderTab('grille');}
 function setOrient(o){orient=o;renderTab('grille');}
 
+async function placeCell(coord){
+  if(!selTool||!canPlaceShips())return;
+  if(selTool==='bonus'||selTool==='malus') await placeBonusMalus(coord,selTool);
+  else await placeShip(coord);
+}
+
+async function placeBonusMalus(coord,type){
+  const gridData   ={...(GRILLE.grid_data  ||{})};
+  const bonusCells =[...(GRILLE.bonus_cells||[])];
+  const malusCells =[...(GRILLE.malus_cells||[])];
+  let cells=type==='bonus'?bonusCells:malusCells;
+  const idx=cells.indexOf(coord);
+  if(idx>=0){
+    // Retirer
+    cells.splice(idx,1);
+    delete gridData[coord];
+  }else{
+    if(cells.length>=2)return; // max 2
+    if(gridData[coord]&&SHIP_KEYS.includes(gridData[coord]))return; // occupé par navire
+    cells.push(coord);
+    gridData[coord]=type;
+  }
+  const newBonus=type==='bonus'?cells:bonusCells;
+  const newMalus=type==='malus'?cells:malusCells;
+  GRILLE={...GRILLE,grid_data:gridData,bonus_cells:newBonus,malus_cells:newMalus};
+  renderTab('grille');
+  await sb.rpc('cap_update_grille',{
+    p_token:TEAM_TOKEN,p_grid_data:gridData,
+    p_ship_cells:GRILLE.ship_cells||{},
+    p_bonus_cells:newBonus,p_malus_cells:newMalus
+  });
+}
+
 async function placeShip(coord){
-  if(!selShip||!canPlaceShips())return;
-  const cells=getShipFootprint(coord,selShip,orient);
+  if(!selTool||!SHIP_KEYS.includes(selTool)||!canPlaceShips())return;
+  const cells=getShipFootprint(coord,selTool,orient);
   if(!cells)return;
   const gridData ={...(GRILLE.grid_data ||{})};
   const shipCells={...(GRILLE.ship_cells||{})};
-  for(const c of cells){if(gridData[c]&&gridData[c]!==selShip)return;}
-  (shipCells[selShip]||[]).forEach(c=>delete gridData[c]);
-  cells.forEach(c=>{gridData[c]=selShip;});
-  shipCells[selShip]=cells;
+  for(const c of cells){if(gridData[c]&&gridData[c]!==selTool&&gridData[c]!=='bonus'&&gridData[c]!=='malus')return;}
+  (shipCells[selTool]||[]).forEach(c=>{if(gridData[c]===selTool)delete gridData[c];});
+  cells.forEach(c=>{gridData[c]=selTool;});
+  shipCells[selTool]=cells;
   GRILLE={...GRILLE,grid_data:gridData,ship_cells:shipCells};
   renderTab('grille');
-  const {error}=await sb.rpc('cap_update_grille',{p_token:TEAM_TOKEN,p_grid_data:gridData,p_ship_cells:shipCells});
+  const {error}=await sb.rpc('cap_update_grille',{
+    p_token:TEAM_TOKEN,p_grid_data:gridData,p_ship_cells:shipCells,
+    p_bonus_cells:GRILLE.bonus_cells||[],p_malus_cells:GRILLE.malus_cells||[]
+  });
   if(error)console.error('Erreur placement:',error.message);
 }
 
@@ -577,16 +648,30 @@ async function eraseCell(evt,coord){
   if(!canPlaceShips())return;
   const gridData ={...(GRILLE.grid_data ||{})};
   const shipCells={...(GRILLE.ship_cells||{})};
-  const shipKey=gridData[coord];
-  if(!shipKey||!SHIP_KEYS.includes(shipKey))return;
-  (shipCells[shipKey]||[]).forEach(c=>delete gridData[c]);
-  delete shipCells[shipKey];
-  GRILLE={...GRILLE,grid_data:gridData,ship_cells:shipCells};
+  const bonusCells=[...(GRILLE.bonus_cells||[])];
+  const malusCells=[...(GRILLE.malus_cells||[])];
+  const occupant=gridData[coord];
+  if(!occupant)return;
+  if(SHIP_KEYS.includes(occupant)){
+    (shipCells[occupant]||[]).forEach(c=>{if(gridData[c]===occupant)delete gridData[c];});
+    delete shipCells[occupant];
+  }else if(occupant==='bonus'){
+    const i=bonusCells.indexOf(coord);if(i>=0)bonusCells.splice(i,1);
+    delete gridData[coord];
+  }else if(occupant==='malus'){
+    const i=malusCells.indexOf(coord);if(i>=0)malusCells.splice(i,1);
+    delete gridData[coord];
+  }
+  GRILLE={...GRILLE,grid_data:gridData,ship_cells:shipCells,bonus_cells:bonusCells,malus_cells:malusCells};
   renderTab('grille');
-  await sb.rpc('cap_update_grille',{p_token:TEAM_TOKEN,p_grid_data:gridData,p_ship_cells:shipCells});
+  await sb.rpc('cap_update_grille',{
+    p_token:TEAM_TOKEN,p_grid_data:gridData,p_ship_cells:shipCells,
+    p_bonus_cells:bonusCells,p_malus_cells:malusCells
+  });
 }
 
-async function validerPlacement(){
+async function confirmerValidation(){
+  document.getElementById('placementModal').style.display='none';
   if(!isGrilleComplete()||!canPlaceShips())return;
   const {error}=await sb.rpc('cap_validate_placement',{p_token:TEAM_TOKEN});
   if(!error){GRILLE={...GRILLE,is_ready:true};await libererLaMain();renderTab('grille');}
@@ -596,8 +681,8 @@ async function reinitGrid(){
   if(!canPlaceShips())return;
   if(!confirm('Réinitialiser toute la grille ?'))return;
   await sb.rpc('cap_reset_grid',{p_token:TEAM_TOKEN});
-  GRILLE={...GRILLE,grid_data:{},ship_cells:{},is_ready:false};
-  selShip=null;
+  GRILLE={...GRILLE,grid_data:{},ship_cells:{},bonus_cells:[],malus_cells:[],is_ready:false};
+  selTool=null;
   renderTab('grille');
 }
 
