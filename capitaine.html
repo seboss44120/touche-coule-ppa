@@ -456,7 +456,25 @@ const RETICLE_SVG = `<svg viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"
   <circle cx="35" cy="35" r="2.5" class="ret-center"/>
 </svg>`;
 
-function buildTacScreen({mode='victory', lines, stampText, stampClass, duration=4500, compact=false}){
+/* ── File d'attente : garantit que les animations jouent
+   séquentiellement même si plusieurs arrivent au même poll ── */
+const _animQueue = [];
+let   _animRunning = false;
+
+function _enqueueAnim(fn, duration) {
+  _animQueue.push({fn, duration});
+  if (!_animRunning) _processAnimQueue();
+}
+
+function _processAnimQueue() {
+  if (_animQueue.length === 0) { _animRunning = false; return; }
+  _animRunning = true;
+  const {fn, duration} = _animQueue.shift();
+  fn();
+  setTimeout(_processAnimQueue, duration + 700);
+}
+
+function buildTacScreen({mode='victory', lines, stampText, stampClass, duration=8000, compact=false}){
   const overlay = document.getElementById('sunkOverlay');
   if(!overlay) return;
   const isDefeat = mode==='defeat';
@@ -500,45 +518,43 @@ function buildTacScreen({mode='victory', lines, stampText, stampClass, duration=
 }
 
 function showHitAnimation(type, shipKey, coord){
-  // type: 'offensive' (j'ai touché) ou 'defensive' (j'ai été touché)
   const ship = SHIP_DATA[shipKey] || {name:'Navire', code:'CLASSE-??', pts:1};
   const coordStr = coord || '??';
 
   if(type === 'offensive'){
-    // Attaquant : impact confirmé, SANS révéler le type de navire
-    buildTacScreen({
+    _enqueueAnim(() => buildTacScreen({
       mode: 'victory',
       stampText: null,
       stampClass: '',
-      duration: 2800,
+      duration: 8000,
       compact: true,
       lines: [
-        {text:'TIRS VALIDÉS — ANALYSE...', cls:'green', delay:0},
-        {text:`COORD : ${coordStr}`,        cls:'dim',   delay:500},
-        {text:'IMPACT CONFIRMÉ !',          cls:'green', delay:900,  lockRet:true, lockClass:'locked-green'},
+        {text:'TIRS VALIDÉS — ANALYSE...',      cls:'green', delay:0},
+        {text:`COORD : ${coordStr}`,             cls:'dim',   delay:500},
+        {text:'IMPACT CONFIRMÉ !',               cls:'green', delay:900,  lockRet:true, lockClass:'locked-green'},
         {text:'CIBLE TOUCHÉE — CLASSE INCONNUE', cls:'green', delay:1400},
       ]
-    });
+    }), 8000);
   } else {
-    // Défenseur : alerte, avec révélation du navire touché
-    const flash = document.createElement('div');
-    flash.className = 'defeat-flash';
-    document.body.appendChild(flash);
-    setTimeout(()=>flash.remove(), 800);
-
-    buildTacScreen({
-      mode: 'hit',
-      stampText: 'TOUCHÉ',
-      stampClass: 'stamp-hit',
-      duration: 3200,
-      compact: true,
-      lines: [
-        {text:'ALERTE IMPACT !',            cls:'orange', delay:0},
-        {text:`COORD : ${coordStr}`,         cls:'orange', delay:450},
-        {text:'DOMMAGES DÉTECTÉS',          cls:'orange', delay:900,  lockRet:true, lockClass:'locked'},
-        {text:`${ship.name.toUpperCase()} TOUCHÉ`, cls:'orange', delay:1400, showStamp:true},
-      ]
-    });
+    _enqueueAnim(() => {
+      const flash = document.createElement('div');
+      flash.className = 'defeat-flash';
+      document.body.appendChild(flash);
+      setTimeout(()=>flash.remove(), 800);
+      buildTacScreen({
+        mode: 'hit',
+        stampText: 'TOUCHÉ',
+        stampClass: 'stamp-hit',
+        duration: 8000,
+        compact: true,
+        lines: [
+          {text:'ALERTE IMPACT !',                    cls:'orange', delay:0},
+          {text:`COORD : ${coordStr}`,                cls:'orange', delay:450},
+          {text:'DOMMAGES DÉTECTÉS',                  cls:'orange', delay:900,  lockRet:true, lockClass:'locked'},
+          {text:`${ship.name.toUpperCase()} TOUCHÉ`,  cls:'orange', delay:1400, showStamp:true},
+        ]
+      });
+    }, 8000);
   }
 }
 
@@ -551,76 +567,65 @@ function showSunkAnimation(type, shipKey){
   const coordStr = cells.length ? cells.join(' · ') : ship.code;
 
   if(isVictory){
-    buildTacScreen({
-      mode: 'victory',
-      stampText: 'NEUTRALISÉ',
-      stampClass: 'stamp-victory',
-      duration: 4500,
-      lines: [
-        {text:'CIBLAGE EN COURS...',                  cls:'green', delay:0},
-        {text:`COORD : ${coordStr}`,                  cls:'dim',   delay:500},
-        {text:'CIBLE VERROUILLÉE',                    cls:'green', delay:900,  lockRet:true, lockClass:'locked-green'},
-        {text:'IMPACT CONFIRMÉ !',                    cls:'green', delay:1400, showStamp:true},
-        {text:`${ship.name.toUpperCase()} COULÉ !`,   cls:'gold',  delay:1900},
-        {text:`+${ship.pts} PTS ACCORDÉS`,            cls:'gold',  delay:2300},
+    _enqueueAnim(()=>buildTacScreen({
+      mode: 'victory', stampText:'NEUTRALISÉ', stampClass:'stamp-victory', duration:8000,
+      lines:[
+        {text:'CIBLAGE EN COURS...',               cls:'green', delay:0},
+        {text:`COORD : ${coordStr}`,               cls:'dim',   delay:500},
+        {text:'CIBLE VERROUILLÉE',                 cls:'green', delay:900,  lockRet:true, lockClass:'locked-green'},
+        {text:'IMPACT CONFIRMÉ !',                 cls:'green', delay:1400, showStamp:true},
+        {text:`${ship.name.toUpperCase()} COULÉ !`,cls:'gold',  delay:1900},
+        {text:`+${ship.pts} PTS ACCORDÉS`,         cls:'gold',  delay:2300},
       ]
-    });
+    }, 8000);
   } else {
-    const flash = document.createElement('div');
-    flash.className = 'defeat-flash';
-    document.body.appendChild(flash);
-    setTimeout(()=>flash.remove(), 1000);
-
-    buildTacScreen({
-      mode: 'defeat',
-      stampText: 'COULÉ',
-      stampClass: 'stamp-defeat',
-      duration: 4000,
-      lines: [
-        {text:'ALERTE IMPACT DÉTECTÉ !',              cls:'red', delay:0},
-        {text:`COORD : ${coordStr}`,                  cls:'red', delay:500},
-        {text:'CIBLE VERROUILLÉE',                    cls:'red', delay:900,  lockRet:true, lockClass:'locked'},
-        {text:`${ship.name.toUpperCase()} COULÉ !`,   cls:'red', delay:1400, showStamp:true},
-        {text:'INTÉGRITÉ DE LA FLOTTE COMPROMISE',    cls:'dim', delay:1900},
-      ]
-    });
+    _enqueueAnim(()=>{
+      const flash=document.createElement('div');
+      flash.className='defeat-flash';
+      document.body.appendChild(flash);
+      setTimeout(()=>flash.remove(),1000);
+      buildTacScreen({
+        mode:'defeat', stampText:'COULÉ', stampClass:'stamp-defeat', duration:8000,
+        lines:[
+          {text:'ALERTE IMPACT DÉTECTÉ !',              cls:'red', delay:0},
+          {text:`COORD : ${coordStr}`,                  cls:'red', delay:500},
+          {text:'CIBLE VERROUILLÉE',                    cls:'red', delay:900,  lockRet:true, lockClass:'locked'},
+          {text:`${ship.name.toUpperCase()} COULÉ !`,   cls:'red', delay:1400, showStamp:true},
+          {text:'INTÉGRITÉ DE LA FLOTTE COMPROMISE',    cls:'dim', delay:1900},
+        ]
+      });
+    }, 8000);
   }
 }
 
 function showDuelEndInternal(isWinner, winnerName, duelId){
   if(isWinner){
-    buildTacScreen({
-      mode: 'victory',
-      stampText: 'VICTOIRE',
-      stampClass: 'stamp-victory',
-      duration: 6000,
-      lines: [
-        {text:'CIBLAGE EN COURS...',         cls:'green', delay:0},
-        {text:'CIBLE VERROUILLÉE',           cls:'green', delay:500,  lockRet:true, lockClass:'locked-green'},
-        {text:'FLOTTE ADVERSE NEUTRALISÉE',  cls:'green', delay:1000},
-        {text:`DUEL ${duelId} REMPORTÉ`,     cls:'gold',  delay:1500, showStamp:true},
-        {text:'MISSION ACCOMPLIE',           cls:'gold',  delay:2000},
+    _enqueueAnim(()=>buildTacScreen({
+      mode:'victory', stampText:'VICTOIRE', stampClass:'stamp-victory', duration:8000,
+      lines:[
+        {text:'CIBLAGE EN COURS...',        cls:'green', delay:0},
+        {text:'CIBLE VERROUILLÉE',          cls:'green', delay:500,  lockRet:true, lockClass:'locked-green'},
+        {text:'FLOTTE ADVERSE NEUTRALISÉE', cls:'green', delay:1000},
+        {text:`DUEL ${duelId} REMPORTÉ`,    cls:'gold',  delay:1500, showStamp:true},
+        {text:'MISSION ACCOMPLIE',          cls:'gold',  delay:2000},
       ]
-    });
+    }, 8000);
   } else {
-    const flash = document.createElement('div');
-    flash.className = 'defeat-flash';
-    document.body.appendChild(flash);
-    setTimeout(()=>flash.remove(), 1000);
-
-    buildTacScreen({
-      mode: 'defeat',
-      stampText: 'DÉFAITE',
-      stampClass: 'stamp-defeat',
-      duration: 5500,
-      lines: [
-        {text:'ALERTE — FLOTTE COULÉE',              cls:'red', delay:0},
-        {text:'CIBLAGE EN COURS...',                 cls:'red', delay:500},
-        {text:'CIBLE VERROUILLÉE',                   cls:'red', delay:1000, lockRet:true, lockClass:'locked'},
-        {text:`DUEL ${duelId} PERDU`,                cls:'red', delay:1500, showStamp:true},
-        {text:`VAINQUEUR : ${winnerName.toUpperCase()}`, cls:'dim', delay:2000},
-      ]
-    });
+    _enqueueAnim(()=>{
+      const flash=document.createElement('div');
+      flash.className='defeat-flash';
+      document.body.appendChild(flash);
+      setTimeout(()=>flash.remove(),1000);
+      buildTacScreen({
+        mode:'defeat', stampText:'DÉFAITE', stampClass:'stamp-defeat', duration:8000,
+        lines:[
+          {text:'ALERTE — FLOTTE COULÉE',               cls:'red', delay:0},
+          {text:'CIBLE VERROUILLÉE',                    cls:'red', delay:500,  lockRet:true, lockClass:'locked'},
+          {text:`DUEL ${duelId} PERDU`,                 cls:'red', delay:1000, showStamp:true},
+          {text:`VAINQUEUR : ${winnerName.toUpperCase()}`,cls:'dim',delay:1500},
+        ]
+      });
+    }, 8000);
   }
 }
 
@@ -1269,36 +1274,50 @@ async function annulerTirs(){
 function renderClassement(){
   const el=document.getElementById('tab-classement');
   if(!el)return;
-  const duelDefs=[{id:'A',nums:[1,2]},{id:'B',nums:[3,4]},{id:'C',nums:[5,6]}];
+  const nb=PARTIE?.nb_groupes||3;
+  const duelDefs=[{id:'A',nums:[1,2]},{id:'B',nums:[3,4]},{id:'C',nums:[5,6]}].slice(0,nb);
 
+  // Cartes de statut par duel
   let duelsHtml=`<div class="duel-status-grid">`;
   duelDefs.forEach(def=>{
     const ds=getDuelState(def.id);
     const isMy=EQUIPE.duel_id===def.id;
-    const t1=getEquipeByNum(def.nums[0]);const t2=getEquipeByNum(def.nums[1]);
+    const t1=getEquipeByNum(def.nums[0]);
+    const t2=getEquipeByNum(def.nums[1]);
     const tours=ds.turn>1?ds.turn-1:0;
     const statusLabel={ready:'Prête',battle:'Bataille',finished:'Terminé'}[ds.status]||ds.status;
+    const winnerEq=ds.winner?getEquipeByNum(ds.winner):null;
     duelsHtml+=`<div class="duel-status-card ${isMy?'my-duel':''}">
       <div class="duel-label">Duel ${def.id}</div>
       <div class="duel-turn-num">${tours}</div>
       <div style="font-size:.7rem;color:var(--text3);margin-bottom:6px">tour${tours>1?'s':''} joué${tours>1?'s':''}</div>
       <span class="status-badge ${ds.status}">${statusLabel}</span>
       <div style="margin-top:5px;font-size:.75rem;color:var(--text2)">${esc(t1?.nom||'?')} vs ${esc(t2?.nom||'?')}</div>
+      ${winnerEq?`<div style="margin-top:5px;font-size:.78rem;color:var(--gold);font-weight:700">🏆 ${esc(winnerEq.nom)}</div>`:''}
     </div>`;
   });
   duelsHtml+=`</div>`;
 
-  const sorted=[...ALL_EQUIPES].filter(e=>e.active&&e.partie_id===EQUIPE.partie_id).sort((a,b)=>b.score-a.score);
+  // Classement général avec trophées
+  const sorted=[...ALL_EQUIPES]
+    .filter(e=>e.active&&e.partie_id===EQUIPE.partie_id)
+    .sort((a,b)=>b.score-a.score);
+
+  // Calculer les trophées : top 3 au score global
+  const TROPHEES=['🥇','🥈','🥉'];
+
   let rankHtml=`<div class="card"><div class="card-title">🏆 Classement Général</div>
     <div style="overflow-x:auto"><table class="rank-table"><thead><tr>
       <th>Rg</th><th style="text-align:left">Équipe</th><th>Duel</th><th>Pts</th>
     </tr></thead><tbody>`;
+
   sorted.forEach((e,i)=>{
     const isMe=e.id===EQUIPE.id;
     const isOpp=e.numero===oppNum();
+    const trophy=i<3?`<span style="font-size:1rem;margin-right:4px">${TROPHEES[i]}</span>`:'';
     rankHtml+=`<tr class="${isMe?'my-team':isOpp?'opp-team':''}">
       <td><span style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--text3)">#${i+1}</span></td>
-      <td style="text-align:left;font-weight:700">${esc(e.nom||'Équipe '+e.numero)}
+      <td style="text-align:left;font-weight:700">${trophy}${esc(e.nom||'Équipe '+e.numero)}
         ${isMe?'<span style="font-size:.65rem;color:var(--cyan);margin-left:4px">(vous)</span>':''}
         ${isOpp?'<span style="font-size:.65rem;color:var(--red);margin-left:4px">(adversaire)</span>':''}
       </td>
