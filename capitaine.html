@@ -373,7 +373,7 @@ function checkNewSunkEvents(prevGrille, newGrille) {
   SHIP_KEYS.forEach(k => {
     const cells = shipCells[k] || [];
     if (!cells.length) return;
-    if (_seenSunkDefensive.has(k)) return; // déjà signalé
+    if (_seenSunkDefensive.has(k)) return;
     const wasAlreadySunk = cells.every(c => prevHit[c]);
     const isNowSunk      = cells.every(c => hitGrid[c]);
     if (!wasAlreadySunk && isNowSunk) {
@@ -382,6 +382,70 @@ function checkNewSunkEvents(prevGrille, newGrille) {
     }
   });
 }
+
+// Suivi des fins de duel déjà annoncées
+const _seenDuelEnd = new Set();
+
+function checkDuelEnd(prevPartie, newPartie) {
+  if (!prevPartie || !newPartie || !EQUIPE) return;
+  const myDuel = EQUIPE.duel_id;
+
+  ['A','B','C'].forEach(letter => {
+    const prev = prevPartie.duels?.[letter];
+    const next = newPartie.duels?.[letter];
+    if (!prev || !next) return;
+    if (prev.status === 'finished') return; // déjà terminé avant ce poll
+    if (next.status !== 'finished') return; // pas encore terminé
+    if (_seenDuelEnd.has(letter)) return;
+    _seenDuelEnd.add(letter);
+
+    const winnerNum  = next.winner;
+    const winnerEq   = ALL_EQUIPES.find(e => e.numero === winnerNum);
+    const winnerName = winnerEq?.nom || `Équipe ${winnerNum}`;
+    const isMyDuel   = letter === myDuel;
+    const amIWinner  = winnerNum === EQUIPE.numero;
+
+    if (isMyDuel) {
+      showDuelEndInternal(amIWinner, winnerName, letter);
+    } else {
+      showDuelEndGlobal(winnerName, letter);
+    }
+  });
+}
+
+function showDuelEndInternal(isWinner, winnerName, duelId) {
+  const overlay = document.getElementById('sunkOverlay');
+  if (!overlay) return;
+  if (isWinner) {
+    overlay.innerHTML = `<div class="sunk-notif victory" style="background:linear-gradient(135deg,rgba(0,180,80,.96),rgba(0,60,30,.96));border-color:var(--green);box-shadow:0 0 80px rgba(0,232,120,.5)">
+      <span class="sunk-icon">🏆</span>
+      <div class="sunk-title" style="color:#fff;font-size:2.4rem">VICTOIRE !</div>
+      <div class="sunk-sub" style="color:#a0ffcc;font-size:.75rem;letter-spacing:3px">DUEL ${duelId} REMPORTÉ</div>
+    </div>`;
+    spawnParticles(['#00e878','#f5c842','#ffffff','#80ffb0']);
+  } else {
+    overlay.innerHTML = `<div class="sunk-notif defeat">
+      <span class="sunk-icon">⚓</span>
+      <div class="sunk-title" style="color:var(--text2);font-size:2rem">DÉFAITE</div>
+      <div class="sunk-sub" style="color:var(--text3);letter-spacing:2px">${esc(winnerName)} remporte le Duel ${duelId}</div>
+    </div>`;
+  }
+  setTimeout(() => { overlay.innerHTML = ''; }, 6000);
+}
+
+function showDuelEndGlobal(winnerName, duelId) {
+  // Toast discret pour les équipes des autres duels
+  const toast = document.createElement('div');
+  toast.style.cssText = `position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:490;
+    background:rgba(13,22,36,.97);border:1px solid var(--gold);border-radius:8px;
+    padding:10px 20px;font-family:'Rajdhani',sans-serif;font-weight:700;
+    font-size:.9rem;color:var(--gold);text-align:center;white-space:nowrap;pointer-events:none;
+    animation:sunkIn .3s ease forwards, sunkOut .4s ease 4.5s forwards`;
+  toast.innerHTML = `🏆 <strong>${esc(winnerName)}</strong> remporte le Duel ${duelId} !`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 5500);
+}
+
 function savePseudo(){
   const val=(document.getElementById('pseudoInp')?.value||'').trim();
   if(!val)return;
@@ -478,7 +542,11 @@ function startPolling(){
         GRILLE=newG;
         changed=true;
       }
-      if(partieRes.data&&JSON.stringify(partieRes.data)!==JSON.stringify(PARTIE)){PARTIE=partieRes.data;changed=true;}
+      if(partieRes.data&&JSON.stringify(partieRes.data)!==JSON.stringify(PARTIE)){
+        if(PARTIE?.started) checkDuelEnd(PARTIE, partieRes.data);
+        PARTIE=partieRes.data;
+        changed=true;
+      }
       if(equipesRes.data){
         const nS=JSON.stringify(equipesRes.data.map(e=>e.score));
         const oS=JSON.stringify(ALL_EQUIPES.map(e=>e.score));
