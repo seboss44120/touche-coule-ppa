@@ -246,6 +246,24 @@ function getDuelDefs() {
   return ALL_DUEL_DEFS.slice(0, nb);
 }
 
+// Helper centralisé : statut lisible d'un duel
+function duelStatusInfo(duelId) {
+  if (!PARTIE?.started) {
+    const def = ALL_DUEL_DEFS.find(d => d.id === duelId);
+    const total = (def?.nums || []).filter(n => getEquipeByNum(n)?.active).length;
+    const ready = (def?.nums || []).filter(n => {
+      const e = getEquipeByNum(n);
+      return e?.active && getGrilleByEquipeId(e.id)?.is_ready;
+    }).length;
+    if (ready === total && total > 0) return { label:'✅ Grilles validées', color:'var(--green)', badge:'ready' };
+    return { label:`⏳ ${ready}/${total} grille${total>1?'s':''} validée${ready>1?'s':''}`, color:'var(--text3)', badge:'ready' };
+  }
+  const ds = getDuelState(duelId);
+  if (ds.status === 'finished') return { label:'🏁 Terminé', color:'var(--gold)', badge:'finished' };
+  if (ds.status === 'battle')   return { label:`⚔️ Tour ${ds.turn} en cours`, color:'var(--cyan)', badge:'battle' };
+  return { label:'🟢 Partie démarrée', color:'var(--green)', badge:'battle' };
+}
+
 /* ════════════════════════════════════════════════════════
    SUPABASE CLIENT
 ════════════════════════════════════════════════════════ */
@@ -550,8 +568,12 @@ function renderConfig() {
     <div class="teams-grid-cfg">`;
 
   getDuelDefs().forEach(def => {
-    teamsHtml += `<div style="grid-column:1/-1;font-family:'Orbitron',monospace;font-size:.6rem;
-      color:var(--gold);letter-spacing:2px;margin-bottom:4px">— Duel ${def.id} —</div>`;
+    const si = duelStatusInfo(def.id);
+    teamsHtml += `<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;
+      font-family:'Orbitron',monospace;font-size:.6rem;color:var(--gold);letter-spacing:2px;margin-bottom:4px">
+      <span>— Duel ${def.id} —</span>
+      <span style="font-size:.65rem;color:${si.color};letter-spacing:1px">${si.label}</span>
+    </div>`;
 
     def.nums.forEach(num => {
       const e = getEquipeByNum(num);
@@ -771,17 +793,17 @@ function renderTour() {
     const bothIn = sub1 && sub2;
     const canVal = bothIn && ds.status !== 'finished';
 
-    const statusLabel = { ready:'Prête', battle:'Bataille en cours', finished:'Combat terminé' }[ds.status];
-
+    const si = duelStatusInfo(def.id);
     h += `<div class="duel-panel">
       <div class="duel-header">
         <div>
           <div class="duel-name">⚓ Duel ${def.id}</div>
-          <div class="duel-turn">Tour ${ds.turn}</div>
+          <div class="duel-turn" style="color:${si.color}">${si.label}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-          <span class="status-badge ${ds.status}">${statusLabel}</span>
+          <span class="status-badge ${ds.status}">${{ready:'Prête',battle:'Bataille',finished:'Terminé'}[ds.status]}</span>
           ${ds.winner ? `<span style="font-size:.72rem;color:var(--gold)">🏆 ${esc(getEquipeByNum(ds.winner)?.nom||'')}</span>` : ''}
+          ${bothIn && ds.status!=='finished' ? `<span style="font-size:.68rem;color:var(--green)">✓ Les 2 équipes ont soumis</span>` : ''}
         </div>
       </div>
       <div class="duel-body">`;
@@ -1031,13 +1053,13 @@ function renderClassement() {
     const [n1, n2] = def.nums;
     const t1 = getEquipeByNum(n1); const t2 = getEquipeByNum(n2);
     const tours = ds.turn > 1 ? ds.turn - 1 : 0;
-    const statusLabel = { ready:'Prête', battle:'Bataille', finished:'Terminé' }[ds.status]||ds.status;
+    const si = duelStatusInfo(def.id);
     const winnerEq = ds.winner ? getEquipeByNum(ds.winner) : null;
     duelsHtml += `<div class="duel-status-card">
       <div class="duel-label">Duel ${def.id}</div>
       <div class="duel-turn-num">${tours}</div>
       <div style="font-size:.7rem;color:var(--text3);margin-bottom:6px">tour${tours>1?'s':''} joué${tours>1?'s':''}</div>
-      <span class="status-badge ${ds.status}">${statusLabel}</span>
+      <span class="status-badge ${si.badge}" style="color:${si.color}">${si.label}</span>
       <div style="margin-top:5px;font-size:.75rem;color:var(--text2)">${esc(t1?.nom||'?')} vs ${esc(t2?.nom||'?')}</div>
       ${winnerEq ? `<div style="margin-top:4px;font-size:.72rem;color:var(--gold)">🏆 ${esc(winnerEq.nom)}</div>` : ''}
     </div>`;
@@ -1081,43 +1103,55 @@ function renderFlottes() {
   const el = document.getElementById('tab-flottes');
   if (!el) return;
 
-  let h = `<div class="fleets-wrap">`;
-  ALL_EQUIPES.filter(e=>e.active).forEach(e => {
-    const g = getGrilleByEquipeId(e.id);
-    const sc = g?.ship_cells || {};
-    const hg = g?.hit_grid   || {};
-    const oppNum = NUM_OPP[e.numero];
-    const oppE = getEquipeByNum(oppNum);
+  let h = '';
+  getDuelDefs().forEach(def => {
+    const si = duelStatusInfo(def.id);
+    h += `<div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--gold);
+      letter-spacing:2px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+      <span>— Duel ${def.id} —</span>
+      <span style="font-size:.65rem;color:${si.color}">${si.label}</span>
+    </div>
+    <div class="fleets-wrap" style="margin-bottom:18px">`;
 
-    h += `<div class="fleet-card">
-      <div class="fleet-name">${esc(e.nom)}</div>
-      <div style="font-size:.7rem;color:var(--text3);margin-bottom:8px">
-        vs ${esc(oppE?.nom||'?')} &nbsp;·&nbsp; Duel ${e.duel_id}
-        ${g?.is_ready ? '&nbsp;·&nbsp;<span style="color:var(--green)">✓ Prête</span>' : '<span style="color:var(--text3)">&nbsp;·&nbsp;En placement</span>'}
-      </div>`;
+    def.nums.forEach(num => {
+      const e = getEquipeByNum(num);
+      if (!e?.active) return;
+      const g = getGrilleByEquipeId(e.id);
+      const sc = g?.ship_cells || {};
+      const hg = g?.hit_grid   || {};
+      const oppE = getEquipeByNum(NUM_OPP[e.numero]);
 
-    SHIP_KEYS.forEach(k => {
-      const ship = SHIPS[k];
-      const cells = sc[k] || [];
-      if (!cells.length) {
-        h += `<div class="ship-bar"><span>${ship.icon}</span>
-          <span style="color:var(--text3);font-size:.75rem">Non placé</span></div>`;
-        return;
-      }
-      const allS = cells.every(c => hg[c]);
-      h += `<div class="ship-bar">
-        <span title="${ship.name}">${ship.icon}</span>
-        <div class="ship-bar-cells">`;
-      cells.forEach(c => {
-        const cls = allS ? 'sunk-c' : hg[c] ? 'hit' : 'ok';
-        h += `<div class="ship-cell ${cls}" title="${c}"></div>`;
+      h += `<div class="fleet-card">
+        <div class="fleet-name">${esc(e.nom)}</div>
+        <div style="font-size:.7rem;color:var(--text3);margin-bottom:8px">
+          vs ${esc(oppE?.nom||'?')}
+          ${g?.is_ready ? '&nbsp;·&nbsp;<span style="color:var(--green)">✓ Prête</span>' : '&nbsp;·&nbsp;<span style="color:var(--text3)">En placement</span>'}
+        </div>`;
+
+      SHIP_KEYS.forEach(k => {
+        const ship = SHIPS[k];
+        const cells = sc[k] || [];
+        if (!cells.length) {
+          h += `<div class="ship-bar"><span>${ship.icon}</span>
+            <span style="color:var(--text3);font-size:.75rem">Non placé</span></div>`;
+          return;
+        }
+        const allS = cells.every(c => hg[c]);
+        h += `<div class="ship-bar">
+          <span title="${ship.name}">${ship.icon}</span>
+          <div class="ship-bar-cells">`;
+        cells.forEach(c => {
+          const cls = allS ? 'sunk-c' : hg[c] ? 'hit' : 'ok';
+          h += `<div class="ship-cell ${cls}" title="${c}"></div>`;
+        });
+        h += `</div>${allS?'<span style="color:var(--red);font-size:.72rem">💀</span>':''}</div>`;
       });
-      h += `</div>${allS?'<span style="color:var(--red);font-size:.72rem">💀</span>':''}</div>`;
+      h += `</div>`;
     });
     h += `</div>`;
   });
-  h += `</div>`;
-  el.innerHTML = h;
+
+  el.innerHTML = h || `<div class="card"><p style="color:var(--text3)">Aucune flotte à afficher.</p></div>`;
 }
 
 /* ════════════════════════════════════════════════════════
