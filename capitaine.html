@@ -115,6 +115,25 @@ select option{background:var(--bg2)}
 @media(max-width:500px){.game-grid{grid-template-columns:18px repeat(10,24px);grid-template-rows:18px repeat(10,24px)}.gc{width:24px;height:24px;font-size:.62rem}.gc-header{font-size:.48rem}main{padding:8px}}
 .spin{display:inline-block;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ══ ANIMATIONS COULAGE ══ */
+#sunkOverlay{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.sunk-notif{pointer-events:none;text-align:center;padding:24px 32px;border-radius:16px;max-width:88vw;
+  animation:sunkIn .4s cubic-bezier(.17,.67,.3,1.4) forwards, sunkOut .5s ease-in 3.2s forwards}
+.sunk-notif.victory{background:linear-gradient(135deg,rgba(255,68,85,.95),rgba(100,0,20,.95));
+  border:2px solid var(--red);box-shadow:0 0 60px rgba(255,68,85,.5),0 0 120px rgba(255,68,85,.2)}
+.sunk-notif.defeat{background:linear-gradient(135deg,rgba(8,14,26,.97),rgba(13,22,36,.97));
+  border:2px solid var(--text3);box-shadow:0 0 40px rgba(0,0,0,.9)}
+.sunk-icon{font-size:3.5rem;line-height:1;margin-bottom:8px;display:block;
+  animation:iconBounce .5s ease .15s both}
+.sunk-title{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:4px;line-height:1.1;margin-bottom:6px}
+.sunk-sub{font-family:'Orbitron',monospace;font-size:.65rem;letter-spacing:2px;opacity:.75}
+@keyframes sunkIn{from{opacity:0;transform:scale(.5) translateY(50px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes sunkOut{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.8) translateY(-40px)}}
+@keyframes iconBounce{0%{transform:scale(0) rotate(-15deg)}65%{transform:scale(1.25) rotate(6deg)}100%{transform:scale(1) rotate(0)}}
+.particle{position:fixed;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:499;
+  animation:particleFly 1s ease-out forwards}
+@keyframes particleFly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0)}}
 </style>
 </head>
 <body>
@@ -130,6 +149,9 @@ select option{background:var(--bg2)}
     <button class="btn btn-outline btn-sm" onclick="doRefresh()">↻</button>
   </div>
 </header>
+
+<!-- Overlay animations coulage -->
+<div id="sunkOverlay"></div>
 
 <!-- Modal pseudo -->
 <div id="pseudoModal" class="modal-overlay" style="display:none">
@@ -236,6 +258,10 @@ let orient  = 'H';
 let selShots      = [];
 let pendingConfirm = null;
 
+// Suivi des coulages déjà vus pour ne déclencher l'animation qu'une seule fois
+let _seenSunkOffensive = new Set(); // coords de mes tirs qui ont coulé
+let _seenSunkDefensive = new Set(); // clés de mes navires déjà coulés
+
 /* ══════════════════════════════════════════════════
    HELPERS
 ══════════════════════════════════════════════════ */
@@ -267,8 +293,95 @@ function getShipFootprint(coord,shipKey,orientation){
 }
 
 /* ══════════════════════════════════════════════════
-   PSEUDO
+   ANIMATIONS COULAGE
 ══════════════════════════════════════════════════ */
+const SHIP_ANIMS = {
+  PA: { icon:'✈️', victory:'PORTE-AVIONS COULÉ !', color:'#f0c040', particles:['#f0c040','#fff176','#ffeb3b'] },
+  CU: { icon:'⚔️', victory:'CUIRASSÉ COULÉ !',     color:'#00d4ff', particles:['#00d4ff','#80deea','#ffffff'] },
+  CR: { icon:'🚢', victory:'CROISEUR COULÉ !',      color:'#00ff8c', particles:['#00ff8c','#69f0ae','#ffffff'] },
+  SM: { icon:'🤿', victory:'SOUS-MARIN COULÉ !',   color:'#ff78c8', particles:['#ff78c8','#f48fb1','#ffffff'] },
+  TP: { icon:'🚤', victory:'TORPILLEUR COULÉ !',   color:'#ff8844', particles:['#ff8844','#ffcc80','#ffffff'] },
+};
+
+function showSunkAnimation(type, shipKey) {
+  // type: 'victory' (j'ai coulé un adversaire) ou 'defeat' (mon navire a été coulé)
+  const overlay = document.getElementById('sunkOverlay');
+  if (!overlay) return;
+
+  const anim = SHIP_ANIMS[shipKey] || { icon:'💥', victory:'NAVIRE COULÉ !', color:'var(--red)', particles:['#ff4455','#ff8888'] };
+
+  const isVictory = type === 'victory';
+  const title = isVictory ? anim.victory : `${anim.icon} TOUCHÉ !`;
+  const sub   = isVictory ? '🎯 +' + { PA:5,CU:4,CR:3,SM:3,TP:2 }[shipKey] + ' pts' : 'Un de vos navires vient d\'être coulé';
+  const color = isVictory ? '#fff' : 'var(--text2)';
+
+  overlay.innerHTML = `<div class="sunk-notif ${type}">
+    <span class="sunk-icon">${anim.icon}</span>
+    <div class="sunk-title" style="color:${isVictory ? anim.color : 'var(--text2)'}">${title}</div>
+    <div class="sunk-sub" style="color:${color}">${sub}</div>
+  </div>`;
+
+  // Particules pour les victoires
+  if (isVictory) {
+    spawnParticles(anim.particles);
+  }
+
+  // Nettoyer après l'animation
+  setTimeout(() => { overlay.innerHTML = ''; }, 4000);
+}
+
+function spawnParticles(colors) {
+  const cx = window.innerWidth / 2;
+  const cy = window.innerHeight / 2;
+  for (let i = 0; i < 28; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const angle = (Math.PI * 2 * i) / 28 + (Math.random() - .5) * .5;
+    const dist  = 120 + Math.random() * 180;
+    p.style.cssText = `left:${cx}px;top:${cy}px;
+      background:${colors[i % colors.length]};
+      --dx:${Math.cos(angle) * dist}px;
+      --dy:${Math.sin(angle) * dist}px;
+      animation-delay:${Math.random() * .3}s;
+      animation-duration:${.8 + Math.random() * .5}s`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1500);
+  }
+}
+
+function checkNewSunkEvents(prevGrille, newGrille) {
+  if (!newGrille || !prevGrille) return;
+
+  // 1. Coulages offensifs — nouveaux 'sunk' dans mon shot_history
+  const prevHist = prevGrille.shot_history || [];
+  const newHist  = newGrille.shot_history  || [];
+  const prevSunkSet = new Set(prevHist.filter(s => s.result === 'sunk').map(s => s.coord));
+
+  newHist.filter(s => s.result === 'sunk').forEach(s => {
+    const key = s.coord + s.shipKey;
+    if (!prevSunkSet.has(s.coord) && !_seenSunkOffensive.has(key)) {
+      _seenSunkOffensive.add(key);
+      showSunkAnimation('victory', s.shipKey);
+    }
+  });
+
+  // 2. Coulages défensifs — un de mes navires vient d'être entièrement touché
+  const shipCells = newGrille.ship_cells || {};
+  const hitGrid   = newGrille.hit_grid   || {};
+  const prevHit   = prevGrille.hit_grid  || {};
+
+  SHIP_KEYS.forEach(k => {
+    const cells = shipCells[k] || [];
+    if (!cells.length) return;
+    if (_seenSunkDefensive.has(k)) return; // déjà signalé
+    const wasAlreadySunk = cells.every(c => prevHit[c]);
+    const isNowSunk      = cells.every(c => hitGrid[c]);
+    if (!wasAlreadySunk && isNowSunk) {
+      _seenSunkDefensive.add(k);
+      showSunkAnimation('defeat', k);
+    }
+  });
+}
 function savePseudo(){
   const val=(document.getElementById('pseudoInp')?.value||'').trim();
   if(!val)return;
@@ -359,7 +472,12 @@ function startPolling(){
       ]);
       let changed=false;
       const newG=grilleRes.data?.[0]||null;
-      if(JSON.stringify(newG)!==JSON.stringify(GRILLE)){GRILLE=newG;changed=true;}
+      if(JSON.stringify(newG)!==JSON.stringify(GRILLE)){
+        // Vérifier les nouveaux coulages avant de mettre à jour l'état
+        if(PARTIE?.started) checkNewSunkEvents(GRILLE, newG);
+        GRILLE=newG;
+        changed=true;
+      }
       if(partieRes.data&&JSON.stringify(partieRes.data)!==JSON.stringify(PARTIE)){PARTIE=partieRes.data;changed=true;}
       if(equipesRes.data){
         const nS=JSON.stringify(equipesRes.data.map(e=>e.score));
