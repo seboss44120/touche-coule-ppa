@@ -791,15 +791,19 @@ function ouvrirConfirm(){
   document.getElementById('confirmCoords').textContent=selShots.join(' · ');
   document.getElementById('confirmModal').style.display='flex';
 }
-function closeConfirm(){document.getElementById('confirmModal').style.display='none';pendingConfirm=null;}
+function closeConfirm(){document.getElementById('confirmModal').style.display='none';}
 
 async function confirmTirs(){
+  // Sauvegarder les tirs AVANT de fermer le modal (closeConfirm ne null plus pendingConfirm)
+  const shotsToSend = pendingConfirm ? [...pendingConfirm] : [];
+  pendingConfirm = null;
   closeConfirm();
-  if(!pendingConfirm||pendingConfirm.length!==3)return;
-  const {error}=await sb.rpc('cap_submit_shots',{p_token:TEAM_TOKEN,p_shots:pendingConfirm});
-  if(error){alert('Erreur: '+error.message);return;}
-  GRILLE={...GRILLE,shots_pending:pendingConfirm};
-  selShots=[];pendingConfirm=null;
+  if(shotsToSend.length !== 3) return;
+
+  const {error} = await sb.rpc('cap_submit_shots', {p_token: TEAM_TOKEN, p_shots: shotsToSend});
+  if(error){ alert('Erreur soumission : ' + error.message); return; }
+  GRILLE = {...GRILLE, shots_pending: shotsToSend};
+  selShots = [];
   renderTab('tirs');
 }
 
