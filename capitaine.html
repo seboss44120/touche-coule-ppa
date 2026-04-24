@@ -577,7 +577,7 @@ function showSunkAnimation(type, shipKey){
         {text:`${ship.name.toUpperCase()} COULÉ !`,cls:'gold',  delay:1900},
         {text:`+${ship.pts} PTS ACCORDÉS`,         cls:'gold',  delay:2300},
       ]
-    }, 8000);
+    }), 8000);
   } else {
     _enqueueAnim(()=>{
       const flash=document.createElement('div');
@@ -609,7 +609,7 @@ function showDuelEndInternal(isWinner, winnerName, duelId){
         {text:`DUEL ${duelId} REMPORTÉ`,    cls:'gold',  delay:1500, showStamp:true},
         {text:'MISSION ACCOMPLIE',          cls:'gold',  delay:2000},
       ]
-    }, 8000);
+    }), 8000);
   } else {
     _enqueueAnim(()=>{
       const flash=document.createElement('div');
