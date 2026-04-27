@@ -898,10 +898,13 @@ async function resoudreTour(matchId,tour){
     await updateProfils({
       match, vainqueur_id,
       draw: !!(j1Sunk&&j2Sunk),
-      tirs_j1: [...tr_j2_av,...res_j1.history], // tirs de j1 sur j2
-      tirs_j2: [...tr_j1_av,...res_j2.history], // tirs de j2 sur j1
+      tirs_j1: [...tr_j2_av,...res_j1.history],
+      tirs_j2: [...tr_j1_av,...res_j2.history],
       nb_tours: tour.numero_tour||1,
     });
+
+    // Vérifier progression du tournoi (génération phases suivantes)
+    await checkProgressTournoi();
   }else{
     await sb.from('tournoi_tours').insert({match_id:matchId,numero_tour:(tour.numero_tour||1)+1,soumis_j1:false,soumis_j2:false,statut:'en_cours'});
   }
@@ -1236,21 +1239,278 @@ async function setDrapeau(code){
   renderProfil();
 }
 
-/* ══ BRACKET ══ */
-function renderTournoi(){
-  document.getElementById('mainContent').innerHTML=`<div class="card" style="text-align:center;padding:28px">
-    <div style="font-size:48px;margin-bottom:12px">🏆</div>
-    <div class="card-title">Tableau du tournoi</div>
-    <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:2px">DISPONIBLE DANS LA PROCHAINE MISE À JOUR</div>
+/* ══ BRACKET — GÉNÉRATION PHASES FINALES ══ */
+
+async function calcStandingsPoule(pouleId,allMatchs,allJoueurs){
+  const joueurs=allJoueurs.filter(j=>j.poule_id===pouleId&&!j.bye);
+  const matchs=allMatchs.filter(m=>m.poule_id===pouleId&&m.statut==='terminé');
+  return joueurs.map(j=>{
+    let pts=0,bonusNet=0;
+    matchs.forEach(m=>{
+      const isJ1=m.joueur1_id===j.id,isJ2=m.joueur2_id===j.id;
+      if(!isJ1&&!isJ2)return;
+      if(isJ1){pts+=m.pts_j1||0;bonusNet+=(m.bonus_j1||0)-(m.malus_j1||0);}
+      else{pts+=m.pts_j2||0;bonusNet+=(m.bonus_j2||0)-(m.malus_j2||0);}
+    });
+    return{...j,pts,bonusNet};
+  }).sort((a,b)=>b.pts-a.pts||b.bonusNet-a.bonusNet);
+}
+
+async function checkProgressTournoi(){
+  if(!TOURNOI)return;
+  const tournoiId=MOI.tournoi_id;
+
+  // Charger tous les matchs du tournoi
+  const{data:allMatchs}=await sb.from('tournoi_matchs').select('*').eq('tournoi_id',tournoiId);
+  if(!allMatchs)return;
+
+  const pouleMatchs=allMatchs.filter(m=>m.phase==='poule');
+  const demiMatchs =allMatchs.filter(m=>m.phase==='demi');
+  const finaleMatch=allMatchs.find(m=>m.phase==='finale');
+
+  // ── Finale terminée → tournoi terminé ──
+  if(finaleMatch?.statut==='terminé'){
+    if(TOURNOI.statut!=='terminé'){
+      await sb.from('tournois').update({statut:'terminé'}).eq('id',tournoiId);
+      TOURNOI.statut='terminé';
+      showToastPhase('🏆 Tournoi terminé !','var(--gold)');
+    }
+    return;
+  }
+
+  // ── Demis terminées → générer la finale ──
+  if(demiMatchs.length>0&&demiMatchs.every(m=>m.statut==='terminé')&&!finaleMatch){
+    const{data:existF}=await sb.from('tournoi_matchs').select('id').eq('tournoi_id',tournoiId).eq('phase','finale');
+    if(!existF?.length){
+      const w1=demiMatchs[0].vainqueur_id;
+      const w2=demiMatchs[1]?.vainqueur_id||demiMatchs[0].vainqueur_id;
+      const{data:fm}=await sb.from('tournoi_matchs').insert({
+        tournoi_id:tournoiId,phase:'finale',joueur1_id:w1,joueur2_id:w2,statut:'placement'
+      }).select().single();
+      if(fm){
+        await sb.from('tournoi_grilles').insert([
+          {match_id:fm.id,joueur_id:w1},
+          {match_id:fm.id,joueur_id:w2},
+        ]);
+      }
+      showToastPhase('🏆 Finale générée — bonne chance !','var(--gold)');
+    }
+    return;
+  }
+
+  // ── Poules terminées → générer les demis ──
+  if(pouleMatchs.length>0&&pouleMatchs.every(m=>m.statut==='terminé')&&demiMatchs.length===0){
+    const{data:existD}=await sb.from('tournoi_matchs').select('id').eq('tournoi_id',tournoiId).in('phase',['demi','finale']);
+    if(existD?.length)return; // déjà généré
+
+    const{data:allJoueurs}=await sb.from('tournoi_joueurs').select('*').eq('tournoi_id',tournoiId);
+    const pouleIds=[...new Set(allJoueurs.map(j=>j.poule_id).filter(Boolean))].sort();
+
+    if(pouleIds.length===1){
+      // Tournoi à poule unique → vainqueur = champion
+      await sb.from('tournois').update({statut:'terminé'}).eq('id',tournoiId);
+      TOURNOI.statut='terminé';
+      showToastPhase('🏆 Tournoi terminé !','var(--gold)');
+      return;
+    }
+
+    // Calculer classements
+    const standings={};
+    for(const pid of pouleIds){
+      standings[pid]=await calcStandingsPoule(pid,pouleMatchs,allJoueurs);
+    }
+
+    // Générer les matchs de demi-finale
+    // 1er poule A vs 2ème poule B et 1er poule B vs 2ème poule A
+    const inserts=[];
+    if(pouleIds.length>=2){
+      const[p1,p2]=pouleIds;
+      const pairings=[
+        [standings[p1]?.[0],standings[p2]?.[1]],
+        [standings[p2]?.[0],standings[p1]?.[1]],
+      ];
+      for(const[j1,j2] of pairings){
+        if(!j1||!j2)continue;
+        const{data:dm}=await sb.from('tournoi_matchs').insert({
+          tournoi_id:tournoiId,phase:'demi',joueur1_id:j1.id,joueur2_id:j2.id,statut:'placement'
+        }).select().single();
+        if(dm){
+          await sb.from('tournoi_grilles').insert([
+            {match_id:dm.id,joueur_id:j1.id},
+            {match_id:dm.id,joueur_id:j2.id},
+          ]);
+          inserts.push(dm);
+        }
+      }
+    }
+
+    await sb.from('tournois').update({statut:'finales'}).eq('id',tournoiId);
+    TOURNOI.statut='finales';
+    showToastPhase('⚔️ Phases finales ! Les demi-finales sont lancées.','var(--cyan)');
+  }
+}
+
+function showToastPhase(msg,color){
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:400;
+    background:#050e08;border:1px solid ${color};font-family:'Orbitron',monospace;
+    font-size:.65rem;letter-spacing:2px;color:${color};padding:10px 20px;white-space:nowrap;
+    border-radius:4px;animation:tacIn .3s ease forwards`;
+  t.textContent=msg;document.body.appendChild(t);
+  setTimeout(()=>t.remove(),5000);
+}
+
+/* ══ BRACKET — AFFICHAGE ══ */
+async function renderTournoi(){
+  const el=document.getElementById('mainContent');
+  el.innerHTML=`<div class="card" style="text-align:center;padding:16px"><span class="spin">⚓</span></div>`;
+
+  const tournoiId=MOI.tournoi_id;
+  const[{data:allMatchs},{data:allJoueurs},{data:tData}]=await Promise.all([
+    sb.from('tournoi_matchs').select('*').eq('tournoi_id',tournoiId).order('created_at'),
+    sb.from('tournoi_joueurs').select('id,nom,poule_id,bye').eq('tournoi_id',tournoiId),
+    sb.from('tournois').select('*').eq('id',tournoiId).maybeSingle(),
+  ]);
+
+  const pouleMatchs=allMatchs?.filter(m=>m.phase==='poule')||[];
+  const demiMatchs =allMatchs?.filter(m=>m.phase==='demi')||[];
+  const finaleMatch=allMatchs?.find(m=>m.phase==='finale');
+  const pouleIds=[...new Set(allJoueurs?.map(j=>j.poule_id).filter(Boolean))].sort();
+
+  const nomById={};
+  (allJoueurs||[]).forEach(j=>nomById[j.id]=j.nom||'?');
+
+  // Statut tournoi
+  const statutColor={inscription:'var(--text2)',poules:'var(--cyan)',finales:'var(--gold)',terminé:'var(--green)'}[tData?.statut]||'var(--text2)';
+  const statutLabel={inscription:'INSCRIPTIONS',poules:'PHASE DE POULES',finales:'PHASES FINALES',terminé:'🏆 TOURNOI TERMINÉ'}[tData?.statut]||'—';
+
+  let h=`<div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div class="card-title" style="margin:0">🏆 Tableau du tournoi</div>
+      <span style="font-family:'Orbitron',monospace;font-size:.6rem;color:${statutColor};letter-spacing:2px;font-weight:700">${statutLabel}</span>
+    </div>`;
+
+  // ── POULES ──
+  for(const pouleId of pouleIds){
+    const standings=await calcStandingsPoule(pouleId,pouleMatchs,allJoueurs||[]);
+    const pouleMatchsLocal=pouleMatchs.filter(m=>m.poule_id===pouleId);
+    const total=pouleMatchsLocal.length,done=pouleMatchsLocal.filter(m=>m.statut==='terminé').length;
+
+    h+=`<div style="margin-bottom:14px">
+      <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--teal);letter-spacing:2px;margin-bottom:8px;display:flex;justify-content:space-between">
+        <span>POULE ${pouleId}</span>
+        <span style="color:var(--text2)">${done}/${total} matchs</span>
+      </div>
+      <table class="rank-table"><thead><tr><th>Rg</th><th style="text-align:left">Joueur</th><th>Pts</th><th>B/M</th></tr></thead><tbody>`;
+
+    standings.forEach((j,i)=>{
+      const isMe=j.id===MOI.id;
+      const inDemi=demiMatchs.some(m=>m.joueur1_id===j.id||m.joueur2_id===j.id);
+      const qualBadge=inDemi?'<span style="font-size:.55rem;color:var(--gold);margin-left:4px">★</span>':'';
+      h+=`<tr class="${isMe?'me-row':''}">
+        <td><span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--text2)">#${i+1}</span></td>
+        <td style="text-align:left;font-weight:700">${esc(j.nom||'?')}${qualBadge}${isMe?'<span style="font-size:.6rem;color:var(--cyan);margin-left:4px">◀</span>':''}${j.bye?'<span style="font-size:.55rem;color:var(--gold);margin-left:4px">BYE</span>':''}</td>
+        <td><span style="font-family:'Orbitron',monospace;font-weight:900;font-size:1rem;color:var(--gold)">${j.pts}</span></td>
+        <td style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2)">+${j.bonusNet>=0?j.bonusNet:0}/-${j.bonusNet<0?Math.abs(j.bonusNet):0}</td>
+      </tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  }
+  h+=`</div>`; // close card
+
+  // ── PHASES FINALES ──
+  if(demiMatchs.length>0||finaleMatch){
+    h+=`<div class="card"><div class="card-title">⚔️ Phases finales</div>`;
+
+    // Demi-finales
+    if(demiMatchs.length>0){
+      h+=`<div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:2px;margin-bottom:10px">DEMI-FINALES</div>`;
+      demiMatchs.forEach((m,i)=>{
+        h+=bracketMatchCard(m,nomById,i+1,'Demi-finale');
+      });
+    }
+
+    // Finale
+    if(finaleMatch){
+      h+=`<div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--gold);letter-spacing:2px;margin:14px 0 10px">FINALE</div>`;
+      h+=bracketMatchCard(finaleMatch,nomById,null,'Finale');
+    }
+
+    // Champion
+    if(tData?.statut==='terminé'&&finaleMatch?.vainqueur_id){
+      const champNom=nomById[finaleMatch.vainqueur_id]||'?';
+      h+=`<div style="text-align:center;padding:16px;background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.3);border-radius:8px;margin-top:12px">
+        <div style="font-size:36px;margin-bottom:8px">🏆</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--gold)">CHAMPION</div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--text);margin-top:4px">${esc(champNom)}</div>
+      </div>`;
+    }
+
+    h+=`</div>`;
+  }
+
+  el.innerHTML=h;
+}
+
+function bracketMatchCard(m,nomById,num,label){
+  const j1Nom=nomById[m.joueur1_id]||'?';
+  const j2Nom=nomById[m.joueur2_id]||'?';
+  const isDone=m.statut==='terminé';
+  const isMe=m.joueur1_id===MOI.id||m.joueur2_id===MOI.id;
+  const stCol={en_attente:'var(--text2)',placement:'var(--text2)',en_cours:'var(--cyan)',terminé:'var(--gold)'}[m.statut];
+  const stLbl={en_attente:'EN ATTENTE',placement:'PLACEMENT',en_cours:'EN COURS',terminé:'TERMINÉ'}[m.statut];
+  const w=m.vainqueur_id;
+
+  return `<div style="background:${isMe?'rgba(14,165,233,.04)':'var(--bg3)'};border:1px solid ${isMe?'rgba(14,165,233,.3)':'var(--border)'};border-radius:8px;padding:12px;margin-bottom:8px">
+    ${num?`<div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1.5px;margin-bottom:8px">${label.toUpperCase()} ${num}</div>`:''}
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-weight:700;font-size:.95rem;color:${w===m.joueur1_id?'var(--gold)':w&&w!==m.joueur1_id?'var(--text2)':'var(--text)'}">${esc(j1Nom)}${m.joueur1_id===MOI.id?' <span style="font-size:.6rem;color:var(--cyan)">◀</span>':''}</span>
+        ${isDone?`<span style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;color:${w===m.joueur1_id?'var(--green)':'var(--red)'}">${m.pts_j1||0}pts</span>`:''}
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-weight:700;font-size:.95rem;color:${w===m.joueur2_id?'var(--gold)':w&&w!==m.joueur2_id?'var(--text2)':'var(--text)'}">${esc(j2Nom)}${m.joueur2_id===MOI.id?' <span style="font-size:.6rem;color:var(--cyan)">◀</span>':''}</span>
+        ${isDone?`<span style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;color:${w===m.joueur2_id?'var(--green)':'var(--red)'}">${m.pts_j2||0}pts</span>`:''}
+      </div>
+    </div>
+    <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:${stCol};letter-spacing:1.5px;font-weight:700">${stLbl}</span>
+      ${isMe&&!isDone?`<span style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--cyan)">TON MATCH !</span>`:''}
+    </div>
   </div>`;
 }
 
 /* ══ REALTIME ══ */
 function abonnerRealtime(){
-  sb.channel('jeu-matchs').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_matchs',filter:`tournoi_id=eq.${MOI.tournoi_id}`},async({new:n})=>{
-    const idx=MATCHS.findIndex(m=>m.id===n.id);if(idx>=0)MATCHS[idx]=n;else MATCHS.push(n);
-    if(n.poule_id===MOI.poule_id){const{data:pm}=await sb.from('tournoi_matchs').select('*').eq('tournoi_id',MOI.tournoi_id).eq('poule_id',MOI.poule_id);POULE_MATCHS=pm||[];}
-    buildNav();renderNav();if(currentTab==='match-'+n.id||currentTab==='poule')renderTab(currentTab);
+  sb.channel('jeu-matchs').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_matchs',filter:`tournoi_id=eq.${MOI.tournoi_id}`},async({new:n,eventType})=>{
+    if(!n)return;
+    const idx=MATCHS.findIndex(m=>m.id===n.id);
+    if(idx>=0)MATCHS[idx]=n;
+    else{
+      // Nouveau match — vérifier si ce joueur en fait partie
+      const concerne=n.joueur1_id===MOI.id||n.joueur2_id===MOI.id;
+      if(concerne){
+        MATCHS.push(n);
+        await loadGrilles(n.id);
+        initPL(n.id);
+        _shots[n.id]=[];
+        if(!_seenSunkOff[n.id])_seenSunkOff[n.id]=new Set();
+        if(!_seenSunkDef[n.id])_seenSunkDef[n.id]=new Set();
+        if(!_seenHitOff[n.id])_seenHitOff[n.id]=new Set();
+        if(!_seenHitDef[n.id])_seenHitDef[n.id]=new Set();
+        // Notifier
+        const phaseLabel={demi:'demi-finale',finale:'finale'}[n.phase]||n.phase;
+        showToastPhase(`⚔️ Tu es qualifié pour la ${phaseLabel} !`,'var(--gold)');
+        // Aller directement sur ce match
+        setTimeout(()=>goTab('match-'+n.id),1000);
+      }
+    }
+    if(n.poule_id===MOI.poule_id){
+      const{data:pm}=await sb.from('tournoi_matchs').select('*').eq('tournoi_id',MOI.tournoi_id).eq('poule_id',MOI.poule_id);
+      POULE_MATCHS=pm||[];
+    }
+    buildNav();renderNav();
+    if(currentTab==='match-'+n.id||currentTab==='poule'||currentTab==='tournoi')renderTab(currentTab);
   }).subscribe();
 
   sb.channel('jeu-grilles').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_grilles'},async({new:n})=>{
