@@ -31,7 +31,10 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;mi
 main{padding:12px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px}
 .card-title{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--gold);margin-bottom:10px}
-.stitle{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.stitle{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+/* Libellés Orbitron fonctionnels — lisibilité */
+.orb-label{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:2px;text-transform:uppercase}
+.rank-table th{color:var(--text2) !important}
 .btn{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:all .2s;display:inline-flex;align-items:center;gap:5px}
 .btn-gold{background:var(--gold);color:#000}.btn-gold:hover{background:#e0b430}
 .btn-gold:disabled{background:#333;color:#555;cursor:default}
@@ -227,7 +230,7 @@ main{padding:12px}
 
 <script>
 const SUPABASE_URL  = 'https://pwtqeyiynrtiprjgqzuw.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3dHFleWl5bnJ0aXByamdxenV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDMzMzMsImV4cCI6MjA4OTc3OTMzM30.acIEmilzlTCScWoKoyAX5rq1EwBWMzSQAmXQBPbX3Yw';
+const SUPABASE_ANON = 'SUPABASE_ANON_KEY';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const COLS=['A','B','C','D','E','F','G','H','I','J'];
@@ -243,8 +246,48 @@ const SHIPS={
 
 let MOI=null,TOURNOI=null,MATCHS=[],GRILLES={},TOURS={},ADVERSAIRES={};
 let POULE_JOUEURS=[],POULE_MATCHS=[],currentTab=null;
+let MON_PROFIL=null;
 let _pl={};   // matchId → placement state
 let _shots={}; // matchId → [coords]
+
+const GRADES=[
+  {label:'Matelot',min:0},{label:'Matelot 1ère classe',min:5},
+  {label:'Matelot 2nde classe',min:10},{label:'Quartier-maître 1ère classe',min:15},
+  {label:'Second maître',min:20},{label:'Maître',min:25},
+  {label:'Premier maître',min:35},{label:'Maître principal',min:45},
+  {label:'Major',min:55},{label:'Aspirant',min:65},
+  {label:'Enseigne de vaisseau',min:80},{label:'Lieutenant de vaisseau',min:95},
+  {label:'Capitaine de corvette',min:110},{label:'Capitaine de frégate',min:125},
+  {label:'Capitaine de vaisseau',min:140},{label:'Commodore',min:155},
+  {label:'Contre-amiral',min:170},{label:'Vice-amiral',min:185},
+  {label:"Vice-amiral d'escadre",min:200},{label:'Amiral',min:215},
+];
+const REWARDS_META={
+  medaille_victoire:{icon:'🎖',label:'Médaille de la victoire',desc:'3 victoires consécutives'},
+  medaille_honneur:{icon:'🏅',label:"Médaille d'honneur",desc:'10 victoires consécutives'},
+  grande_medaille:{icon:'🌟',label:'Grande médaille d\'honneur',desc:'25 victoires consécutives'},
+  sixieme_sens:{icon:'🔮',label:'Sixième sens',desc:'Toucher dès le premier coup'},
+  aiguille:{icon:'🪡',label:'Aiguille dans une botte de foin',desc:'Couler un navire dès le premier tour'},
+  bronze:{icon:'🥉',label:'Médaille de bronze',desc:'10 victoires au total'},
+  argent:{icon:'🥈',label:"Médaille d'argent",desc:'50 victoires au total'},
+  or:{icon:'🥇',label:"Médaille d'or",desc:'100 victoires au total'},
+  diamant:{icon:'💎',label:'Médaille de diamant',desc:'200 victoires au total'},
+};
+const AVATARS=['⚓','🚢','🛳️','⛵','🚤','🛥️','⛴️','🦈','🐙','🦑','🐋','🐬','🦅','🦁','🐯','🦊','🐺','🦝','🦖','👑','💀','🔥','⚡','🌊','🏴‍☠️'];
+const DRAPEAUX=[
+  {code:'fr',flag:'🇫🇷'},{code:'gb',flag:'🇬🇧'},{code:'de',flag:'🇩🇪'},
+  {code:'es',flag:'🇪🇸'},{code:'it',flag:'🇮🇹'},{code:'pt',flag:'🇵🇹'},
+  {code:'be',flag:'🇧🇪'},{code:'nl',flag:'🇳🇱'},{code:'ch',flag:'🇨🇭'},
+  {code:'us',flag:'🇺🇸'},{code:'ca',flag:'🇨🇦'},{code:'au',flag:'🇦🇺'},
+  {code:'jp',flag:'🇯🇵'},{code:'br',flag:'🇧🇷'},{code:'mx',flag:'🇲🇽'},
+  {code:'ma',flag:'🇲🇦'},{code:'dz',flag:'🇩🇿'},{code:'sn',flag:'🇸🇳'},
+  {code:'pirate',flag:'🏴‍☠️'},{code:'rainbow',flag:'🏳️‍🌈'},{code:'white',flag:'🏳️'},
+  {code:'black',flag:'🏴'},{code:'crossed',flag:'🎌'},{code:'eu',flag:'🇪🇺'},
+];
+function getGrade(v){let g=GRADES[0];for(const gr of GRADES){if(v>=gr.min)g=gr;else break;}return g.label;}
+function getNextGrade(v){const idx=GRADES.findIndex(g=>g.min>v);return idx>0?GRADES[idx]:null;}
+function getRatio(v,m){return m>0?Math.round((v/m)*100)+'%':'—';}
+function getFlagEmoji(code){return DRAPEAUX.find(d=>d.code===code)?.flag||'🏳️';}
 
 // Suivi animations par match
 let _seenSunkOff={};   // matchId → Set
@@ -439,6 +482,12 @@ async function init(){
   const{data:moi}=await sb.from('tournoi_joueurs').select('*').eq('token',token).maybeSingle();
   if(!moi?.nom){showError('Lien invalide ou expiré.');return;}
   MOI=moi;document.getElementById('hdrPlayer').textContent=moi.nom.toUpperCase();
+
+  // Charger le profil persistant
+  if(moi.profil_id){
+    const{data:p}=await sb.from('joueur_profils').select('*').eq('id',moi.profil_id).maybeSingle();
+    MON_PROFIL=p||null;
+  }
   const{data:t}=await sb.from('tournois').select('*').eq('id',moi.tournoi_id).maybeSingle();
   TOURNOI=t;
   const{data:matchs}=await sb.from('tournoi_matchs').select('*')
@@ -490,7 +539,8 @@ function buildNav(){
       ${esc(getAdvNom(m))||'?'}${isItMyTurn(m)?'<span class="badge"></span>':''}
     </button>`).join('')+
     (MATCHS.length?`<button class="mnav-btn" data-tab="poule" onclick="goTab('poule')">🏅 POULE</button>
-    <button class="mnav-btn" data-tab="tournoi" onclick="goTab('tournoi')">🏆 TOURNOI</button>`:'');
+    <button class="mnav-btn" data-tab="tournoi" onclick="goTab('tournoi')">🏆 TOURNOI</button>`:'')
+    +`<button class="mnav-btn" data-tab="profil" onclick="goTab('profil')">👤 PROFIL</button>`;
 }
 function renderNav(){document.querySelectorAll('.mnav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===currentTab));}
 function goTab(tab){currentTab=tab;renderNav();renderTab(tab);}
@@ -498,6 +548,7 @@ function renderTab(tab){
   if(tab.startsWith('match-')){const m=MATCHS.find(m=>m.id===tab.replace('match-',''));if(m)renderMatch(m);return;}
   if(tab==='poule')renderPoule();
   if(tab==='tournoi')renderTournoi();
+  if(tab==='profil')renderProfil();
 }
 
 /* ══ MATCH ══ */
@@ -902,11 +953,11 @@ function renderPoule(){
   standings.forEach((j,i)=>{
     const me=j.id===MOI.id;
     h+=`<tr class="${me?'me-row':''}">
-      <td><span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--text3)">#${i+1}</span></td>
+      <td><span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--text2)">#${i+1}</span></td>
       <td style="text-align:left;font-weight:700">${esc(j.nom)}${j.bye?' <span style="font-size:.6rem;color:var(--gold)">BYE</span>':''}${me?' <span style="font-size:.6rem;color:var(--cyan)">◀</span>':''}</td>
       <td><span style="font-family:'Orbitron',monospace;font-weight:900;font-size:1rem;color:var(--gold)">${j.pts}</span></td>
       <td style="color:var(--text2)">${j.played}</td>
-      <td style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text3)">+${j.bonus}/-${j.malus}</td>
+      <td style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2)">+${j.bonus}/-${j.malus}</td>
     </tr>`;
   });
   h+=`</tbody></table></div><div class="card"><div class="card-title">📋 Résultats</div>`;
@@ -917,13 +968,176 @@ function renderPoule(){
     const nbTours=MATCHS.find(x=>x.id===m.id) ? (TOURS[m.id]?.numero_tour||'—') : '—';
     h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border2)">
       <div style="font-size:.88rem"><strong>${esc(j1?.nom||'?')}</strong><span style="color:var(--text3);font-size:.72rem;margin:0 5px">vs</span><strong>${esc(j2?.nom||'?')}</strong></div>
-      <div style="text-align:right"><span style="font-family:'Orbitron',monospace;font-size:.52rem;color:${stCol}">${m.statut.toUpperCase()}</span>
+      <div style="text-align:right"><span style="font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;color:${stCol}">${m.statut.toUpperCase()}</span>
         ${m.statut==='en_cours'?`<div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan)">Tour ${nbTours}</div>`:''}
         ${m.statut==='terminé'?`<div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold)">${m.pts_j1||0}—${m.pts_j2||0}</div>`:''}</div>
     </div>`;
   });
   h+=`</div>`;
   el.innerHTML=h;
+}
+
+/* ══ PROFIL ══ */
+async function renderProfil(profilId){
+  const el=document.getElementById('mainContent');
+  el.innerHTML=`<div class="card" style="text-align:center;padding:20px"><span class="spin">⚓</span></div>`;
+
+  const pid=profilId||MOI?.profil_id;
+  if(!pid){el.innerHTML=`<div class="card"><p style="color:var(--text2)">Profil non disponible.</p></div>`;return;}
+
+  const{data:p}=await sb.from('joueur_profils').select('*').eq('id',pid).maybeSingle();
+  if(!p){el.innerHTML=`<div class="card"><p style="color:var(--text2)">Profil introuvable.</p></div>`;return;}
+  if(!profilId)MON_PROFIL=p; // mise à jour cache
+
+  const isMe=!profilId||profilId===MOI?.profil_id;
+  const grade=getGrade(p.victoires);
+  const nextGr=getNextGrade(p.victoires);
+  const ratio=getRatio(p.victoires,p.matchs_joues);
+  const pct=p.matchs_joues>0?Math.round((p.victoires/p.matchs_joues)*100):0;
+  const tireurElite=pct>=75&&p.matchs_joues>=5;
+  const flagEmoji=getFlagEmoji(p.drapeau);
+
+  // Barre progression grade
+  const gradeIdx=GRADES.findIndex(g=>g.label===grade);
+  const gradeNext=GRADES[gradeIdx+1];
+  const gradePct=gradeNext?Math.round(((p.victoires-GRADES[gradeIdx].min)/(gradeNext.min-GRADES[gradeIdx].min))*100):100;
+
+  let h=`
+  <div class="card">
+    <div style="text-align:center;padding:8px 0">
+      <div style="font-size:52px;margin-bottom:4px">${p.avatar||'⚓'} ${flagEmoji}</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px;color:var(--text)">${esc(p.pseudo)}</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.62rem;color:var(--gold);letter-spacing:2px;margin-top:4px">${grade}</div>
+      ${tireurElite?`<div style="display:inline-block;margin-top:6px;font-family:'Orbitron',monospace;font-size:.55rem;padding:3px 10px;border-radius:10px;background:rgba(14,165,233,.12);border:1px solid var(--cyan);color:var(--cyan);letter-spacing:1.5px">🎯 TIREUR D'ÉLITE</div>`:''}
+    </div>
+
+    ${gradeNext?`<div style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);margin-bottom:4px">
+        <span>${grade}</span><span>${gradeNext.label} (${gradeNext.min} victoires)</span>
+      </div>
+      <div style="background:var(--border);border-radius:4px;height:5px;overflow:hidden">
+        <div style="height:100%;width:${gradePct}%;background:var(--gold);border-radius:4px;transition:width .5s;box-shadow:0 0 8px rgba(245,158,11,.4)"></div>
+      </div>
+      <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);margin-top:3px;text-align:right">${gradePct}% — ${p.victoires} / ${gradeNext.min} victoires</div>
+    </div>`:'<div style="font-family:\'Orbitron\',monospace;font-size:.6rem;color:var(--gold);text-align:center;margin-top:8px;letter-spacing:2px">★ GRADE MAXIMUM ATTEINT ★</div>'}
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 Statistiques</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;color:var(--green)">${p.victoires}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1px;margin-top:2px">VICTOIRES</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;color:var(--red)">${p.defaites}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1px;margin-top:2px">DÉFAITES</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;color:var(--cyan)">${p.egalites||0}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1px;margin-top:2px">ÉGALITÉS</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--teal)">${p.matchs_joues}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1px;margin-top:2px">MATCHS JOUÉS</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:${pct>=75?'var(--gold)':'var(--text)'}">${ratio}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1px;margin-top:2px">RATIO V/M</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--orange)">${p.bateaux_detruits||0}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1px;margin-top:2px">BATEAUX COULÉS</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--purple)">${p.meilleure_serie||0}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1px;margin-top:2px">MEILLEURE SÉRIE</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏅 Récompenses</div>`;
+
+  const rewUnlocked=p.recompenses||[];
+  const rewDisplayed=p.recompenses_affichees||[];
+
+  if(!rewUnlocked.length){
+    h+=`<div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);text-align:center;padding:12px;letter-spacing:1px">AUCUNE RÉCOMPENSE ENCORE DÉBLOQUÉE</div>`;
+  }else{
+    h+=`<div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);margin-bottom:10px;letter-spacing:1px">
+      ${isMe?`Sélectionne jusqu'à 2 récompenses à afficher sur ton profil`:'Récompenses débloquées'}
+    </div>`;
+    h+=`<div style="display:flex;flex-direction:column;gap:7px">`;
+    Object.entries(REWARDS_META).forEach(([k,m])=>{
+      const unlocked=rewUnlocked.includes(k);
+      const displayed=rewDisplayed.includes(k);
+      if(!unlocked&&!isMe)return;
+      h+=`<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:${unlocked?'var(--bg3)':'rgba(0,0,0,.2)'};border:1px solid ${displayed?'rgba(245,158,11,.4)':unlocked?'var(--border)':'rgba(26,47,74,.3)'};border-radius:7px;${unlocked?'':'opacity:.45'}">
+        <span style="font-size:20px">${m.icon}</span>
+        <div style="flex:1">
+          <div style="font-size:.85rem;font-weight:700;color:${unlocked?'var(--text)':'var(--text2)'}">${m.label}</div>
+          <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);margin-top:2px;letter-spacing:.5px">${m.desc}</div>
+        </div>
+        ${unlocked&&isMe?`<button class="btn btn-sm ${displayed?'btn-gold':'btn-outline'}"
+          onclick="toggleReward('${k}')" ${!displayed&&rewDisplayed.length>=2?'disabled':''}>
+          ${displayed?'✓ AFFICHÉE':'AFFICHER'}
+        </button>`:''}
+        ${displayed&&!isMe?`<span style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--gold)">★</span>`:''}
+        ${!unlocked?`<span style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2)">🔒</span>`:''}
+      </div>`;
+    });
+    h+=`</div>`;
+  }
+  h+=`</div>`;
+
+  // Personnalisation (seulement pour soi)
+  if(isMe){
+    h+=`<div class="card">
+      <div class="card-title">🎨 Personnalisation</div>
+      <div class="stitle">Avatar</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+        ${AVATARS.map(a=>`<button onclick="setAvatar('${a}')" style="font-size:22px;padding:6px 8px;border-radius:6px;border:1px solid ${(p.avatar||'⚓')===a?'var(--gold)':'var(--border)'};background:${(p.avatar||'⚓')===a?'rgba(245,158,11,.12)':'var(--bg3)'};cursor:pointer">${a}</button>`).join('')}
+      </div>
+      <div class="stitle">Drapeau</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${DRAPEAUX.map(d=>`<button onclick="setDrapeau('${d.code}')" title="${d.code}" style="font-size:22px;padding:6px 8px;border-radius:6px;border:1px solid ${p.drapeau===d.code?'var(--gold)':'var(--border)'};background:${p.drapeau===d.code?'rgba(245,158,11,.12)':'var(--bg3)'};cursor:pointer">${d.flag}</button>`).join('')}
+      </div>
+      <div id="alertProfil" class="alert" style="margin-top:10px"></div>
+    </div>`;
+  }
+
+  el.innerHTML=h;
+}
+
+async function toggleReward(key){
+  if(!MON_PROFIL)return;
+  const displayed=[...(MON_PROFIL.recompenses_affichees||[])];
+  const idx=displayed.indexOf(key);
+  if(idx>=0)displayed.splice(idx,1);
+  else if(displayed.length<2)displayed.push(key);
+  else return;
+  await sb.from('joueur_profils').update({recompenses_affichees:displayed}).eq('id',MON_PROFIL.id);
+  MON_PROFIL.recompenses_affichees=displayed;
+  renderProfil();
+}
+
+async function setAvatar(avatar){
+  if(!MON_PROFIL)return;
+  await sb.from('joueur_profils').update({avatar}).eq('id',MON_PROFIL.id);
+  MON_PROFIL.avatar=avatar;
+  showAlert('alertProfil','ok','✓ Avatar mis à jour');
+  renderProfil();
+}
+
+async function setDrapeau(code){
+  if(!MON_PROFIL)return;
+  await sb.from('joueur_profils').update({drapeau:code}).eq('id',MON_PROFIL.id);
+  MON_PROFIL.drapeau=code;
+  showAlert('alertProfil','ok','✓ Drapeau mis à jour');
+  renderProfil();
 }
 
 /* ══ BRACKET ══ */
