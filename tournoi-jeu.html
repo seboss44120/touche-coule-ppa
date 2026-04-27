@@ -100,6 +100,61 @@ main{padding:12px}
 .bye-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:8px}
 .bye-sub{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1.5px;line-height:2}
 @media(max-width:400px){main{padding:8px}}
+
+/* ══ ANIMATIONS TACTIQUES (depuis capitaine.html) ══ */
+#sunkOverlay{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.tac-screen{position:relative;width:320px;max-width:92vw;background:#050e08;border:1px solid #00e878;font-family:'Orbitron',monospace;overflow:hidden;animation:tacIn .25s ease-out forwards,tacOut .4s ease-in var(--dur,4s) forwards}
+.tac-screen.defeat-mode{border-color:#ff4455}
+.tac-screen.hit-mode{border-color:#ff8844}
+.tac-screen::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(0,232,120,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(0,232,120,.06) 1px,transparent 1px);background-size:18px 18px}
+.tac-screen.defeat-mode::before{background-image:linear-gradient(rgba(255,68,85,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,68,85,.06) 1px,transparent 1px)}
+.tac-screen.hit-mode::before{background-image:linear-gradient(rgba(255,136,68,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,100,40,.06) 1px,transparent 1px);background-size:18px 18px}
+.tac-screen::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 140px 50px at 30% 65%,rgba(0,60,20,.4) 0%,transparent 70%),radial-gradient(ellipse 100px 60px at 72% 30%,rgba(0,40,15,.35) 0%,transparent 70%)}
+.tac-header{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid rgba(0,232,120,.3);font-size:.55rem;letter-spacing:3px;color:#3f8050}
+.tac-header .tac-dot{width:6px;height:6px;border-radius:50%;background:#00e878;box-shadow:0 0 6px #00e878;animation:blink .7s step-end infinite}
+.tac-header.defeat-hdr{border-bottom-color:rgba(255,68,85,.3);color:#803040}
+.tac-header.defeat-hdr .tac-dot{background:#ff4455;box-shadow:0 0 6px #ff4455}
+.tac-header.hit-hdr{border-bottom-color:rgba(255,136,68,.3);color:#805030}
+.tac-header.hit-hdr .tac-dot{background:#ff8844;box-shadow:0 0 6px #ff8844}
+@keyframes blink{50%{opacity:0}}
+.tac-center{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;padding:16px 12px 8px;gap:16px}
+.tac-reticle{position:relative;width:70px;height:70px;flex-shrink:0}
+.tac-reticle svg{width:70px;height:70px}
+.ret-ring{stroke:#00e878;fill:none;stroke-width:1.5;transform-origin:35px 35px;animation:retSpin 3s linear infinite}
+.ret-ring2{stroke:rgba(0,232,120,.35);fill:none;stroke-width:.8;stroke-dasharray:4 8;transform-origin:35px 35px;animation:retSpin 6s linear infinite reverse}
+.ret-cross-h,.ret-cross-v{stroke:rgba(0,232,120,.6);stroke-width:.8}
+.ret-center{fill:#00e878;animation:blink .5s step-end infinite}
+@keyframes retSpin{to{transform:rotate(360deg)}}
+.tac-reticle.locked .ret-ring{animation:none;stroke:#ff4455}
+.tac-reticle.locked .ret-ring2{animation:none;stroke:rgba(255,68,85,.3)}
+.tac-reticle.locked .ret-cross-h,.tac-reticle.locked .ret-cross-v{stroke:rgba(255,68,85,.5)}
+.tac-reticle.locked .ret-center{fill:#ff4455}
+.tac-reticle.locked-green .ret-ring{animation:none;stroke:#00e878}
+.tac-reticle.locked-green .ret-ring2{animation:none;stroke:rgba(0,232,120,.3)}
+.tac-stamp{font-size:1.05rem;letter-spacing:4px;font-weight:700;padding:6px 10px;border-width:2px;border-style:solid;transform:rotate(-12deg) scale(0);opacity:0}
+.tac-stamp.show{animation:stampSlam .35s cubic-bezier(.17,.67,.3,1.4) forwards}
+@keyframes stampSlam{0%{transform:rotate(-12deg) scale(0);opacity:0}70%{transform:rotate(-12deg) scale(1.12);opacity:1}100%{transform:rotate(-12deg) scale(1);opacity:1}}
+.stamp-victory{color:#00e878;border-color:#00e878}
+.stamp-defeat{color:#ff4455;border-color:#ff4455}
+.stamp-hit{color:#ff8844;border-color:#ff8844}
+.tac-terminal{position:relative;z-index:2;padding:8px 12px 12px;border-top:1px solid rgba(0,232,120,.2);min-height:64px}
+.tac-terminal.defeat-term{border-top-color:rgba(255,68,85,.2)}
+.tac-terminal.hit-term{border-top-color:rgba(255,136,68,.2)}
+.tac-line{font-size:.6rem;letter-spacing:1.5px;line-height:1.8;opacity:0;white-space:nowrap;overflow:hidden}
+.tac-line.green{color:#00e878}.tac-line.gold{color:#f5c842}.tac-line.red{color:#ff4455}
+.tac-line.dim{color:#3f8050}.tac-line.orange{color:#ff8844}.tac-line.dim-o{color:#5a3010}
+.tac-line.show{animation:lineIn .12s ease forwards}
+@keyframes lineIn{to{opacity:1}}
+.tac-scan{position:absolute;inset:0;z-index:3;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.08) 3px,rgba(0,0,0,.08) 4px)}
+@keyframes tacIn{from{opacity:0;transform:scaleY(.85)}to{opacity:1;transform:scaleY(1)}}
+@keyframes tacOut{from{opacity:1}to{opacity:0}}
+.defeat-flash{position:fixed;inset:0;z-index:498;pointer-events:none;background:#ff0000;opacity:0;animation:defFlash .8s ease-out forwards}
+@keyframes defFlash{0%{opacity:.18}100%{opacity:0}}
+.tac-screen.compact .tac-center{padding:8px 12px 4px}
+.tac-screen.compact .tac-reticle{width:50px;height:50px}
+.tac-screen.compact .tac-reticle svg{width:50px;height:50px}
+/* Tooltip coordonnées */
+.coord-tooltip{position:fixed;background:#0a1628;border:1px solid var(--gold);color:var(--gold);font-family:'Orbitron',monospace;font-size:.6rem;letter-spacing:2px;padding:3px 8px;border-radius:4px;pointer-events:none;z-index:300;display:none}
 </style>
 </head>
 <body>
@@ -123,6 +178,36 @@ main{padding:12px}
   </div>
 </main>
 
+<!-- Overlay animations tactiques -->
+<div id="sunkOverlay"></div>
+
+<!-- Tooltip coordonnées -->
+<div class="coord-tooltip" id="coordTooltip"></div>
+
+<!-- MODAL CONFIRMATION TIRS -->
+<div class="modal-overlay" id="modalTirs" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">🎯 Confirmer les tirs</div>
+    <div class="modal-sub">TU ES SUR LE POINT DE SOUMETTRE :</div>
+    <div id="modalTirsCoords" style="font-family:'Orbitron',monospace;font-size:1.3rem;color:var(--gold);letter-spacing:5px;text-align:center;margin:16px 0"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-outline" style="flex:1" onclick="document.getElementById('modalTirs').style.display='none'">← ANNULER</button>
+      <button class="btn btn-gold" style="flex:1" id="btnConfirmTirs">✓ CONFIRMER</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ANNULATION TOUR ADMIN -->
+<div class="modal-overlay" id="modalAnnulTour" style="display:none">
+  <div class="modal-box" style="text-align:center">
+    <div style="font-size:40px;margin-bottom:10px">🔄</div>
+    <div class="modal-title" style="color:var(--orange)">TOUR ANNULÉ</div>
+    <div class="modal-sub">ACTION ADMINISTRATIVE</div>
+    <div style="color:var(--text2);font-size:.9rem;margin-bottom:16px">L'administrateur a annulé le dernier tour.<br>Tu peux soumettre tes tirs à nouveau.</div>
+    <button class="btn btn-gold btn-block" onclick="document.getElementById('modalAnnulTour').style.display='none'">✓ COMPRIS</button>
+  </div>
+</div>
+
 <!-- MODAL CONFIRMATION GRILLE -->
 <div class="modal-overlay" id="modalConfirm" style="display:none">
   <div class="modal-box">
@@ -142,7 +227,7 @@ main{padding:12px}
 
 <script>
 const SUPABASE_URL  = 'https://pwtqeyiynrtiprjgqzuw.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3dHFleWl5bnJ0aXByamdxenV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDMzMzMsImV4cCI6MjA4OTc3OTMzM30.acIEmilzlTCScWoKoyAX5rq1EwBWMzSQAmXQBPbX3Yw';
+const SUPABASE_ANON = 'SUPABASE_ANON_KEY';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const COLS=['A','B','C','D','E','F','G','H','I','J'];
@@ -160,6 +245,151 @@ let MOI=null,TOURNOI=null,MATCHS=[],GRILLES={},TOURS={},ADVERSAIRES={};
 let POULE_JOUEURS=[],POULE_MATCHS=[],currentTab=null;
 let _pl={};   // matchId → placement state
 let _shots={}; // matchId → [coords]
+
+// Suivi animations par match
+let _seenSunkOff={};   // matchId → Set
+let _seenSunkDef={};   // matchId → Set
+let _seenHitOff={};    // matchId → Set
+let _seenHitDef={};    // matchId → Set
+let _prevTirsRecusTheirs={}; // matchId → snapshot précédent
+let _prevTirsRecusMine  ={}; // matchId → snapshot précédent
+let _prevToursIds={};        // matchId → Set d'ids de tours connus (pour détecter annulation)
+
+/* ══ ANIMATIONS TACTIQUES ══ */
+const RETICLE_SVG=`<svg viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="35" cy="35" r="28" class="ret-ring" stroke-dasharray="12 6"/>
+  <circle cx="35" cy="35" r="20" class="ret-ring2"/>
+  <line x1="35" y1="4"  x2="35" y2="18" class="ret-cross-v"/>
+  <line x1="35" y1="52" x2="35" y2="66" class="ret-cross-v"/>
+  <line x1="4"  y1="35" x2="18" y2="35" class="ret-cross-h"/>
+  <line x1="52" y1="35" x2="66" y2="35" class="ret-cross-h"/>
+  <circle cx="35" cy="35" r="2.5" class="ret-center"/>
+</svg>`;
+
+const _animQueue=[];let _animRunning=false;
+function _enqueueAnim(fn,duration){_animQueue.push({fn,duration});if(!_animRunning)_processAnimQueue();}
+function _processAnimQueue(){
+  if(!_animQueue.length){_animRunning=false;return;}
+  _animRunning=true;const{fn,duration}=_animQueue.shift();fn();
+  setTimeout(_processAnimQueue,duration+700);
+}
+
+function buildTacScreen({mode='victory',lines,stampText,stampClass,duration=8000,compact=false,matchId=''}){
+  const overlay=document.getElementById('sunkOverlay');if(!overlay)return;
+  const isDefeat=mode==='defeat',isHit=mode==='hit';
+  const screenCls=isDefeat?'defeat-mode':isHit?'hit-mode':'';
+  const hdrCls=isDefeat?'defeat-hdr':isHit?'hit-hdr':'';
+  const termCls=isDefeat?'defeat-term':isHit?'hit-term':'';
+  const match=MATCHS.find(m=>m.id===matchId);
+  const advNom=match?getAdvNom(match):'?';
+  overlay.innerHTML=`<div class="tac-screen ${screenCls}${compact?' compact':''}" style="--dur:${duration}ms">
+    <div class="tac-scan"></div>
+    <div class="tac-header ${hdrCls}"><span>TOURNOI · vs ${esc(advNom).toUpperCase()}</span><div class="tac-dot"></div></div>
+    <div class="tac-center">
+      <div class="tac-reticle" id="tacRet">${RETICLE_SVG}</div>
+      ${stampText?`<div class="tac-stamp ${stampClass}" id="tacStamp">${stampText}</div>`:''}
+    </div>
+    <div class="tac-terminal ${termCls}" id="tacTerm"></div>
+  </div>`;
+  const term=document.getElementById('tacTerm'),ret=document.getElementById('tacRet'),stamp=document.getElementById('tacStamp');
+  lines.forEach(({text,cls,delay,lockRet,lockClass,showStamp})=>{
+    setTimeout(()=>{
+      const d=document.createElement('div');d.className=`tac-line ${cls}`;d.textContent='> '+text;
+      term.appendChild(d);void d.offsetWidth;d.classList.add('show');
+      if(lockRet&&ret)ret.className=`tac-reticle ${lockClass||'locked-green'}`;
+      if(showStamp&&stamp){void stamp.offsetWidth;stamp.classList.add('show');}
+    },delay);
+  });
+  setTimeout(()=>overlay.innerHTML='',duration+500);
+}
+
+function showHitAnim(type,shipKey,coord,matchId){
+  const name=SHIPS[shipKey]?.name||'Navire';
+  if(type==='offensive'){
+    _enqueueAnim(()=>buildTacScreen({mode:'victory',compact:true,duration:6000,matchId,lines:[
+      {text:'TIRS VALIDÉS — ANALYSE...',cls:'green',delay:0},
+      {text:`COORD : ${coord}`,cls:'dim',delay:500},
+      {text:'IMPACT CONFIRMÉ !',cls:'green',delay:900,lockRet:true,lockClass:'locked-green'},
+      {text:'CIBLE TOUCHÉE',cls:'green',delay:1400},
+    ]}),6000);
+  }else{
+    _enqueueAnim(()=>{
+      const f=document.createElement('div');f.className='defeat-flash';document.body.appendChild(f);setTimeout(()=>f.remove(),800);
+      buildTacScreen({mode:'hit',compact:true,stampText:'TOUCHÉ',stampClass:'stamp-hit',duration:6000,matchId,lines:[
+        {text:'ALERTE IMPACT !',cls:'orange',delay:0},
+        {text:`COORD : ${coord}`,cls:'orange',delay:450},
+        {text:'DOMMAGES DÉTECTÉS',cls:'orange',delay:900,lockRet:true,lockClass:'locked'},
+        {text:`${name.toUpperCase()} TOUCHÉ`,cls:'orange',delay:1400,showStamp:true},
+      ]});
+    },6000);
+  }
+}
+
+function showSunkAnim(type,shipKey,matchId){
+  const ship=SHIPS[shipKey]||{name:'Navire',pts:1};
+  if(type==='victory'){
+    _enqueueAnim(()=>buildTacScreen({mode:'victory',stampText:'NEUTRALISÉ',stampClass:'stamp-victory',duration:8000,matchId,lines:[
+      {text:'CIBLAGE EN COURS...',cls:'green',delay:0},
+      {text:'CIBLE VERROUILLÉE',cls:'green',delay:900,lockRet:true,lockClass:'locked-green'},
+      {text:'IMPACT CONFIRMÉ !',cls:'green',delay:1400,showStamp:true},
+      {text:`${ship.name.toUpperCase()} COULÉ !`,cls:'gold',delay:1900},
+      {text:`+${ship.pts} PTS ACCORDÉS`,cls:'gold',delay:2300},
+    ]}),8000);
+  }else{
+    _enqueueAnim(()=>{
+      const f=document.createElement('div');f.className='defeat-flash';document.body.appendChild(f);setTimeout(()=>f.remove(),1000);
+      buildTacScreen({mode:'defeat',stampText:'COULÉ',stampClass:'stamp-defeat',duration:8000,matchId,lines:[
+        {text:'ALERTE IMPACT DÉTECTÉ !',cls:'red',delay:0},
+        {text:'CIBLE VERROUILLÉE',cls:'red',delay:900,lockRet:true,lockClass:'locked'},
+        {text:`${ship.name.toUpperCase()} COULÉ !`,cls:'red',delay:1400,showStamp:true},
+        {text:'INTÉGRITÉ DE LA FLOTTE COMPROMISE',cls:'dim',delay:1900},
+      ]});
+    },8000);
+  }
+}
+
+function checkNewAnimEvents(matchId){
+  const g=GRILLES[matchId];if(!g)return;
+  // Init sets si besoin
+  if(!_seenSunkOff[matchId])_seenSunkOff[matchId]=new Set();
+  if(!_seenSunkDef[matchId])_seenSunkDef[matchId]=new Set();
+  if(!_seenHitOff[matchId])_seenHitOff[matchId]=new Set();
+  if(!_seenHitDef[matchId])_seenHitDef[matchId]=new Set();
+
+  // Mes tirs sur la grille adverse (tirs_recus de theirs)
+  const tirsAdv=g.theirs?.tirs_recus||[];
+  tirsAdv.forEach(t=>{
+    const key=t.coord+(t.shipKey||'');
+    if(t.result==='sunk'&&!_seenSunkOff[matchId].has(key)){_seenSunkOff[matchId].add(key);showSunkAnim('victory',t.shipKey,matchId);}
+    else if(t.result==='hit'&&!_seenHitOff[matchId].has(t.coord)){_seenHitOff[matchId].add(t.coord);showHitAnim('offensive',t.shipKey,t.coord,matchId);}
+  });
+
+  // Tirs adverses sur ma grille (tirs_recus de mine)
+  const tirsRecus=g.mine?.tirs_recus||[];
+  const myPl=g.mine?.grille_placement;
+  tirsRecus.forEach(t=>{
+    const key=t.coord+(t.shipKey||'');
+    if(t.result==='sunk'&&!_seenSunkDef[matchId].has(key)){_seenSunkDef[matchId].add(key);showSunkAnim('defeat',t.shipKey,matchId);}
+    else if(t.result==='hit'&&!_seenHitDef[matchId].has(t.coord)){_seenHitDef[matchId].add(t.coord);showHitAnim('defensive',t.shipKey,t.coord,matchId);}
+  });
+}
+
+/* ══ TOOLTIP COORDONNÉES ══ */
+const tooltip=()=>document.getElementById('coordTooltip');
+function attachCoordTooltip(grid){
+  if(!grid)return;
+  grid.querySelectorAll('.gc').forEach(c=>{
+    c.addEventListener('mouseenter',e=>{
+      const t=tooltip();if(!t)return;
+      t.textContent=c.dataset.coord||'';t.style.display='block';
+    });
+    c.addEventListener('mousemove',e=>{
+      const t=tooltip();if(!t)return;
+      t.style.left=(e.clientX+12)+'px';t.style.top=(e.clientY-28)+'px';
+    });
+    c.addEventListener('mouseleave',()=>{const t=tooltip();if(t)t.style.display='none';});
+  });
+}
 
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const getMyRole=m=>m.joueur1_id===MOI.id?1:2;
@@ -415,6 +645,7 @@ function buildGrid(matchId,mode){
 
 function attachPlacementEvents(matchId){
   const grid=document.getElementById(`grid-${matchId}-placement`);if(!grid)return;
+  attachCoordTooltip(grid);
   grid.querySelectorAll('.gc').forEach(cell=>{
     cell.addEventListener('click',()=>onPlacementClick(matchId,cell.dataset.coord));
     cell.addEventListener('mouseenter',()=>onPlacementHover(matchId,cell.dataset.coord));
@@ -499,12 +730,17 @@ function renderBataille(match,el){
   const myTurn=isItMyTurn(match),shots=_shots[match.id]||[];
   const mesTirs=GRILLES[match.id]?.theirs?.tirs_recus||[];
   const sesTirs=GRILLES[match.id]?.mine?.tirs_recus||[];
+  const tourNum=TOURS[match.id]?.numero_tour||1;
 
   el.innerHTML=`
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
         <div class="card-title" style="margin:0">⚔️ vs ${esc(getAdvNom(match))}</div>
         ${myTurn?`<span class="status-pill sp-your-turn">⚡ À TON TOUR</span>`:`<span class="status-pill sp-wait">⏳ ${esc(getAdvNom(match))}…</span>`}
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+        <div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);letter-spacing:2px">TOUR</div>
+        <div style="font-family:'Orbitron',monospace;font-weight:900;font-size:1.4rem;color:var(--cyan)">${tourNum}</div>
       </div>
       <div class="score-row"><div style="font-weight:700">🎯 ${esc(MOI.nom)}</div><div class="score-pts">${calcScore(mesTirs)}</div></div>
       <div class="score-row"><div style="font-weight:700">💀 ${esc(getAdvNom(match))}</div><div class="score-pts">${calcScore(sesTirs)}</div></div>
@@ -517,7 +753,7 @@ function renderBataille(match,el){
       <div class="grid-wrap">${buildGrid(match.id,'attack')}</div>
       <div id="alertB-${match.id}" class="alert" style="margin-top:8px"></div>
       ${myTurn?`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <button class="btn btn-gold" onclick="soumettreCoups('${match.id}')" ${shots.length===3?'':'disabled'}>🎯 ENVOYER LES TIRS</button>
+        <button class="btn btn-gold" onclick="demanderConfirmTirs('${match.id}')" ${shots.length===3?'':'disabled'}>🎯 ENVOYER LES TIRS</button>
         <button class="btn btn-outline btn-sm" onclick="_shots['${match.id}']=[];renderTab(currentTab)">✗ Effacer</button>
       </div>`:''}
     </div>
@@ -526,10 +762,14 @@ function renderBataille(match,el){
       <div class="grid-wrap">${buildGrid(match.id,'defense')}</div>
     </div>`;
 
-  if(myTurn){
-    const grid=document.getElementById(`grid-${match.id}-attack`);
-    if(grid)grid.querySelectorAll('.gc').forEach(c=>c.addEventListener('click',()=>onAttackClick(match.id,c.dataset.coord)));
+  const attackGrid=document.getElementById(`grid-${match.id}-attack`);
+  if(attackGrid){
+    attachCoordTooltip(attackGrid);
+    if(myTurn)attackGrid.querySelectorAll('.gc').forEach(c=>c.addEventListener('click',()=>onAttackClick(match.id,c.dataset.coord)));
   }
+  const defGrid=document.getElementById(`grid-${match.id}-defense`);
+  if(defGrid)attachCoordTooltip(defGrid);
+  checkNewAnimEvents(match.id);
 }
 
 function onAttackClick(matchId,coord){
@@ -538,6 +778,17 @@ function onAttackClick(matchId,coord){
   if(shots.includes(coord)){_shots[matchId]=shots.filter(c=>c!==coord);}
   else if(shots.length<3){_shots[matchId]=[...shots,coord];}
   renderTab(currentTab);
+}
+
+function demanderConfirmTirs(matchId){
+  const shots=_shots[matchId]||[];
+  if(shots.length!==3)return;
+  document.getElementById('modalTirsCoords').textContent=shots.join('  ·  ');
+  document.getElementById('btnConfirmTirs').onclick=()=>{
+    document.getElementById('modalTirs').style.display='none';
+    soumettreCoups(matchId);
+  };
+  document.getElementById('modalTirs').style.display='flex';
 }
 
 async function soumettreCoups(matchId){
@@ -662,9 +913,12 @@ function renderPoule(){
   POULE_MATCHS.forEach(m=>{
     const j1=POULE_JOUEURS.find(j=>j.id===m.joueur1_id),j2=POULE_JOUEURS.find(j=>j.id===m.joueur2_id);
     const stCol={en_attente:'var(--text3)',placement:'var(--text3)',en_cours:'var(--cyan)',terminé:'var(--gold)'}[m.statut];
+    // Calculer le tour max à partir des tirs_recus si match en cours
+    const nbTours=MATCHS.find(x=>x.id===m.id) ? (TOURS[m.id]?.numero_tour||'—') : '—';
     h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border2)">
       <div style="font-size:.88rem"><strong>${esc(j1?.nom||'?')}</strong><span style="color:var(--text3);font-size:.72rem;margin:0 5px">vs</span><strong>${esc(j2?.nom||'?')}</strong></div>
       <div style="text-align:right"><span style="font-family:'Orbitron',monospace;font-size:.52rem;color:${stCol}">${m.statut.toUpperCase()}</span>
+        ${m.statut==='en_cours'?`<div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan)">Tour ${nbTours}</div>`:''}
         ${m.statut==='terminé'?`<div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold)">${m.pts_j1||0}—${m.pts_j2||0}</div>`:''}</div>
     </div>`;
   });
@@ -695,11 +949,24 @@ function abonnerRealtime(){
     if(currentTab==='match-'+n.match_id)renderTab(currentTab);
   }).subscribe();
 
-  sb.channel('jeu-tours').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_tours'},async({new:n})=>{
-    if(!MATCHS.find(m=>m.id===n.match_id))return;
-    TOURS[n.match_id]=n.statut==='en_cours'?n:null;
-    if(n.statut==='en_cours'&&n.soumis_j1&&n.soumis_j2)await resoudreTour(n.match_id,n);
-    else{buildNav();renderNav();if(currentTab==='match-'+n.match_id)renderTab(currentTab);}
+  sb.channel('jeu-tours').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_tours'},async({new:n,old:o,eventType})=>{
+    if(!MATCHS.find(m=>m.id===n?.match_id||m.id===o?.match_id))return;
+    const matchId=n?.match_id||o?.match_id;
+
+    // Détection annulation admin : un tour en_cours est supprimé ou repassé à un tour inférieur
+    if(eventType==='DELETE'&&o?.statut==='en_cours'){
+      // L'admin a supprimé le tour en cours
+      _shots[matchId]=[];
+      await loadTourEnCours(matchId);
+      document.getElementById('modalAnnulTour').style.display='flex';
+      buildNav();renderNav();if(currentTab==='match-'+matchId)renderTab(currentTab);
+      return;
+    }
+
+    if(n?.statut==='en_cours')TOURS[matchId]=n;
+    else{await loadTourEnCours(matchId);}
+    if(n?.statut==='en_cours'&&n?.soumis_j1&&n?.soumis_j2)await resoudreTour(matchId,n);
+    else{buildNav();renderNav();if(currentTab==='match-'+matchId)renderTab(currentTab);}
   }).subscribe();
 }
 
