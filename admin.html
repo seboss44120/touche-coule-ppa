@@ -270,15 +270,22 @@ function duelStatusInfo(duelId) {
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
   db: { schema: 'touche_coule' }
 });
+// Client pour les tables tournoi (schéma public)
+const sbT = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const BASE_URL_TOURNOI = location.href.replace(/[^/]*$/, 'tournoi-capitaine-inscription.html');
 
 /* ════════════════════════════════════════════════════════
    STATE
 ════════════════════════════════════════════════════════ */
-let PARTIE      = null;
-let ALL_EQUIPES = [];
-let ALL_GRILLES = [];
-let currentTab  = 'config';
-let _tourSel    = {}; // duelId → selected team num for manual entry
+let PARTIE         = null;
+let ALL_EQUIPES    = [];
+let ALL_GRILLES    = [];
+let currentTab     = 'config';
+let _tourSel       = {}; // duelId → selected team num for manual entry
+// Tournoi
+let TOURNOI        = null;
+let TOURNOI_JOUEURS = [];
+let _nbJoueursSelect = null;
 
 /* ════════════════════════════════════════════════════════
    HELPERS
@@ -388,6 +395,19 @@ async function loadAllData() {
     ALL_EQUIPES = [];
     ALL_GRILLES = [];
   }
+
+  // Charger le tournoi actif (schéma public)
+  const { data: tournois } = await sbT.from('tournois')
+    .select('*').neq('statut','terminé')
+    .order('created_at',{ascending:false}).limit(1);
+  TOURNOI = tournois?.[0] || null;
+  if (TOURNOI) {
+    const { data: jData } = await sbT.from('tournoi_joueurs')
+      .select('*').eq('tournoi_id', TOURNOI.id).order('created_at');
+    TOURNOI_JOUEURS = jData || [];
+    // Si tournoi actif, basculer sur l'onglet tournoi
+    if (currentTab === 'config' && TOURNOI) currentTab = 'tournoi';
+  }
 }
 
 async function doRefresh() {
@@ -452,25 +472,59 @@ function setupRealtime() {
     .on('postgres_changes', { event:'UPDATE', schema:'touche_coule', table:'parties' },
       ({ new:n }) => { PARTIE = n; updateHeaderStatus(); renderTab(currentTab); })
     .subscribe();
+
+  // Tournoi — écouter inscriptions joueurs
+  if (TOURNOI) {
+    sbT.channel('admin-tournoi-joueurs')
+      .on('postgres_changes', {
+        event:'*', schema:'public', table:'tournoi_joueurs',
+        filter:`tournoi_id=eq.${TOURNOI.id}`
+      }, async () => {
+        const { data } = await sbT.from('tournoi_joueurs')
+          .select('*').eq('tournoi_id', TOURNOI.id).order('created_at');
+        TOURNOI_JOUEURS = data || [];
+        if (currentTab === 'tournoi') renderTournoi();
+      })
+      .subscribe();
+
+    sbT.channel('admin-tournoi-statut')
+      .on('postgres_changes', {
+        event:'UPDATE', schema:'public', table:'tournois',
+        filter:`id=eq.${TOURNOI.id}`
+      }, ({ new:n }) => {
+        TOURNOI = n;
+        if (currentTab === 'tournoi') renderTournoi();
+      })
+      .subscribe();
+  }
 }
 
 /* ════════════════════════════════════════════════════════
    NAV
 ════════════════════════════════════════════════════════ */
-const TABS = [
+const TABS_DUEL = [
   { id:'config',     label:'⚙️ Config' },
   { id:'tour',       label:'🎯 Tour' },
   { id:'classement', label:'🏆 Classement' },
   { id:'flottes',    label:'⚓ Flottes' },
   { id:'historique', label:'📋 Historique' },
 ];
+const TABS_TOURNOI = [
+  { id:'config',   label:'⚙️ Config' },
+  { id:'tournoi',  label:'🏆 Tournoi' },
+];
+function getTabs() {
+  return TOURNOI ? TABS_TOURNOI : TABS_DUEL;
+}
+const TABS = TABS_DUEL; // compat ancien code
 
 function buildNav() {
-  document.getElementById('mainNav').innerHTML = TABS.map(t =>
+  const tabs = getTabs();
+  document.getElementById('mainNav').innerHTML = tabs.map(t =>
     `<button data-tab="${t.id}" onclick="goTab('${t.id}')"
       ${currentTab===t.id?'class="active"':''}>${t.label}</button>`
   ).join('');
-  document.getElementById('mainContent').innerHTML = TABS.map(t =>
+  document.getElementById('mainContent').innerHTML = tabs.map(t =>
     `<div class="tab-content ${t.id===currentTab?'active':''}" id="tab-${t.id}"></div>`
   ).join('');
   updateHeaderStatus();
@@ -492,6 +546,7 @@ function renderTab(t) {
   if (t === 'classement') renderClassement();
   if (t === 'flottes')    renderFlottes();
   if (t === 'historique') renderHistorique();
+  if (t === 'tournoi')    renderTournoi();
 }
 
 function updateHeaderStatus() {
@@ -534,22 +589,31 @@ function renderConfig() {
                   <span style="font-size:.8rem;color:var(--text2)">Groupes de 2 équipes en duel simultané et indépendant</span>
                 </span>
               </label>
-              <label style="display:flex;align-items:flex-start;gap:10px;opacity:.4;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px">
-                <input type="radio" name="modeJeu" value="tournoi" disabled style="margin-top:3px">
+              <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px" id="labelTournoi">
+                <input type="radio" name="modeJeu" value="tournoi" style="margin-top:3px;accent-color:var(--gold)" onchange="onModeChange()">
                 <span>
-                  <strong style="color:var(--text3)">Tournoi individuel</strong><br>
-                  <span style="font-size:.8rem;color:var(--text3)">À venir</span>
+                  <strong style="color:var(--gold)">Tournoi individuel</strong><br>
+                  <span style="font-size:.8rem;color:var(--text2)">Joueurs 1vs1 en poules puis phases finales</span>
                 </span>
               </label>
             </div>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="grpNbGroupes">
             <div class="form-label">Nombre de groupes (Duel équipes)</div>
             <select id="nbGroupesInp" style="width:100%">
               <option value="1">1 groupe — 2 équipes, 1 duel</option>
               <option value="2">2 groupes — 4 équipes, 2 duels</option>
               <option value="3" selected>3 groupes — 6 équipes, 3 duels</option>
             </select>
+          </div>
+          <div class="form-group" id="grpNbJoueurs" style="display:none">
+            <div class="form-label">Nombre de joueurs (2 à 8)</div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:4px" id="nbJoueursSelector">
+              ${[2,3,4,5,6,7,8].map(n=>`<button type="button"
+                onclick="_nbJoueursSelect=${n};document.querySelectorAll('.nbj-btn').forEach(b=>b.classList.remove('nbj-active'));this.classList.add('nbj-active')"
+                class="btn btn-outline btn-sm nbj-btn" style="padding:8px 0;font-size:.9rem">${n}</button>`).join('')}
+            </div>
+            <div id="formatPreview" style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1px;margin-top:8px;text-align:center;min-height:16px"></div>
           </div>
           <button class="btn btn-gold" style="margin-top:8px;width:100%" onclick="creerPartie()">
             ▶ Créer la partie
@@ -649,7 +713,47 @@ function renderConfig() {
 }
 
 /* ── Config helpers ── */
+const FORMATS_TOURNOI = {
+  2:'Finale directe (1 match)',
+  3:'1 poule de 3 — vainqueur = champion',
+  4:'1 poule de 4 — vainqueur = champion',
+  5:'1 poule de 3 + 1 poule de 2 — Demi + Finale',
+  6:'2 poules de 3 — Demi + Finale',
+  7:'1 poule de 4 + 1 poule de 3 — Demi + Finale',
+  8:'2 poules de 4 — Demi + Finale',
+};
+
+function onModeChange() {
+  const mode = document.querySelector('input[name="modeJeu"]:checked')?.value;
+  const grpG = document.getElementById('grpNbGroupes');
+  const grpJ = document.getElementById('grpNbJoueurs');
+  const lDuel = document.querySelector('label[for="modeJeu"]');
+  if (mode === 'tournoi') {
+    if (grpG) grpG.style.display = 'none';
+    if (grpJ) grpJ.style.display = 'block';
+  } else {
+    if (grpG) grpG.style.display = 'block';
+    if (grpJ) grpJ.style.display = 'none';
+  }
+}
+
+// Mise à jour du preview format en live
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('nbj-btn')) {
+    const n = parseInt(e.target.textContent);
+    const prev = document.getElementById('formatPreview');
+    if (prev) prev.textContent = FORMATS_TOURNOI[n] || '';
+  }
+});
+
 async function creerPartie() {
+  const mode = document.querySelector('input[name="modeJeu"]:checked')?.value || 'duel_equipes';
+
+  if (mode === 'tournoi') {
+    await creerTournoi();
+    return;
+  }
+
   const nom = (document.getElementById('partieNomInp')?.value||'').trim() || 'Partie PPA';
   const nbGroupes = parseInt(document.getElementById('nbGroupesInp')?.value || '3');
   const alert = document.getElementById('createAlert');
@@ -686,6 +790,40 @@ async function creerPartie() {
   } catch(err) {
     alert.className = 'alert err show';
     alert.textContent = 'Erreur : ' + err.message;
+  }
+}
+
+async function creerTournoi() {
+  const n = _nbJoueursSelect;
+  const alert = document.getElementById('createAlert');
+  if (!n) {
+    alert.className='alert err show'; alert.textContent='Choisissez le nombre de joueurs.'; return;
+  }
+  alert.className='alert info show'; alert.textContent='Création du tournoi…';
+
+  try {
+    // 1. Créer le tournoi
+    const { data: t, error: errT } = await sbT.from('tournois')
+      .insert({ nb_joueurs_cible: n, statut: 'inscription' })
+      .select().single();
+    if (errT) throw errT;
+    TOURNOI = t;
+
+    // 2. Générer N entrées joueurs (nom null = pas encore inscrit)
+    const joueurs = Array.from({ length: n }, () => ({ tournoi_id: t.id, nom: null }));
+    const { error: errJ } = await sbT.from('tournoi_joueurs').insert(joueurs);
+    if (errJ) throw errJ;
+
+    // Charger les joueurs générés
+    const { data: jData } = await sbT.from('tournoi_joueurs').select('*').eq('tournoi_id', t.id).order('created_at');
+    TOURNOI_JOUEURS = jData || [];
+
+    currentTab = 'tournoi';
+    buildNav();
+    renderTab('tournoi');
+    alert.style.display = 'none';
+  } catch(err) {
+    alert.className='alert err show'; alert.textContent='Erreur : '+err.message;
   }
 }
 
@@ -1288,6 +1426,224 @@ async function undoDuel(duelId) {
 
   await loadAllData();
   renderTab('historique');
+}
+
+/* ════════════════════════════════════════════════════════
+   TAB : TOURNOI
+════════════════════════════════════════════════════════ */
+function renderTournoi() {
+  const el = document.getElementById('tab-tournoi');
+  if (!el || !TOURNOI) return;
+
+  const inscrits   = TOURNOI_JOUEURS.filter(j => !!j.nom);
+  const cible      = TOURNOI.nb_joueurs_cible;
+  const pct        = Math.round((inscrits.length / cible) * 100);
+  const statut     = TOURNOI.statut;
+  const peutLancer = inscrits.length >= 2;
+  const complet    = inscrits.length === cible;
+
+  // ── Compteur ──
+  let h = `<div class="card">
+    <div class="card-title">📡 Statut du tournoi</div>
+    <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-bottom:10px">
+      <div style="font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:var(--cyan);letter-spacing:2px;flex-shrink:0">
+        ${inscrits.length}/${cible}
+      </div>
+      <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1.5px">
+        ${complet ? '<span style="color:var(--green)">✅ TOUS LES JOUEURS INSCRITS</span>' : 'JOUEURS EMBARQUÉS'}
+        <div style="margin-top:3px;color:var(--text2);font-size:.62rem">${FORMATS_TOURNOI[cible]||''}</div>
+      </div>
+    </div>
+
+    <!-- Barre de progression -->
+    <div style="background:var(--border);border-radius:4px;height:4px;margin-bottom:14px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:var(--cyan);border-radius:4px;transition:width .5s;box-shadow:0 0 8px var(--cyan)"></div>
+    </div>`;
+
+  // ── Bouton lancer ──
+  if (statut === 'inscription') {
+    h += `<div id="alertTournoi" class="alert" style="margin-bottom:8px"></div>
+    <button class="btn btn-gold" style="width:100%" ${peutLancer?'':'disabled'}
+      onclick="adminLancerTournoi()">
+      ${complet ? '⚓ LANCER LE TOURNOI' : `⚓ LANCER QUAND MÊME (${inscrits.length}/${cible})`}
+    </button>
+    <button class="btn btn-danger btn-sm" style="width:100%;margin-top:8px"
+      onclick="adminAnnulerTournoi()">🗑️ ANNULER ET SUPPRIMER CE TOURNOI</button>`;
+  } else {
+    h += `<div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:2px;text-align:center;padding:8px">
+      ${{'poules':'⚔️ PHASE DE POULES EN COURS','finales':'🏆 PHASES FINALES EN COURS','terminé':'✅ TOURNOI TERMINÉ'}[statut]||statut.toUpperCase()}
+    </div>`;
+  }
+  h += `</div>`;
+
+  // ── Liens capitaines ──
+  h += `<div class="card">
+    <div class="card-title">🔗 Liens capitaines</div>
+    <button class="btn btn-cyan btn-sm" style="margin-bottom:12px" onclick="adminCopierTousLiens()">
+      📋 Copier tous les liens
+    </button>
+    <div id="alertCopyAll" class="alert" style="margin-bottom:8px"></div>`;
+
+  TOURNOI_JOUEURS.forEach((j, i) => {
+    const url      = `${BASE_URL_TOURNOI}?token=${j.token}`;
+    const inscrit  = !!j.nom;
+    const isBye    = j.bye;
+    h += `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;
+      background:var(--bg3);border:1px solid ${inscrit?'rgba(0,232,120,.35)':'var(--border)'};
+      border-radius:8px;margin-bottom:6px;${isBye?'border-color:rgba(245,200,66,.4)':''}">
+      <div style="width:28px;height:28px;border-radius:50%;background:var(--border2);
+        display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;
+        font-size:.65rem;font-weight:900;color:${inscrit?'var(--green)':'var(--text3)'};flex-shrink:0">
+        ${i+1}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:.9rem;color:${inscrit?'var(--text)':'var(--text3)'}">
+          ${inscrit ? esc(j.nom) : '<em style="color:var(--text3);font-size:.8rem">En attente…</em>'}
+          ${isBye ? '&nbsp;<span style="font-family:\'Orbitron\',monospace;font-size:.5rem;padding:2px 7px;border-radius:10px;background:rgba(245,200,66,.15);border:1px solid var(--gold);color:var(--gold)">BYE</span>' : ''}
+        </div>
+        <div class="url-box" onclick="copyUrl('${esc(url)}')" style="margin-top:3px" title="Cliquer pour copier">
+          ${url.length>60?url.slice(0,60)+'…':url}
+        </div>
+      </div>
+      <button class="btn btn-outline btn-xs" onclick="copyUrl('${esc(url)}')">📋</button>
+    </div>`;
+  });
+  h += `</div>`;
+
+  // ── Actions d'urgence (si tournoi lancé) ──
+  if (statut !== 'inscription') {
+    h += `<div class="card">
+      <div class="card-title">🚨 Actions d'urgence</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1px;margin-bottom:12px">
+        Intervenir sur un match en cours
+      </div>
+      <div id="matchsUrgenceList"></div>
+    </div>`;
+  }
+
+  el.innerHTML = h;
+
+  // Charger les matchs d'urgence si besoin
+  if (statut !== 'inscription') adminChargerMatchsUrgence();
+}
+
+/* ── Tournoi helpers ── */
+function shuffle(arr) {
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+function tirerPoules(joueurs) {
+  const n=joueurs.length, mel=shuffle(joueurs);
+  const configs={2:[[2]],3:[[3]],4:[[4]],5:[[3,2]],6:[[3,3]],7:[[4,3]],8:[[4,4]]};
+  const tailles=configs[n]||[[n]];
+  const poules=[];let idx=0;
+  for(const taille of tailles){
+    const groupe=mel.slice(idx,idx+taille).map(j=>({...j,bye:false}));
+    if(taille===2&&n===5){groupe[Math.floor(Math.random()*2)].bye=true;}
+    poules.push(groupe);idx+=taille;
+  }
+  return poules;
+}
+
+function roundRobin(joueurs){
+  const paires=[];
+  for(let i=0;i<joueurs.length;i++)for(let j=i+1;j<joueurs.length;j++)paires.push([joueurs[i],joueurs[j]]);
+  return paires;
+}
+
+async function adminLancerTournoi() {
+  const inscrits = TOURNOI_JOUEURS.filter(j=>!!j.nom);
+  if(!confirm(`Lancer le tournoi avec ${inscrits.length} joueur(s) ?`))return;
+  const alertEl=document.getElementById('alertTournoi');
+  if(alertEl){alertEl.className='alert info show';alertEl.textContent='Tirage en cours…';}
+
+  try{
+    const poules=tirerPoules(inscrits);
+    for(const [pi,groupe] of poules.entries()){
+      for(const j of groupe){
+        await sbT.from('tournoi_joueurs').update({poule_id:pi+1,bye:j.bye||false}).eq('id',j.id);
+      }
+      const reels=groupe.filter(j=>!j.bye);
+      for(const [j1,j2] of roundRobin(reels)){
+        const {data:m}=await sbT.from('tournoi_matchs').insert({
+          tournoi_id:TOURNOI.id,phase:'poule',poule_id:pi+1,
+          joueur1_id:j1.id,joueur2_id:j2.id,statut:'placement'
+        }).select().single();
+        if(m){
+          await sbT.from('tournoi_grilles').insert([
+            {match_id:m.id,joueur_id:j1.id},
+            {match_id:m.id,joueur_id:j2.id},
+          ]);
+        }
+      }
+    }
+    await sbT.from('tournois').update({statut:'poules'}).eq('id',TOURNOI.id);
+    TOURNOI.statut='poules';
+    const{data:jData}=await sbT.from('tournoi_joueurs').select('*').eq('tournoi_id',TOURNOI.id).order('created_at');
+    TOURNOI_JOUEURS=jData||[];
+    renderTournoi();
+  }catch(e){
+    if(alertEl){alertEl.className='alert err show';alertEl.textContent='Erreur : '+e.message;}
+  }
+}
+
+async function adminAnnulerTournoi(){
+  if(!confirm('Supprimer ce tournoi définitivement ?'))return;
+  await sbT.from('tournois').delete().eq('id',TOURNOI.id);
+  TOURNOI=null;TOURNOI_JOUEURS=[];
+  currentTab='config';buildNav();renderTab('config');
+}
+
+async function adminCopierTousLiens(){
+  const lignes=TOURNOI_JOUEURS.map((j,i)=>
+    `Joueur ${i+1}${j.nom?' ('+j.nom+')':''} : ${BASE_URL_TOURNOI}?token=${j.token}`
+  );
+  const texte=`LIENS TOURNOI TOUCHÉ COULÉ\n${'─'.repeat(40)}\n${lignes.join('\n')}`;
+  await navigator.clipboard.writeText(texte);
+  const alertEl=document.getElementById('alertCopyAll');
+  if(alertEl){alertEl.className='alert ok show';alertEl.textContent='✓ Tous les liens copiés !';setTimeout(()=>alertEl.style.display='none',3000);}
+}
+
+async function adminChargerMatchsUrgence(){
+  const {data:matchs}=await sbT.from('tournoi_matchs')
+    .select('*').eq('tournoi_id',TOURNOI.id).neq('statut','terminé').order('created_at');
+  const container=document.getElementById('matchsUrgenceList');
+  if(!container)return;
+  if(!matchs||!matchs.length){container.innerHTML='<div style="font-family:\'Orbitron\',monospace;font-size:.58rem;color:var(--text3);text-align:center;padding:12px">Aucun match en cours</div>';return;}
+
+  // Récupérer les noms des joueurs
+  const ids=[...new Set(matchs.flatMap(m=>[m.joueur1_id,m.joueur2_id]).filter(Boolean))];
+  const{data:joueurs}=await sbT.from('tournoi_joueurs').select('id,nom').in('id',ids);
+  const nomById=Object.fromEntries((joueurs||[]).map(j=>[j.id,j.nom]));
+
+  container.innerHTML=matchs.map(m=>`
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <div>
+        <div style="font-size:.9rem;font-weight:700">
+          ${esc(nomById[m.joueur1_id]||'?')}
+          <span style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);margin:0 6px">VS</span>
+          ${esc(nomById[m.joueur2_id]||'?')}
+        </div>
+        <div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);margin-top:2px">
+          POULE ${m.poule_id||'—'} · ${m.statut.toUpperCase()}
+        </div>
+      </div>
+      <button class="btn btn-danger btn-xs" onclick="adminAnnulerTourTournoi('${m.id}')">ANNULER TOUR</button>
+    </div>`).join('');
+}
+
+async function adminAnnulerTourTournoi(matchId){
+  if(!confirm('Annuler le tour en cours de ce match ?'))return;
+  const{data:tours}=await sbT.from('tournoi_tours')
+    .select('id').eq('match_id',matchId).eq('statut','en_cours')
+    .order('created_at',{ascending:false}).limit(1);
+  const showToast=(msg)=>{const a=document.createElement('div');a.className='alert info show';a.textContent=msg;a.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:999;min-width:200px;text-align:center';document.body.appendChild(a);setTimeout(()=>a.remove(),2500);};
+  if(tours&&tours.length){
+    await sbT.from('tournoi_tours').delete().eq('id',tours[0].id);
+    showToast('✓ Tour annulé.');
+  }else{showToast('Aucun tour en cours à annuler.');}
 }
 
 /* ════════════════════════════════════════════════════════
