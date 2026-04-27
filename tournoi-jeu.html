@@ -230,7 +230,7 @@ main{padding:12px}
 
 <script>
 const SUPABASE_URL  = 'https://pwtqeyiynrtiprjgqzuw.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3dHFleWl5bnJ0aXByamdxenV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDMzMzMsImV4cCI6MjA4OTc3OTMzM30.acIEmilzlTCScWoKoyAX5rq1EwBWMzSQAmXQBPbX3Yw';
+const SUPABASE_ANON = 'SUPABASE_ANON_KEY';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const COLS=['A','B','C','D','E','F','G','H','I','J'];
@@ -893,6 +893,15 @@ async function resoudreTour(matchId,tour){
     else{vainqueur_id=match.joueur2_id;pts_j2=3;}
     await sb.from('tournoi_matchs').update({statut:'terminé',vainqueur_id,pts_j1,pts_j2,bonus_j1:res_j1.bonusPts,malus_j1:res_j1.malusPts,bonus_j2:res_j2.bonusPts,malus_j2:res_j2.malusPts}).eq('id',matchId);
     const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)Object.assign(MATCHS[idx],{statut:'terminé',vainqueur_id,pts_j1,pts_j2});
+
+    // Mise à jour des profils persistants
+    await updateProfils({
+      match, vainqueur_id,
+      draw: !!(j1Sunk&&j2Sunk),
+      tirs_j1: [...tr_j2_av,...res_j1.history], // tirs de j1 sur j2
+      tirs_j2: [...tr_j1_av,...res_j2.history], // tirs de j2 sur j1
+      nb_tours: tour.numero_tour||1,
+    });
   }else{
     await sb.from('tournoi_tours').insert({match_id:matchId,numero_tour:(tour.numero_tour||1)+1,soumis_j1:false,soumis_j2:false,statut:'en_cours'});
   }
@@ -918,6 +927,93 @@ function processShots(shots,placement,tirsAv,bonus,malus,turn){
     history.push({coord,result,pts,shipKey,turn});
   });
   return{history,bonusPts,malusPts};
+}
+
+/* ══ MISE À JOUR PROFILS APRÈS MATCH ══ */
+async function updateProfils({match,vainqueur_id,draw,tirs_j1,tirs_j2,nb_tours}){
+  // Charger les tournoi_joueurs pour récupérer les profil_id
+  const{data:joueurs}=await sb.from('tournoi_joueurs')
+    .select('id,profil_id').in('id',[match.joueur1_id,match.joueur2_id]);
+  if(!joueurs)return;
+
+  const tj1=joueurs.find(j=>j.id===match.joueur1_id);
+  const tj2=joueurs.find(j=>j.id===match.joueur2_id);
+
+  // Traiter chaque joueur
+  const jobs=[];
+  if(tj1?.profil_id) jobs.push(updateUnProfil(tj1.profil_id,'j1',{vainqueur_id,draw,match,tirs:tirs_j1,tirs_adv:tirs_j2,nb_tours}));
+  if(tj2?.profil_id) jobs.push(updateUnProfil(tj2.profil_id,'j2',{vainqueur_id,draw,match,tirs:tirs_j2,tirs_adv:tirs_j1,nb_tours}));
+  await Promise.all(jobs);
+
+  // Rafraîchir le profil du joueur courant si concerné
+  if(MOI.profil_id&&(tj1?.profil_id===MOI.profil_id||tj2?.profil_id===MOI.profil_id)){
+    const{data:p}=await sb.from('joueur_profils').select('*').eq('id',MOI.profil_id).maybeSingle();
+    if(p)MON_PROFIL=p;
+  }
+}
+
+async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_adv,nb_tours}){
+  // Charger le profil actuel
+  const{data:p}=await sb.from('joueur_profils').select('*').eq('id',profilId).maybeSingle();
+  if(!p)return;
+
+  const joueurId=role==='j1'?match.joueur1_id:match.joueur2_id;
+  const isWinner=vainqueur_id===joueurId;
+  const isDraw=draw;
+
+  // Stats de base
+  const matchs_joues=(p.matchs_joues||0)+1;
+  let victoires=p.victoires||0;
+  let defaites=p.defaites||0;
+  let egalites=p.egalites||0;
+  let serie=p.serie_en_cours||0;
+  let meilleure_serie=p.meilleure_serie||0;
+
+  if(isDraw){egalites++;serie=0;}
+  else if(isWinner){victoires++;serie++;if(serie>meilleure_serie)meilleure_serie=serie;}
+  else{defaites++;serie=0;}
+
+  // Bateaux détruits ce match (résultat='sunk' dans mes tirs)
+  const bateauxCeMatch=(tirs||[]).filter(t=>t.result==='sunk').length;
+  const bateaux_detruits=(p.bateaux_detruits||0)+bateauxCeMatch;
+
+  // Bateaux perdus ce match
+  const bateaux_perdus=(p.bateaux_perdus||0)+(tirs_adv||[]).filter(t=>t.result==='sunk').length;
+
+  // ── Récompenses ──
+  const rewExisting=new Set(p.recompenses||[]);
+
+  // Victoires totales
+  if(victoires>=10) rewExisting.add('bronze');
+  if(victoires>=50) rewExisting.add('argent');
+  if(victoires>=100) rewExisting.add('or');
+  if(victoires>=200) rewExisting.add('diamant');
+
+  // Séries
+  if(serie>=3)  rewExisting.add('medaille_victoire');
+  if(serie>=10) rewExisting.add('medaille_honneur');
+  if(serie>=25) rewExisting.add('grande_medaille');
+
+  // Sixième sens : premier tir du match = hit ou sunk
+  const premierTirTouche=tirs.length>0&&['hit','sunk'].includes(tirs[0].result);
+  let premier_tir_touches=p.premier_tir_touches||0;
+  if(premierTirTouche){premier_tir_touches++;rewExisting.add('sixieme_sens');}
+
+  // Aiguille : couler un navire au tour 1
+  const couleTour1=(tirs||[]).some(t=>t.result==='sunk'&&t.turn===1);
+  let coule_premier_tour=p.coule_premier_tour||0;
+  if(couleTour1){coule_premier_tour++;rewExisting.add('aiguille');}
+
+  // Sauvegarder
+  await sb.from('joueur_profils').update({
+    matchs_joues, victoires, defaites, egalites,
+    serie_en_cours:serie, meilleure_serie,
+    bateaux_detruits, bateaux_perdus,
+    premier_tir_touches, coule_premier_tour,
+    recompenses:[...rewExisting],
+    grade_cache:getGrade(victoires),
+    updated_at:new Date().toISOString(),
+  }).eq('id',profilId);
 }
 
 /* ══ RÉSULTAT ══ */
