@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Touché Coulé — Tournoi</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --bg:#080e1a;--bg2:#0d1624;--bg3:#111e30;
+  --text:#d4e8ff;--text2:#7aabcc;--text3:#3f6080;
+  --gold:#f5c842;--cyan:#00d4ff;--green:#00e878;
+  --red:#ff4455;--orange:#ff8844;--purple:#cc88ff;
+  --border:#1a2f4a;--border2:#234;--card:#0f1c2e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;font-size:15px;overflow-x:hidden}
+
+/* ── HEADER ── */
+.app-header{background:linear-gradient(135deg,#040b14,#0a1628,#061020);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.hdr-title{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--gold);letter-spacing:3px;line-height:1}
+.hdr-sub{font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text3);letter-spacing:2px}
+.hdr-right{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan);text-align:right}
+.hdr-player{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--text);letter-spacing:2px;line-height:1.1}
+
+/* ── NAV TABS ── */
+.match-nav{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;padding:0 4px;scrollbar-width:none}
+.match-nav::-webkit-scrollbar{display:none}
+.mnav-btn{font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;padding:10px 12px;cursor:pointer;white-space:nowrap;letter-spacing:1px;transition:all .2s;position:relative}
+.mnav-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
+.mnav-btn:hover:not(.active){color:var(--text2)}
+.badge{position:absolute;top:6px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--red);animation:badgepulse 1s ease-in-out infinite}
+@keyframes badgepulse{0%,100%{box-shadow:0 0 0 0 rgba(255,68,85,.6)}50%{box-shadow:0 0 0 4px rgba(255,68,85,0)}}
+
+/* ── MAIN ── */
+main{padding:12px}
+.tab-content{display:none}.tab-content.active{display:block}
+
+/* ── CARD ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px}
+.card-title{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--gold);margin-bottom:10px}
+.stitle{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+
+/* ── BTN ── */
+.btn{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.85rem;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:all .2s;display:inline-flex;align-items:center;gap:5px}
+.btn-gold{background:var(--gold);color:#000}.btn-gold:hover{background:#e0b430}
+.btn-gold:disabled{background:#333;color:#555;cursor:default}
+.btn-cyan{background:rgba(0,212,255,.15);border:1px solid var(--cyan);color:var(--cyan)}
+.btn-cyan:hover{background:rgba(0,212,255,.25)}
+.btn-danger{background:rgba(255,68,85,.15);border:1px solid var(--red);color:var(--red)}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn-sm{font-size:.75rem;padding:5px 10px}
+.btn-xs{font-size:.68rem;padding:3px 8px}
+.btn-block{width:100%}
+
+/* ── GRILLES ── */
+.grid-wrap{overflow-x:auto;margin:8px 0}
+.game-grid{display:grid;grid-template-columns:20px repeat(10,1fr);gap:2px;min-width:260px;max-width:380px}
+.gc-hdr{display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text3)}
+.gc{height:0;padding-bottom:100%;border-radius:3px;background:rgba(0,50,100,.3);border:1px solid rgba(26,47,74,.8);position:relative;cursor:pointer;transition:background .15s,border-color .15s}
+.gc::after{content:attr(data-sym);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.65rem}
+.gc:hover{border-color:var(--cyan);background:rgba(0,212,255,.12)}
+.gc.sel{border-color:var(--gold)!important;background:rgba(245,200,66,.2)!important}
+.gc.preview{background:rgba(0,212,255,.18)!important;border-color:rgba(0,212,255,.5)!important}
+.gc.preview-bad{background:rgba(255,68,85,.18)!important;border-color:rgba(255,68,85,.5)!important}
+/* Navires placés */
+.gc.placed-PA{background:rgba(240,192,64,.22);border-color:#f0c040}
+.gc.placed-CU{background:rgba(0,212,255,.2);border-color:#00d4ff}
+.gc.placed-CR{background:rgba(0,255,140,.18);border-color:#00ff8c}
+.gc.placed-SM{background:rgba(100,255,100,.15);border-color:#64ff64}
+.gc.placed-TP{background:rgba(255,136,68,.2);border-color:#ff8844}
+/* Bonus/Malus */
+.gc.bonus{background:rgba(204,136,255,.2);border-color:var(--purple)}
+.gc.malus{background:rgba(255,136,68,.15);border-color:var(--orange)}
+/* Tirs */
+.gc.hit{background:rgba(255,100,30,.35);border-color:var(--orange)}
+.gc.miss{background:rgba(0,100,200,.18);border-color:rgba(0,100,200,.35)}
+.gc.sunk{background:rgba(255,68,85,.4);border-color:var(--red)}
+
+/* ── SHIP SELECTOR ── */
+.ship-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.ship-item{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:border-color .15s}
+.ship-item.active{border-color:var(--gold);background:rgba(245,200,66,.08)}
+.ship-item.placed{border-color:var(--green);opacity:.7;cursor:default}
+.ship-cells-preview{display:flex;gap:2px}
+.ship-cell-prev{width:14px;height:14px;border-radius:2px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15)}
+.ship-cell-prev.filled{background:rgba(0,212,255,.4);border-color:var(--cyan)}
+
+/* ── STATUT ── */
+.status-pill{font-family:'Orbitron',monospace;font-size:.52rem;padding:3px 9px;border-radius:10px;letter-spacing:1px}
+.sp-wait{background:rgba(122,171,204,.1);border:1px solid var(--border);color:var(--text3)}
+.sp-go{background:rgba(0,232,120,.12);border:1px solid var(--green);color:var(--green)}
+.sp-your-turn{background:rgba(245,200,66,.15);border:1px solid var(--gold);color:var(--gold);animation:goldblink .8s ease-in-out infinite}
+@keyframes goldblink{0%,100%{box-shadow:0 0 0 0 rgba(245,200,66,.4)}50%{box-shadow:0 0 8px 3px rgba(245,200,66,.15)}}
+.sp-done{background:rgba(0,232,120,.12);border:1px solid var(--green);color:var(--green)}
+.sp-end{background:rgba(245,200,66,.12);border:1px solid var(--gold);color:var(--gold)}
+
+/* ── SCORE DISPLAY ── */
+.score-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:var(--bg3);border-radius:6px;margin-bottom:8px}
+.score-name{font-weight:700;font-size:.95rem}
+.score-pts{font-family:'Orbitron',monospace;font-weight:900;font-size:1.4rem;color:var(--gold)}
+
+/* ── CLASSEMENT TABLE ── */
+.rank-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.rank-table th{font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text3);letter-spacing:1px;padding:6px 8px;border-bottom:1px solid var(--border);text-align:center}
+.rank-table td{padding:7px 8px;border-bottom:1px solid var(--border2);text-align:center}
+.me-row td{background:rgba(245,200,66,.05);color:var(--gold)}
+
+/* ── BYE ── */
+.bye-screen{text-align:center;padding:32px 16px}
+.bye-icon{font-size:56px;margin-bottom:12px;display:block;animation:byespin 3s ease-in-out infinite}
+@keyframes byespin{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.bye-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:8px}
+.bye-sub{font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text3);letter-spacing:2px;line-height:1.8}
+
+/* ── ALERT ── */
+.alert{padding:8px 12px;border-radius:6px;font-size:.82rem;display:none}
+.alert.show{display:block}
+.alert.ok{background:rgba(0,232,120,.1);border:1px solid var(--green);color:var(--green)}
+.alert.err{background:rgba(255,68,85,.1);border:1px solid var(--red);color:var(--red)}
+.alert.info{background:rgba(0,212,255,.08);border:1px solid var(--cyan);color:var(--cyan)}
+
+/* ── SPIN ── */
+.spin{display:inline-block;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── SCREEN CENTER ── */
+.center-screen{min-height:70vh;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:12px;padding:24px}
+.center-screen .icon{font-size:48px;margin-bottom:8px}
+
+/* ── DEUX GRILLES CÔTE À CÔTE ── */
+.grids-duo{display:flex;flex-direction:column;gap:14px}
+.grid-label{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:2px;margin-bottom:6px}
+.shot-counter{font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:2px;text-align:center;margin:6px 0}
+
+/* ── WIN/LOSE ── */
+.result-screen{text-align:center;padding:24px 16px}
+.result-icon{font-size:60px;display:block;margin-bottom:12px}
+.result-title{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:3px;margin-bottom:6px}
+
+@media(max-width:400px){main{padding:8px}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div>
+    <div class="hdr-sub">⚓ MODE TOURNOI</div>
+    <div class="hdr-title">TOUCHÉ COULÉ</div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-sub">CAPITAINE</div>
+    <div class="hdr-player" id="hdrPlayer">—</div>
+  </div>
+</div>
+
+<!-- TABS NAV -->
+<nav class="match-nav" id="matchNav"></nav>
+
+<!-- CONTENU -->
+<main id="mainContent">
+  <div class="center-screen">
+    <span class="icon spin">⚓</span>
+    <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--cyan);letter-spacing:3px">CHARGEMENT…</div>
+  </div>
+</main>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   CONFIG
+══════════════════════════════════════════════════════ */
+const SUPABASE_URL  = 'https://pwtqeyiynrtiprjgqzuw.supabase.co';
+const SUPABASE_ANON = 'SUPABASE_ANON_KEY';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const COLS     = ['A','B','C','D','E','F','G','H','I','J'];
+const ROWS     = [1,2,3,4,5,6,7,8,9,10];
+const SHIP_KEYS= ['PA','CU','CR','SM','TP'];
+const SHIPS    = {
+  PA:{name:'Porte-avions',icon:'✈️',size:5,pts:5},
+  CU:{name:'Cuirassé',    icon:'⚔️',size:4,pts:4},
+  CR:{name:'Croiseur',    icon:'🚢',size:3,pts:3},
+  SM:{name:'Sous-marin',  icon:'🤿',size:3,pts:3},
+  TP:{name:'Torpilleur',  icon:'🚤',size:2,pts:2},
+};
+
+/* ══════════════════════════════════════════════════════
+   ÉTAT
+══════════════════════════════════════════════════════ */
+let MOI         = null;   // tournoi_joueurs row
+let TOURNOI     = null;   // tournois row
+let MATCHS      = [];     // tournoi_matchs rows (les miens)
+let GRILLES     = {};     // matchId → {mine, theirs}
+let TOURS       = {};     // matchId → tournoi_tours row (en cours)
+let ADVERSAIRES = {};     // joueurId → {nom}
+let POULE_JOUEURS = [];   // all joueurs in my poule
+let POULE_MATCHS  = [];   // all matchs in my poule
+
+let currentTab  = null;
+let _placement  = {};     // matchId → state {selectedShip, orient, shipCells, gridData}
+let _shots      = {};     // matchId → selected coords []
+
+/* ══════════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════════ */
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const coordStr = (col, row) => col + row;
+
+function getMyRole(match) {
+  return match.joueur1_id === MOI.id ? 1 : 2;
+}
+function getAdvId(match) {
+  return match.joueur1_id === MOI.id ? match.joueur2_id : match.joueur1_id;
+}
+function getAdvNom(match) {
+  const id = getAdvId(match);
+  return ADVERSAIRES[id]?.nom || '?';
+}
+
+// Génère les cases bonus/malus de façon déterministe à partir du matchId
+function getMatchBonusMalus(matchId) {
+  let seed = 0;
+  for (let i = 0; i < matchId.length; i++) seed = (seed * 31 + matchId.charCodeAt(i)) >>> 0;
+  const rand = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const all = []; COLS.forEach(c => ROWS.forEach(r => all.push(c+r)));
+  // Simple fisher-yates on indices using seeded rand
+  const idx = all.map((_,i)=>i);
+  for(let i=idx.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]];}
+  return { bonus: [all[idx[0]],all[idx[1]]], malus: [all[idx[2]],all[idx[3]]] };
+}
+
+function allSunk(placement, tirs) {
+  if (!placement?.ship_cells) return false;
+  const hitSet = new Set((tirs||[]).map(t=>t.coord));
+  return SHIP_KEYS.every(k => {
+    const cells = placement.ship_cells[k];
+    if (!cells || !cells.length) return true;
+    return cells.every(c => hitSet.has(c));
+  });
+}
+
+function calcScore(tirs) {
+  return (tirs||[]).reduce((s,t) => s + (t.pts||0), 0);
+}
+
+/* ══════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════ */
+async function init() {
+  const token = new URLSearchParams(location.search).get('token');
+  if (!token) { showError('Token manquant dans l\'URL.'); return; }
+
+  // Charger mon profil joueur
+  const { data: moi, error } = await sb.from('tournoi_joueurs')
+    .select('*').eq('token', token).maybeSingle();
+  if (error || !moi || !moi.nom) { showError('Lien invalide ou expiré.'); return; }
+  MOI = moi;
+  document.getElementById('hdrPlayer').textContent = moi.nom.toUpperCase();
+
+  // Charger le tournoi
+  const { data: t } = await sb.from('tournois').select('*').eq('id', moi.tournoi_id).maybeSingle();
+  TOURNOI = t;
+
+  // Charger mes matchs
+  const { data: matchs } = await sb.from('tournoi_matchs')
+    .select('*')
+    .eq('tournoi_id', moi.tournoi_id)
+    .or(`joueur1_id.eq.${moi.id},joueur2_id.eq.${moi.id}`)
+    .order('created_at');
+  MATCHS = matchs || [];
+
+  // Charger les adversaires
+  const advIds = [...new Set(MATCHS.map(m => getAdvId(m)).filter(Boolean))];
+  if (advIds.length) {
+    const { data: adjs } = await sb.from('tournoi_joueurs').select('id,nom').in('id', advIds);
+    (adjs||[]).forEach(j => { ADVERSAIRES[j.id] = j; });
+  }
+
+  // Charger toutes les grilles de mes matchs
+  for (const m of MATCHS) {
+    await loadGrilles(m.id);
+    await loadTourEnCours(m.id);
+  }
+
+  // Charger joueurs et matchs de ma poule pour le classement
+  if (moi.poule_id) {
+    const { data: pj } = await sb.from('tournoi_joueurs')
+      .select('id,nom,bye').eq('tournoi_id', moi.tournoi_id).eq('poule_id', moi.poule_id);
+    POULE_JOUEURS = pj || [];
+    const { data: pm } = await sb.from('tournoi_matchs')
+      .select('*').eq('tournoi_id', moi.tournoi_id).eq('poule_id', moi.poule_id);
+    POULE_MATCHS = pm || [];
+  }
+
+  // Init placement state
+  MATCHS.forEach(m => {
+    _placement[m.id] = { selectedShip: null, orient: 'H', shipCells: {}, gridData: {} };
+    _shots[m.id] = [];
+  });
+
+  buildNav();
+  abonnerRealtime();
+
+  // Onglet par défaut : premier match actif, sinon poule
+  const firstActive = MATCHS.find(m => m.statut !== 'terminé');
+  currentTab = firstActive ? 'match-'+firstActive.id : 'poule';
+  renderNav();
+  renderTab(currentTab);
+}
+
+/* ══════════════════════════════════════════════════════
+   DATA LOADERS
+══════════════════════════════════════════════════════ */
+async function loadGrilles(matchId) {
+  const { data: gs } = await sb.from('tournoi_grilles')
+    .select('*').eq('match_id', matchId);
+  if (!gs) return;
+  const mine   = gs.find(g => g.joueur_id === MOI.id);
+  const theirs = gs.find(g => g.joueur_id !== MOI.id);
+  GRILLES[matchId] = { mine, theirs };
+}
+
+async function loadTourEnCours(matchId) {
+  const { data: tours } = await sb.from('tournoi_tours')
+    .select('*').eq('match_id', matchId).eq('statut', 'en_cours')
+    .order('numero_tour', { ascending: false }).limit(1);
+  TOURS[matchId] = tours?.[0] || null;
+}
+
+/* ══════════════════════════════════════════════════════
+   NAV
+══════════════════════════════════════════════════════ */
+function buildNav() {
+  const nav = document.getElementById('matchNav');
+  let html = '';
+
+  MATCHS.forEach(m => {
+    const advNom = getAdvNom(m);
+    const isMyTurn = isItMyTurn(m);
+    html += `<button class="mnav-btn" data-tab="match-${m.id}" onclick="goTab('match-${m.id}')">
+      ${esc(advNom)||'?'}
+      ${isMyTurn ? '<span class="badge"></span>' : ''}
+    </button>`;
+  });
+
+  if (MATCHS.length) {
+    html += `<button class="mnav-btn" data-tab="poule" onclick="goTab('poule')">🏅 MA POULE</button>`;
+    html += `<button class="mnav-btn" data-tab="tournoi" onclick="goTab('tournoi')">🏆 TOURNOI</button>`;
+  }
+
+  nav.innerHTML = html;
+}
+
+function renderNav() {
+  document.querySelectorAll('.mnav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === currentTab);
+  });
+}
+
+function goTab(tab) {
+  currentTab = tab;
+  renderNav();
+  renderTab(tab);
+}
+
+/* ══════════════════════════════════════════════════════
+   RENDER DISPATCH
+══════════════════════════════════════════════════════ */
+function renderTab(tab) {
+  if (tab.startsWith('match-')) {
+    const matchId = tab.replace('match-', '');
+    const match = MATCHS.find(m => m.id === matchId);
+    if (match) renderMatch(match);
+    return;
+  }
+  if (tab === 'poule')   { renderPoule();   return; }
+  if (tab === 'tournoi') { renderTournoi(); return; }
+}
+
+/* ══════════════════════════════════════════════════════
+   IS IT MY TURN?
+══════════════════════════════════════════════════════ */
+function isItMyTurn(match) {
+  if (match.statut !== 'en_cours') return false;
+  const tour = TOURS[match.id];
+  if (!tour) return true; // pas encore de tour → c'est à moi de lancer
+  const role = getMyRole(match);
+  const soumis = role === 1 ? tour.soumis_j1 : tour.soumis_j2;
+  return !soumis;
+}
+
+/* ══════════════════════════════════════════════════════
+   RENDER MATCH
+══════════════════════════════════════════════════════ */
+function renderMatch(match) {
+  const el = document.getElementById('mainContent');
+
+  // BYE
+  if (MOI.bye && match.joueur2_id === null) {
+    el.innerHTML = `<div class="card bye-screen">
+      <span class="bye-icon">⚡</span>
+      <div class="bye-title">EXEMPTION — BYE</div>
+      <div class="bye-sub">Tu es exempté de ce tour.<br>Tu passes directement à la phase suivante.<br>En attente des autres matchs…</div>
+    </div>`;
+    return;
+  }
+
+  switch(match.statut) {
+    case 'placement': renderPlacement(match, el); break;
+    case 'en_cours':  renderBataille(match, el);  break;
+    case 'terminé':   renderResultat(match, el);  break;
+    default: el.innerHTML = `<div class="card"><p style="color:var(--text3)">En attente de démarrage…</p></div>`;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   PLACEMENT
+══════════════════════════════════════════════════════ */
+function renderPlacement(match, el) {
+  const grille = GRILLES[match.id]?.mine;
+  const state  = _placement[match.id];
+
+  if (grille?.placement_valide) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:24px">
+      <div style="font-size:40px;margin-bottom:10px">⏳</div>
+      <div class="card-title">FLOTTE DÉPLOYÉE</div>
+      <div style="color:var(--text2);font-size:.9rem">En attente que <strong style="color:var(--cyan)">${esc(getAdvNom(match))}</strong> place sa flotte…</div>
+    </div>`;
+    return;
+  }
+
+  const placed     = Object.keys(state.shipCells);
+  const allPlaced  = SHIP_KEYS.every(k => placed.includes(k));
+
+  // Construire la liste des navires
+  let shipsHtml = `<div class="ship-list">`;
+  SHIP_KEYS.forEach(k => {
+    const s = SHIPS[k];
+    const isPlaced = !!state.shipCells[k];
+    const isActive = state.selectedShip === k;
+    let cells = '';
+    for(let i=0;i<s.size;i++) cells+=`<div class="ship-cell-prev ${isActive||isPlaced?'filled':''}"></div>`;
+    shipsHtml += `<div class="ship-item ${isActive?'active':''} ${isPlaced?'placed':''}"
+      onclick="${isPlaced?`removePlacement('${match.id}','${k}')`:`selectShip('${match.id}','${k}')`}">
+      <span style="font-size:1.2rem">${s.icon}</span>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:.9rem">${s.name} <span style="color:var(--text3);font-size:.75rem">(${s.size} cases)</span></div>
+        <div class="ship-cells-preview">${cells}</div>
+      </div>
+      ${isPlaced ? '<span style="color:var(--green);font-size:.75rem">✓ PLACÉ</span>' : ''}
+      ${isActive ? '<span style="color:var(--gold);font-size:.75rem">SÉLECTIONNÉ</span>' : ''}
+    </div>`;
+  });
+  shipsHtml += `</div>`;
+
+  // Orientation toggle
+  const orientHtml = state.selectedShip ? `
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+      <span style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3)">ORIENTATION</span>
+      <button class="btn btn-sm ${state.orient==='H'?'btn-gold':'btn-outline'}"
+        onclick="setOrient('${match.id}','H')">↔ H</button>
+      <button class="btn btn-sm ${state.orient==='V'?'btn-gold':'btn-outline'}"
+        onclick="setOrient('${match.id}','V')">↕ V</button>
+    </div>` : '';
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="card-title">⚓ Déploiement de flotte</div>
+      <div style="color:var(--text2);font-size:.85rem;margin-bottom:12px">
+        Adversaire : <strong style="color:var(--cyan)">${esc(getAdvNom(match))}</strong>
+      </div>
+      ${shipsHtml}
+      ${orientHtml}
+      <div class="stitle" style="margin-bottom:4px">Clique sur la grille pour placer</div>
+      <div class="grid-wrap">
+        ${buildGrid(match.id, 'placement')}
+      </div>
+      <div id="alertPlacement-${match.id}" class="alert" style="margin-top:8px"></div>
+      <button class="btn btn-gold btn-block" style="margin-top:10px"
+        onclick="validerPlacement('${match.id}')" ${allPlaced?'':'disabled'}>
+        ✓ VALIDER MA FLOTTE
+      </button>
+    </div>`;
+
+  attachGridEvents(match.id, 'placement');
+}
+
+function buildGrid(matchId, mode) {
+  const state   = _placement[matchId];
+  const grilles = GRILLES[matchId];
+  const {bonus, malus} = getMatchBonusMalus(matchId);
+
+  // Quelles classes par coord ?
+  const cellClass = (coord) => {
+    const classes = ['gc'];
+    if (mode === 'placement') {
+      if (state.gridData[coord]) classes.push('placed-'+state.gridData[coord]);
+      else if (bonus.includes(coord)) classes.push('bonus');
+      else if (malus.includes(coord)) classes.push('malus');
+      if (state._preview?.includes(coord)) classes.push(state._previewOk?'preview':'preview-bad');
+    }
+    if (mode === 'attack') {
+      // Grille adverse — montrer les tirs effectués
+      const tirs = grilles?.theirs?.tirs_recus || [];
+      const tirCoord = tirs.find(t => t.coord === coord);
+      if (tirCoord) {
+        if (tirCoord.result==='miss')  classes.push('miss');
+        else if (tirCoord.result==='sunk') classes.push('sunk');
+        else classes.push('hit');
+      }
+      if ((_shots[matchId]||[]).includes(coord)) classes.push('sel');
+    }
+    if (mode === 'defense') {
+      // Ma grille — montrer placement + tirs reçus
+      const myTirs = grilles?.mine?.tirs_recus || [];
+      const myPlacement = grilles?.mine?.grille_placement;
+      if (myPlacement?.grid_data?.[coord]) classes.push('placed-'+myPlacement.grid_data[coord]);
+      if (bonus.includes(coord)) classes.push('bonus');
+      if (malus.includes(coord)) classes.push('malus');
+      const tirCoord = myTirs.find(t => t.coord === coord);
+      if (tirCoord) {
+        if (tirCoord.result==='miss')  classes.push('miss');
+        else if (tirCoord.result==='sunk') classes.push('sunk');
+        else classes.push('hit');
+      }
+    }
+    return classes.join(' ');
+  };
+
+  const sym = (coord, mode) => {
+    const {bonus,malus} = getMatchBonusMalus(matchId);
+    if (mode==='placement') {
+      if (bonus.includes(coord)) return '⭐';
+      if (malus.includes(coord)) return '💣';
+    }
+    if (mode==='defense') {
+      const {bonus,malus} = getMatchBonusMalus(matchId);
+      if (bonus.includes(coord)) return '⭐';
+      if (malus.includes(coord)) return '💣';
+    }
+    if (mode==='attack') {
+      const tirs = GRILLES[matchId]?.theirs?.tirs_recus || [];
+      const t = tirs.find(t=>t.coord===coord);
+      if (t) return {miss:'🌊',hit:'💥',sunk:'💀',bonus:'⭐',malus:'💣'}[t.result]||'';
+      if ((_shots[matchId]||[]).includes(coord)) return '🎯';
+    }
+    return '';
+  };
+
+  let h = `<div class="game-grid" id="grid-${matchId}-${mode}">`;
+  h += `<div class="gc-hdr"></div>`;
+  COLS.forEach(c => h += `<div class="gc-hdr">${c}</div>`);
+  ROWS.forEach(r => {
+    h += `<div class="gc-hdr">${r}</div>`;
+    COLS.forEach(c => {
+      const coord = c+r;
+      h += `<div class="${cellClass(coord)}" data-coord="${coord}" data-grid="${mode}" data-match="${matchId}">${sym(coord,mode)}</div>`;
+    });
+  });
+  h += `</div>`;
+  return h;
+}
+
+function attachGridEvents(matchId, mode) {
+  const grid = document.getElementById(`grid-${matchId}-${mode}`);
+  if (!grid) return;
+  grid.querySelectorAll('.gc').forEach(cell => {
+    cell.addEventListener('click', () => onGridClick(matchId, cell.dataset.coord, mode));
+    if (mode === 'placement') {
+      cell.addEventListener('mouseover', () => onGridHover(matchId, cell.dataset.coord));
+    }
+  });
+  if (mode === 'placement') {
+    grid.addEventListener('mouseleave', () => clearPreview(matchId));
+  }
+}
+
+/* ── Placement logic ── */
+function selectShip(matchId, key) {
+  const state = _placement[matchId];
+  if (state.shipCells[key]) return;
+  state.selectedShip = (state.selectedShip === key) ? null : key;
+  renderTab(currentTab);
+}
+
+function setOrient(matchId, orient) {
+  _placement[matchId].orient = orient;
+  renderTab(currentTab);
+}
+
+function removePlacement(matchId, key) {
+  const state = _placement[matchId];
+  const cells = state.shipCells[key]||[];
+  cells.forEach(c => delete state.gridData[c]);
+  delete state.shipCells[key];
+  renderTab(currentTab);
+}
+
+function getShipCoords(startCoord, size, orient) {
+  const col = COLS.indexOf(startCoord[0]);
+  const row = parseInt(startCoord.slice(1));
+  const coords = [];
+  for (let i = 0; i < size; i++) {
+    if (orient === 'H') {
+      if (col+i > 9) return null;
+      coords.push(COLS[col+i] + row);
+    } else {
+      if (row+i > 10) return null;
+      coords.push(COLS[col] + (row+i));
+    }
+  }
+  return coords;
+}
+
+function onGridHover(matchId, coord) {
+  const state = _placement[matchId];
+  if (!state.selectedShip) return;
+  const size = SHIPS[state.selectedShip].size;
+  const coords = getShipCoords(coord, size, state.orient);
+  const occupied = new Set(Object.keys(state.gridData));
+  const ok = coords && coords.every(c => !occupied.has(c));
+  state._preview = coords || [];
+  state._previewOk = !!ok;
+  // Update only preview classes without full re-render
+  const grid = document.getElementById(`grid-${matchId}-placement`);
+  if (!grid) return;
+  grid.querySelectorAll('.gc').forEach(c => {
+    c.classList.remove('preview','preview-bad');
+    if ((coords||[]).includes(c.dataset.coord)) c.classList.add(ok?'preview':'preview-bad');
+  });
+}
+
+function clearPreview(matchId) {
+  const state = _placement[matchId];
+  state._preview = [];
+  const grid = document.getElementById(`grid-${matchId}-placement`);
+  if (!grid) return;
+  grid.querySelectorAll('.gc').forEach(c => c.classList.remove('preview','preview-bad'));
+}
+
+function onGridClick(matchId, coord, mode) {
+  if (mode === 'placement') {
+    const state = _placement[matchId];
+    if (!state.selectedShip) return;
+    const size = SHIPS[state.selectedShip].size;
+    const coords = getShipCoords(coord, size, state.orient);
+    if (!coords) { showAlert(`alertPlacement-${matchId}`, 'err', 'Hors limites !'); return; }
+    const occupied = new Set(Object.keys(state.gridData));
+    if (!coords.every(c => !occupied.has(c))) { showAlert(`alertPlacement-${matchId}`, 'err', 'Case déjà occupée !'); return; }
+    const key = state.selectedShip;
+    state.shipCells[key] = coords;
+    coords.forEach(c => { state.gridData[c] = key; });
+    state.selectedShip = null;
+    renderTab(currentTab);
+  }
+  if (mode === 'attack') {
+    const shots = _shots[matchId] || [];
+    if (shots.includes(coord)) {
+      _shots[matchId] = shots.filter(c => c !== coord);
+    } else if (shots.length < 3) {
+      // Vérifier que cette case n'a pas déjà été tirée
+      const tirs = GRILLES[matchId]?.theirs?.tirs_recus || [];
+      if (tirs.find(t => t.coord === coord)) return;
+      _shots[matchId] = [...shots, coord];
+    }
+    renderTab(currentTab);
+  }
+}
+
+async function validerPlacement(matchId) {
+  const state = _placement[matchId];
+  const {bonus, malus} = getMatchBonusMalus(matchId);
+
+  const placement = {
+    grid_data:  state.gridData,
+    ship_cells: state.shipCells,
+    bonus_cells: bonus,
+    malus_cells: malus,
+  };
+
+  const { error } = await sb.from('tournoi_grilles')
+    .update({ grille_placement: placement, placement_valide: true })
+    .eq('match_id', matchId).eq('joueur_id', MOI.id);
+
+  if (error) { showAlert(`alertPlacement-${matchId}`, 'err', 'Erreur : '+error.message); return; }
+
+  // Recharger et vérifier si les 2 ont placé → démarrer la partie
+  await loadGrilles(matchId);
+  const g = GRILLES[matchId];
+  if (g?.mine?.placement_valide && g?.theirs?.placement_valide) {
+    // Les 2 ont placé → démarrer
+    await sb.from('tournoi_matchs').update({ statut: 'en_cours' }).eq('id', matchId);
+    // Créer le premier tour
+    const match = MATCHS.find(m => m.id === matchId);
+    await sb.from('tournoi_tours').insert({
+      match_id: matchId, numero_tour: 1,
+      soumis_j1: false, soumis_j2: false, statut: 'en_cours'
+    });
+    await loadTourEnCours(matchId);
+    const idx = MATCHS.findIndex(m => m.id === matchId);
+    if (idx >= 0) MATCHS[idx].statut = 'en_cours';
+  }
+
+  buildNav(); renderNav(); renderTab(currentTab);
+}
+
+/* ══════════════════════════════════════════════════════
+   BATAILLE
+══════════════════════════════════════════════════════ */
+function renderBataille(match, el) {
+  const myTurn  = isItMyTurn(match);
+  const shots   = _shots[match.id] || [];
+  const tirs    = GRILLES[match.id]?.theirs?.tirs_recus || [];
+  const myTirs  = GRILLES[match.id]?.mine?.tirs_recus || [];
+  const myScore = calcScore(myTirs.map ? [] : []); // recalc below
+  const tour    = TOURS[match.id];
+
+  // Calculer scores à partir des tirs_recus de l'ADVERSAIRE
+  const mesPoints   = calcScore(GRILLES[match.id]?.theirs?.tirs_recus||[]);  // mes tirs sur l'adv
+  const sesPts      = calcScore(GRILLES[match.id]?.mine?.tirs_recus||[]);    // ses tirs sur moi
+
+  const statusHtml = myTurn
+    ? `<span class="status-pill sp-your-turn">⚡ À TON TOUR</span>`
+    : `<span class="status-pill sp-wait">⏳ En attente de ${esc(getAdvNom(match))}</span>`;
+
+  el.innerHTML = `
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="card-title" style="margin:0">⚔️ Duel vs ${esc(getAdvNom(match))}</div>
+        ${statusHtml}
+      </div>
+      <div class="score-row">
+        <div class="score-name">🎯 ${esc(MOI.nom)}</div>
+        <div class="score-pts">${mesPoints}</div>
+      </div>
+      <div class="score-row">
+        <div class="score-name">💀 ${esc(getAdvNom(match))}</div>
+        <div class="score-pts">${sesPts}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎯 Grille adverse</div>
+      <div style="font-size:.8rem;color:var(--text2);margin-bottom:8px">
+        ${myTurn ? `Sélectionne 3 cases (${shots.length}/3 sélectionnées)` : 'Tirs déjà envoyés — en attente de validation.'}
+      </div>
+      ${myTurn ? `<div class="shot-counter">${shots.length} / 3 TIRS SÉLECTIONNÉS</div>` : ''}
+      <div class="grid-wrap">${buildGrid(match.id, 'attack')}</div>
+      <div id="alertBataille-${match.id}" class="alert" style="margin-top:8px"></div>
+      ${myTurn ? `
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button class="btn btn-gold" onclick="soumettreCoups('${match.id}')"
+            ${shots.length===3?'':'disabled'}>🎯 ENVOYER LES TIRS</button>
+          <button class="btn btn-outline btn-sm" onclick="_shots['${match.id}']=[];renderTab(currentTab)">✗ Effacer</button>
+        </div>` : ''}
+    </div>
+
+    <div class="card">
+      <div class="card-title">🛡️ Ma flotte</div>
+      <div class="grid-wrap">${buildGrid(match.id, 'defense')}</div>
+    </div>`;
+
+  attachGridEvents(match.id, 'attack');
+}
+
+/* ── Soumettre les tirs ── */
+async function soumettreCoups(matchId) {
+  const match = MATCHS.find(m => m.id === matchId);
+  const shots = _shots[matchId] || [];
+  if (shots.length !== 3) return;
+
+  const role = getMyRole(match);
+  let tour   = TOURS[matchId];
+
+  // Créer ou mettre à jour le tour
+  const tirs_field  = role === 1 ? 'tirs_j1' : 'tirs_j2';
+  const soumis_field= role === 1 ? 'soumis_j1' : 'soumis_j2';
+
+  if (!tour) {
+    // Premier à jouer ce tour — créer le tour
+    const { data: newTour, error } = await sb.from('tournoi_tours').insert({
+      match_id: matchId,
+      numero_tour: 1,
+      [tirs_field]: shots,
+      [soumis_field]: true,
+      statut: 'en_cours'
+    }).select().single();
+    if (error) { showAlert(`alertBataille-${matchId}`, 'err', 'Erreur réseau.'); return; }
+    TOURS[matchId] = newTour;
+  } else {
+    // Mettre à jour le tour existant
+    const { data: updTour, error } = await sb.from('tournoi_tours')
+      .update({ [tirs_field]: shots, [soumis_field]: true })
+      .eq('id', tour.id).select().single();
+    if (error) { showAlert(`alertBataille-${matchId}`, 'err', 'Erreur réseau.'); return; }
+    TOURS[matchId] = updTour;
+    tour = updTour;
+  }
+
+  _shots[matchId] = [];
+
+  // Vérifier si l'adversaire a aussi soumis → résoudre le tour
+  const updTour = TOURS[matchId];
+  const advSubmitted = role === 1 ? updTour.soumis_j2 : updTour.soumis_j1;
+
+  if (advSubmitted) {
+    await resoudreTour(matchId, updTour);
+  } else {
+    await loadGrilles(matchId);
+    renderTab(currentTab);
+  }
+}
+
+/* ── Résolution automatique du tour ── */
+async function resoudreTour(matchId, tour) {
+  const match = MATCHS.find(m => m.id === matchId);
+  const g     = GRILLES[matchId];
+  if (!g?.mine || !g?.theirs) { await loadGrilles(matchId); return; }
+
+  const {bonus, malus} = getMatchBonusMalus(matchId);
+
+  // Tirs du j1 contre la grille du j2, et inversement
+  const myRole   = getMyRole(match);
+  const shots_j1 = tour.tirs_j1 || [];
+  const shots_j2 = tour.tirs_j2 || [];
+
+  // Grilles avec placements
+  const pl_j1 = myRole === 1 ? g.mine?.grille_placement : g.theirs?.grille_placement;
+  const pl_j2 = myRole === 2 ? g.mine?.grille_placement : g.theirs?.grille_placement;
+  const tirs_j2_actuels = myRole === 2
+    ? (g.mine?.tirs_recus || [])
+    : (g.theirs?.tirs_recus || []);
+  const tirs_j1_actuels = myRole === 1
+    ? (g.mine?.tirs_recus || [])
+    : (g.theirs?.tirs_recus || []);
+
+  // Résoudre j1 tire sur j2
+  const res_j1 = processShots(shots_j1, pl_j2, tirs_j2_actuels, bonus, malus, tour.numero_tour);
+  // Résoudre j2 tire sur j1
+  const res_j2 = processShots(shots_j2, pl_j1, tirs_j1_actuels, bonus, malus, tour.numero_tour);
+
+  // Nouveaux tirs_recus
+  const new_tirs_j2 = [...tirs_j2_actuels, ...res_j1.history];
+  const new_tirs_j1 = [...tirs_j1_actuels, ...res_j2.history];
+
+  // Vérifier fin de match
+  const j1Sunk = allSunk(pl_j2, new_tirs_j2);
+  const j2Sunk = allSunk(pl_j1, new_tirs_j1);
+
+  // Identifier les IDs réels des grilles
+  const grille_j1_id = myRole === 1 ? g.mine?.id : g.theirs?.id;
+  const grille_j2_id = myRole === 2 ? g.mine?.id : g.theirs?.id;
+
+  // Mettre à jour les grilles
+  await Promise.all([
+    sb.from('tournoi_grilles').update({ tirs_recus: new_tirs_j2 }).eq('id', grille_j2_id),
+    sb.from('tournoi_grilles').update({ tirs_recus: new_tirs_j1 }).eq('id', grille_j1_id),
+  ]);
+
+  // Marquer le tour validé
+  await sb.from('tournoi_tours').update({ statut: 'validé' }).eq('id', tour.id);
+
+  if (j1Sunk || j2Sunk) {
+    // Fin du match
+    const score_j1 = calcScore(new_tirs_j2);
+    const score_j2 = calcScore(new_tirs_j1);
+    let vainqueur_id = null;
+    let pts_j1 = 0, pts_j2 = 0;
+
+    if (j1Sunk && j2Sunk) {
+      // Égalité → 1 pt chacun
+      pts_j1 = 1; pts_j2 = 1;
+    } else if (j1Sunk) {
+      // j1 gagne → 3 pts
+      vainqueur_id = match.joueur1_id; pts_j1 = 3; pts_j2 = 0;
+    } else {
+      vainqueur_id = match.joueur2_id; pts_j1 = 0; pts_j2 = 3;
+    }
+
+    await sb.from('tournoi_matchs').update({
+      statut: 'terminé',
+      vainqueur_id,
+      pts_j1, pts_j2,
+      bonus_j1: res_j1.bonus, malus_j1: res_j1.malus,
+      bonus_j2: res_j2.bonus, malus_j2: res_j2.malus,
+    }).eq('id', matchId);
+
+    const idx = MATCHS.findIndex(m => m.id === matchId);
+    if (idx >= 0) {
+      MATCHS[idx].statut = 'terminé';
+      MATCHS[idx].vainqueur_id = vainqueur_id;
+      MATCHS[idx].pts_j1 = pts_j1; MATCHS[idx].pts_j2 = pts_j2;
+    }
+  } else {
+    // Prochain tour
+    const nextNum = (tour.numero_tour || 1) + 1;
+    await sb.from('tournoi_tours').insert({
+      match_id: matchId, numero_tour: nextNum,
+      soumis_j1: false, soumis_j2: false, statut: 'en_cours'
+    });
+  }
+
+  await loadGrilles(matchId);
+  await loadTourEnCours(matchId);
+  buildNav(); renderNav(); renderTab(currentTab);
+}
+
+function processShots(shots, placement, tirsActuels, bonus, malus, turn) {
+  const history = [];
+  let bonusPts = 0, malusPts = 0;
+  const hitSet = new Set((tirsActuels||[]).map(t => t.coord));
+
+  shots.forEach(coord => {
+    hitSet.add(coord);
+    const occupant = placement?.grid_data?.[coord];
+    let result = 'miss', pts = 0, shipKey = null;
+
+    if (bonus.includes(coord)) { result = 'bonus'; pts = 2; bonusPts += 2; }
+    else if (malus.includes(coord)) { result = 'malus'; pts = -2; malusPts += 2; }
+    else if (occupant && SHIP_KEYS.includes(occupant)) {
+      shipKey = occupant;
+      const cells = placement?.ship_cells?.[occupant] || [];
+      const sunk = cells.every(c => hitSet.has(c));
+      if (sunk) { result = 'sunk'; pts = SHIPS[occupant].pts; }
+      else       { result = 'hit';  pts = 1; }
+    }
+    history.push({ coord, result, pts, shipKey, turn });
+  });
+
+  return { history, bonus: bonusPts, malus: malusPts };
+}
+
+/* ══════════════════════════════════════════════════════
+   RÉSULTAT
+══════════════════════════════════════════════════════ */
+function renderResultat(match, el) {
+  const won   = match.vainqueur_id === MOI.id;
+  const draw  = !match.vainqueur_id;
+  const myRole = getMyRole(match);
+  const myPts  = myRole === 1 ? match.pts_j1 : match.pts_j2;
+  const advPts = myRole === 1 ? match.pts_j2 : match.pts_j1;
+  const advNom = getAdvNom(match);
+
+  el.innerHTML = `<div class="card result-screen">
+    <span class="result-icon">${draw ? '🤝' : won ? '🏆' : '💀'}</span>
+    <div class="result-title" style="color:${draw?'var(--cyan)':won?'var(--gold)':'var(--red)'}">
+      ${draw ? 'ÉGALITÉ' : won ? 'VICTOIRE !' : 'DÉFAITE'}
+    </div>
+    <div style="color:var(--text2);margin-bottom:16px">vs <strong>${esc(advNom)}</strong></div>
+    <div class="score-row">
+      <div class="score-name">${esc(MOI.nom)}</div>
+      <div class="score-pts" style="color:${won?'var(--gold)':'var(--red)'}">${myPts} pt${myPts>1?'s':''}</div>
+    </div>
+    <div class="score-row">
+      <div class="score-name">${esc(advNom)}</div>
+      <div class="score-pts">${advPts} pt${advPts>1?'s':''}</div>
+    </div>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════
+   CLASSEMENT POULE
+══════════════════════════════════════════════════════ */
+function renderPoule() {
+  const el = document.getElementById('mainContent');
+  if (!POULE_JOUEURS.length) {
+    el.innerHTML = `<div class="card"><p style="color:var(--text3)">Poule non encore disponible.</p></div>`;
+    return;
+  }
+
+  // Calculer les points de chaque joueur
+  const standings = POULE_JOUEURS.map(j => {
+    let pts = 0, played = 0, won = 0;
+    let bonus = 0, malus = 0;
+    POULE_MATCHS.filter(m => m.statut === 'terminé').forEach(m => {
+      const isJ1 = m.joueur1_id === j.id;
+      const isJ2 = m.joueur2_id === j.id;
+      if (!isJ1 && !isJ2) return;
+      played++;
+      if (isJ1) { pts += m.pts_j1||0; bonus += m.bonus_j1||0; malus += m.malus_j1||0; }
+      else       { pts += m.pts_j2||0; bonus += m.bonus_j2||0; malus += m.malus_j2||0; }
+    });
+    return { ...j, pts, played, bonus, malus };
+  }).sort((a,b) => b.pts - a.pts || (b.bonus-b.malus) - (a.bonus-a.malus));
+
+  let h = `<div class="card">
+    <div class="card-title">🏅 Classement — Poule ${MOI.poule_id}</div>
+    <table class="rank-table"><thead><tr>
+      <th>Rg</th><th style="text-align:left">Joueur</th>
+      <th>Pts</th><th>J</th><th>B/M</th>
+    </tr></thead><tbody>`;
+
+  standings.forEach((j, i) => {
+    const isMe = j.id === MOI.id;
+    h += `<tr class="${isMe?'me-row':''}">
+      <td><span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--text3)">#${i+1}</span></td>
+      <td style="text-align:left;font-weight:700">
+        ${esc(j.nom)} ${j.bye ? '<span style="font-size:.65rem;color:var(--gold)">(BYE)</span>' : ''}
+        ${isMe ? '<span style="font-size:.65rem;color:var(--cyan)">◀ MOI</span>' : ''}
+      </td>
+      <td><span style="font-family:'Orbitron',monospace;font-weight:900;font-size:1rem;color:var(--gold)">${j.pts}</span></td>
+      <td style="color:var(--text2)">${j.played}</td>
+      <td style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--text3)">+${j.bonus}/-${j.malus}</td>
+    </tr>`;
+  });
+  h += `</tbody></table></div>`;
+
+  // Résultats des matchs de poule
+  h += `<div class="card"><div class="card-title">📋 Matchs de ma poule</div>`;
+  POULE_MATCHS.forEach(m => {
+    const j1 = POULE_JOUEURS.find(j => j.id === m.joueur1_id);
+    const j2 = POULE_JOUEURS.find(j => j.id === m.joueur2_id);
+    const statusColor = {en_attente:'var(--text3)',placement:'var(--text3)',en_cours:'var(--cyan)',terminé:'var(--gold)'}[m.statut];
+    const statusIcon  = {en_attente:'⏳',placement:'⚓',en_cours:'⚔️',terminé:'🏁'}[m.statut];
+    h += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border2)">
+      <div style="font-size:.88rem">
+        <strong>${esc(j1?.nom||'?')}</strong>
+        <span style="color:var(--text3);font-size:.75rem;margin:0 6px">vs</span>
+        <strong>${esc(j2?.nom||'?')}</strong>
+      </div>
+      <div style="text-align:right">
+        <span style="font-family:'Orbitron',monospace;font-size:.55rem;color:${statusColor}">${statusIcon} ${m.statut.toUpperCase()}</span>
+        ${m.statut==='terminé' ? `<div style="font-family:'Orbitron',monospace;font-size:.68rem;color:var(--gold)">${m.pts_j1||0} — ${m.pts_j2||0}</div>` : ''}
+      </div>
+    </div>`;
+  });
+  h += `</div>`;
+
+  el.innerHTML = h;
+}
+
+/* ══════════════════════════════════════════════════════
+   BRACKET TOURNOI
+══════════════════════════════════════════════════════ */
+function renderTournoi() {
+  const el = document.getElementById('mainContent');
+  el.innerHTML = `<div class="card">
+    <div class="card-title">🏆 Tableau du tournoi</div>
+    <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:2px;text-align:center;padding:20px">
+      EN COURS DE CONSTRUCTION<br><br>
+      <span style="font-size:1.5rem">🚧</span><br><br>
+      Disponible dans la prochaine mise à jour
+    </div>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════════════════
+   REALTIME
+══════════════════════════════════════════════════════ */
+function abonnerRealtime() {
+  // Écouter les changements sur mes matchs
+  sb.channel('jeu-matchs')
+    .on('postgres_changes', {
+      event: '*', schema: 'public', table: 'tournoi_matchs',
+      filter: `tournoi_id=eq.${MOI.tournoi_id}`
+    }, async ({ new: n }) => {
+      const idx = MATCHS.findIndex(m => m.id === n.id);
+      if (idx >= 0) MATCHS[idx] = n;
+      else MATCHS.push(n);
+      buildNav(); renderNav(); renderTab(currentTab);
+    })
+    .subscribe();
+
+  // Écouter les grilles
+  sb.channel('jeu-grilles')
+    .on('postgres_changes', {
+      event: '*', schema: 'public', table: 'tournoi_grilles'
+    }, async ({ new: n }) => {
+      const matchId = n.match_id;
+      const myMatch = MATCHS.find(m => m.id === matchId);
+      if (!myMatch) return;
+      await loadGrilles(matchId);
+      if (currentTab === 'match-'+matchId) renderTab(currentTab);
+    })
+    .subscribe();
+
+  // Écouter les tours
+  sb.channel('jeu-tours')
+    .on('postgres_changes', {
+      event: '*', schema: 'public', table: 'tournoi_tours'
+    }, async ({ new: n }) => {
+      const matchId = n.match_id;
+      const myMatch = MATCHS.find(m => m.id === matchId);
+      if (!myMatch) return;
+      TOURS[matchId] = n.statut === 'en_cours' ? n : null;
+      // Si l'adversaire vient de soumettre et que c'est validé depuis l'extérieur
+      if (n.statut === 'validé') {
+        await loadGrilles(matchId);
+        await loadTourEnCours(matchId);
+      }
+      buildNav(); renderNav();
+      if (currentTab === 'match-'+matchId) renderTab(currentTab);
+    })
+    .subscribe();
+}
+
+/* ══════════════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════════════ */
+function showAlert(id, type, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = `alert ${type} show`;
+  el.textContent = msg;
+  setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+function showError(msg) {
+  document.getElementById('mainContent').innerHTML = `
+    <div class="center-screen">
+      <div class="icon">🚫</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--red)">Erreur</div>
+      <div style="color:var(--text3);font-family:'Orbitron',monospace;font-size:.6rem;letter-spacing:1px">${esc(msg)}</div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
