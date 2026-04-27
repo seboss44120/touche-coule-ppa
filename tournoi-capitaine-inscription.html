@@ -2,889 +2,309 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>Touché Coulé — Tournoi</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root {
-    --navy:      #0a0e1a;
-    --navy-mid:  #111827;
-    --navy-lite: #1e2d45;
-    --steel:     #2a3f5f;
-    --ocean:     #1a4a6e;
-    --teal:      #0ea5e9;
-    --teal-glow: #38bdf8;
-    --gold:      #f59e0b;
-    --gold-lite: #fcd34d;
-    --red:       #ef4444;
-    --green:     #22c55e;
-    --text:      #e2e8f0;
-    --text-dim:  #64748b;
-    --radius:    12px;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'Georgia', serif;
-    background: var(--navy);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    overflow-x: hidden;
-    position: relative;
-  }
-
-  /* Fond animé — sonar */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 60% 60% at 50% 50%, rgba(14,165,233,0.04) 0%, transparent 70%),
-      repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(30,45,69,0.3) 40px, rgba(30,45,69,0.3) 41px),
-      repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(30,45,69,0.3) 40px, rgba(30,45,69,0.3) 41px);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .sonar-ring {
-    position: fixed;
-    border-radius: 50%;
-    border: 1px solid rgba(14,165,233,0.15);
-    pointer-events: none;
-    z-index: 0;
-    animation: sonar-pulse 4s ease-out infinite;
-  }
-  .sonar-ring:nth-child(1) { width: 200px; height: 200px; top: calc(50% - 100px); left: calc(50% - 100px); animation-delay: 0s; }
-  .sonar-ring:nth-child(2) { width: 400px; height: 400px; top: calc(50% - 200px); left: calc(50% - 200px); animation-delay: 0.8s; }
-  .sonar-ring:nth-child(3) { width: 600px; height: 600px; top: calc(50% - 300px); left: calc(50% - 300px); animation-delay: 1.6s; }
-  .sonar-ring:nth-child(4) { width: 800px; height: 800px; top: calc(50% - 400px); left: calc(50% - 400px); animation-delay: 2.4s; }
-
-  @keyframes sonar-pulse {
-    0%   { opacity: 0.5; transform: scale(0.8); }
-    50%  { opacity: 0.2; }
-    100% { opacity: 0;   transform: scale(1.1); }
-  }
-
-  /* Layout principal */
-  .container {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    max-width: 480px;
-  }
-
-  /* Header */
-  .header {
-    text-align: center;
-    margin-bottom: 36px;
-    animation: fade-down 0.6s ease both;
-  }
-
-  .header-badge {
-    display: inline-block;
-    font-family: 'Courier New', monospace;
-    font-size: 10px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: var(--teal);
-    border: 1px solid rgba(14,165,233,0.3);
-    padding: 4px 14px;
-    border-radius: 20px;
-    margin-bottom: 16px;
-  }
-
-  .header h1 {
-    font-size: 36px;
-    font-weight: 400;
-    letter-spacing: -1px;
-    color: var(--text);
-    line-height: 1.1;
-  }
-
-  .header h1 span {
-    color: var(--teal);
-  }
-
-  .header-sub {
-    margin-top: 8px;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    color: var(--text-dim);
-    letter-spacing: 2px;
-  }
-
-  /* Card */
-  .card {
-    background: var(--navy-mid);
-    border: 1px solid var(--steel);
-    border-radius: var(--radius);
-    padding: 32px;
-    animation: fade-up 0.6s ease both 0.1s;
-  }
-
-  .card-title {
-    font-size: 13px;
-    font-family: 'Courier New', monospace;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--teal);
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .card-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--steel);
-  }
-
-  /* Input */
-  .input-group {
-    margin-bottom: 20px;
-  }
-
-  .input-label {
-    display: block;
-    font-family: 'Courier New', monospace;
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 8px;
-  }
-
-  .input-field {
-    width: 100%;
-    background: var(--navy);
-    border: 1px solid var(--steel);
-    border-radius: 8px;
-    padding: 14px 16px;
-    color: var(--text);
-    font-size: 18px;
-    font-family: 'Georgia', serif;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    -webkit-appearance: none;
-  }
-
-  .input-field:focus {
-    border-color: var(--teal);
-    box-shadow: 0 0 0 3px rgba(14,165,233,0.15);
-  }
-
-  .input-field::placeholder {
-    color: var(--text-dim);
-    font-size: 14px;
-  }
-
-  /* Bouton principal */
-  .btn-primary {
-    width: 100%;
-    background: var(--teal);
-    color: var(--navy);
-    border: none;
-    border-radius: 8px;
-    padding: 16px;
-    font-size: 14px;
-    font-family: 'Courier New', monospace;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
-  }
-
-  .btn-primary:hover:not(:disabled) {
-    background: var(--teal-glow);
-    box-shadow: 0 0 20px rgba(14,165,233,0.4);
-  }
-
-  .btn-primary:active:not(:disabled) {
-    transform: scale(0.98);
-  }
-
-  .btn-primary:disabled {
-    background: var(--steel);
-    color: var(--text-dim);
-    cursor: not-allowed;
-  }
-
-  /* Salle d'attente */
-  .waiting-room {
-    display: none;
-    flex-direction: column;
-    gap: 20px;
-    animation: fade-up 0.5s ease both;
-  }
-
-  .player-name-display {
-    text-align: center;
-    padding: 24px;
-    background: rgba(14,165,233,0.06);
-    border: 1px solid rgba(14,165,233,0.2);
-    border-radius: var(--radius);
-    margin-bottom: 4px;
-  }
-
-  .player-name-display .label {
-    font-family: 'Courier New', monospace;
-    font-size: 10px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 8px;
-  }
-
-  .player-name-display .name {
-    font-size: 28px;
-    color: var(--teal-glow);
-    font-weight: 400;
-  }
-
-  /* Liste des joueurs inscrits */
-  .players-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .player-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: var(--navy);
-    border: 1px solid var(--steel);
-    border-radius: 8px;
-    transition: border-color 0.3s;
-    animation: fade-up 0.3s ease both;
-  }
-
-  .player-row.me {
-    border-color: rgba(14,165,233,0.4);
-    background: rgba(14,165,233,0.04);
-  }
-
-  .player-row.bye-player {
-    border-color: rgba(245,158,11,0.4);
-    background: rgba(245,158,11,0.04);
-  }
-
-  .player-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--steel);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: bold;
-    flex-shrink: 0;
-    color: var(--teal);
-    font-family: 'Courier New', monospace;
-  }
-
-  .player-info { flex: 1; }
-  .player-info .pname {
-    font-size: 16px;
-    color: var(--text);
-  }
-  .player-info .ptag {
-    font-family: 'Courier New', monospace;
-    font-size: 10px;
-    color: var(--text-dim);
-    letter-spacing: 1px;
-  }
-
-  .player-status {
-    font-size: 18px;
-  }
-
-  /* Compteur */
-  .counter {
-    text-align: center;
-    padding: 16px;
-    border: 1px solid var(--steel);
-    border-radius: var(--radius);
-    background: var(--navy);
-  }
-
-  .counter-nums {
-    font-size: 32px;
-    font-family: 'Courier New', monospace;
-    color: var(--teal);
-    letter-spacing: 4px;
-  }
-
-  .counter-label {
-    font-size: 11px;
-    font-family: 'Courier New', monospace;
-    letter-spacing: 2px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    margin-top: 4px;
-  }
-
-  /* Pulse "en attente" */
-  .pulse-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--teal);
-    margin-right: 8px;
-    animation: pulse-dot 1.5s ease-in-out infinite;
-  }
-
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.4; transform: scale(0.7); }
-  }
-
-  .waiting-label {
-    text-align: center;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    color: var(--text-dim);
-    letter-spacing: 1.5px;
-    padding: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* Badge BYE */
-  .bye-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(245,158,11,0.15);
-    border: 1px solid rgba(245,158,11,0.4);
-    color: var(--gold);
-    font-family: 'Courier New', monospace;
-    font-size: 10px;
-    letter-spacing: 2px;
-    padding: 3px 10px;
-    border-radius: 20px;
-    animation: bye-pulse 2s ease-in-out infinite;
-  }
-
-  @keyframes bye-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.3); }
-    50%       { box-shadow: 0 0 12px 4px rgba(245,158,11,0.15); }
-  }
-
-  /* Phase: Tournoi lancé */
-  .go-screen {
-    display: none;
-    text-align: center;
-    animation: fade-up 0.5s ease both;
-  }
-
-  .go-icon {
-    font-size: 64px;
-    animation: go-appear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-    display: block;
-    margin-bottom: 16px;
-  }
-
-  @keyframes go-appear {
-    from { transform: scale(0) rotate(-180deg); opacity: 0; }
-    to   { transform: scale(1) rotate(0deg); opacity: 1; }
-  }
-
-  .go-title {
-    font-size: 28px;
-    color: var(--green);
-    margin-bottom: 8px;
-  }
-
-  .go-sub {
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    color: var(--text-dim);
-    letter-spacing: 2px;
-  }
-
-  /* Erreur */
-  .error-screen {
-    display: none;
-    text-align: center;
-    animation: fade-up 0.5s ease both;
-  }
-
-  .error-icon { font-size: 48px; margin-bottom: 16px; }
-  .error-title { font-size: 22px; color: var(--red); margin-bottom: 8px; }
-  .error-sub {
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    color: var(--text-dim);
-    letter-spacing: 1px;
-  }
-
-  /* Message flash */
-  .flash {
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    letter-spacing: 1px;
-    display: none;
-  }
-  .flash.error   { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.3);  color: #fca5a5; }
-  .flash.success { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.3);  color: #86efac; }
-  .flash.info    { background: rgba(14,165,233,0.1); border: 1px solid rgba(14,165,233,0.3); color: var(--teal-glow); }
-
-  /* Skeleton loading */
-  .skeleton {
-    height: 52px;
-    background: linear-gradient(90deg, var(--navy) 25%, var(--navy-lite) 50%, var(--navy) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    border-radius: 8px;
-    border: 1px solid var(--steel);
-  }
-
-  @keyframes shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  /* Animations globales */
-  @keyframes fade-up {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes fade-down {
-    from { opacity: 0; transform: translateY(-16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Slot vide */
-  .slot-empty {
-    border: 1px dashed var(--steel);
-    border-radius: 8px;
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    opacity: 0.4;
-  }
-
-  .slot-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1px dashed var(--steel);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    flex-shrink: 0;
-  }
-
-  .slot-label {
-    font-family: 'Courier New', monospace;
-    font-size: 11px;
-    color: var(--text-dim);
-    letter-spacing: 1px;
-  }
+:root{--navy:#0a0e1a;--navy-mid:#111827;--navy-lite:#1e2d45;--steel:#2a3f5f;--teal:#0ea5e9;--teal-glow:#38bdf8;--gold:#f59e0b;--red:#ef4444;--green:#22c55e;--text:#e2e8f0;--text-dim:#64748b;--radius:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Georgia',serif;background:var(--navy);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow-x:hidden;position:relative}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(30,45,69,.25) 40px,rgba(30,45,69,.25) 41px),repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(30,45,69,.25) 40px,rgba(30,45,69,.25) 41px);pointer-events:none;z-index:0}
+.sonar-ring{position:fixed;border-radius:50%;border:1px solid rgba(14,165,233,.12);pointer-events:none;z-index:0;animation:sonar-pulse 4s ease-out infinite}
+.sonar-ring:nth-child(1){width:200px;height:200px;top:calc(50% - 100px);left:calc(50% - 100px);animation-delay:0s}
+.sonar-ring:nth-child(2){width:400px;height:400px;top:calc(50% - 200px);left:calc(50% - 200px);animation-delay:.8s}
+.sonar-ring:nth-child(3){width:600px;height:600px;top:calc(50% - 300px);left:calc(50% - 300px);animation-delay:1.6s}
+@keyframes sonar-pulse{0%{opacity:.5;transform:scale(.8)}100%{opacity:0;transform:scale(1.1)}}
+.container{position:relative;z-index:1;width:100%;max-width:480px}
+.header{text-align:center;margin-bottom:32px}
+.header-badge{display:inline-block;font-family:'Courier New',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--teal);border:1px solid rgba(14,165,233,.3);padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.header h1{font-size:34px;font-weight:400;letter-spacing:-1px;color:var(--text);line-height:1.1}
+.header h1 span{color:var(--teal)}
+.header-sub{margin-top:6px;font-family:'Courier New',monospace;font-size:11px;color:var(--text-dim);letter-spacing:2px}
+.card{background:var(--navy-mid);border:1px solid var(--steel);border-radius:var(--radius);padding:26px;margin-bottom:14px}
+.card-title{font-size:12px;font-family:'Courier New',monospace;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:18px;display:flex;align-items:center;gap:10px}
+.card-title::after{content:'';flex:1;height:1px;background:var(--steel)}
+.input-label{display:block;font-family:'Courier New',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:7px}
+.input-field{width:100%;background:var(--navy);border:1px solid var(--steel);border-radius:8px;padding:13px 15px;color:var(--text);font-size:17px;font-family:'Georgia',serif;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none}
+.input-field:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(14,165,233,.15)}
+.input-field.valid{border-color:var(--green)}
+.input-field.taken{border-color:var(--red)}
+.pseudo-status{font-family:'Courier New',monospace;font-size:11px;letter-spacing:1px;margin-top:6px;min-height:16px}
+.ps-ok{color:var(--green)}.ps-taken{color:var(--red)}.ps-check{color:var(--text-dim)}
+.btn-primary{width:100%;background:var(--teal);color:var(--navy);border:none;border-radius:8px;padding:15px;font-size:13px;font-family:'Courier New',monospace;letter-spacing:2px;text-transform:uppercase;font-weight:bold;cursor:pointer;transition:background .2s,box-shadow .2s}
+.btn-primary:hover:not(:disabled){background:var(--teal-glow);box-shadow:0 0 18px rgba(14,165,233,.4)}
+.btn-primary:disabled{background:var(--steel);color:var(--text-dim);cursor:not-allowed}
+.profil-card{background:rgba(14,165,233,.06);border:1px solid rgba(14,165,233,.25);border-radius:10px;padding:14px;margin-top:14px;display:none}
+.profil-avatar{font-size:30px;margin-bottom:5px;text-align:center}
+.profil-grade{font-family:'Courier New',monospace;font-size:11px;color:var(--gold);letter-spacing:2px;text-align:center;margin-bottom:10px}
+.profil-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.stat-box{background:var(--navy);border:1px solid var(--steel);border-radius:6px;padding:7px;text-align:center}
+.stat-val{font-family:'Courier New',monospace;font-size:17px;font-weight:900;color:var(--teal)}
+.stat-lbl{font-family:'Courier New',monospace;font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-top:2px}
+.badge-row{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px}
+.reward-badge{font-size:16px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:20px;padding:3px 8px}
+.waiting-card{display:none;flex-direction:column;gap:14px}
+.player-name-display{text-align:center;padding:18px;background:rgba(14,165,233,.06);border:1px solid rgba(14,165,233,.2);border-radius:var(--radius)}
+.pname-label{font-family:'Courier New',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);margin-bottom:7px}
+.pname-val{font-size:24px;color:var(--teal-glow)}
+.grade-display{font-family:'Courier New',monospace;font-size:10px;color:var(--gold);letter-spacing:2px;margin-top:4px}
+.counter{text-align:center;padding:13px;border:1px solid var(--steel);border-radius:var(--radius);background:var(--navy)}
+.counter-nums{font-size:28px;font-family:'Courier New',monospace;color:var(--teal);letter-spacing:4px}
+.counter-label{font-size:11px;font-family:'Courier New',monospace;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-top:3px}
+.players-list{display:flex;flex-direction:column;gap:7px}
+.player-row{display:flex;align-items:center;gap:11px;padding:10px 13px;background:var(--navy);border:1px solid var(--steel);border-radius:8px}
+.player-row.me{border-color:rgba(14,165,233,.4);background:rgba(14,165,233,.04)}
+.player-avatar-box{width:34px;height:34px;border-radius:50%;background:var(--steel);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.player-info .pname{font-size:14px;color:var(--text)}
+.player-info .ptag{font-family:'Courier New',monospace;font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-top:2px}
+.pulse-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pd 1.5s ease-in-out infinite;margin-right:7px}
+@keyframes pd{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+.waiting-label{text-align:center;font-family:'Courier New',monospace;font-size:11px;color:var(--text-dim);letter-spacing:1.5px;padding:11px;display:flex;align-items:center;justify-content:center}
+.go-screen{display:none;text-align:center;padding:30px}
+.go-icon{font-size:56px;margin-bottom:12px;display:block}
+.go-title{font-size:24px;color:var(--green);margin-bottom:5px}
+.err-screen{display:none;text-align:center;padding:30px}
+.slot-empty{border:1px dashed var(--steel);border-radius:8px;padding:10px 13px;display:flex;align-items:center;gap:11px;opacity:.4}
+.slot-avatar{width:34px;height:34px;border-radius:50%;border:1px dashed var(--steel);display:flex;align-items:center;justify-content:center}
+.flash{padding:9px 13px;border-radius:8px;font-family:'Courier New',monospace;font-size:11px;letter-spacing:1px;display:none;margin-bottom:12px}
+.flash.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
+.flash.success{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#86efac}
+.flash.info{background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.3);color:var(--teal-glow)}
+.skeleton{height:50px;background:linear-gradient(90deg,var(--navy) 25%,var(--navy-lite) 50%,var(--navy) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px;border:1px solid var(--steel)}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 </style>
 </head>
 <body>
-
-<!-- Anneaux sonar fond -->
-<div class="sonar-ring"></div>
-<div class="sonar-ring"></div>
-<div class="sonar-ring"></div>
-<div class="sonar-ring"></div>
-
+<div class="sonar-ring"></div><div class="sonar-ring"></div><div class="sonar-ring"></div>
 <div class="container">
-
-  <!-- HEADER -->
   <div class="header">
     <div class="header-badge">⚓ MODE TOURNOI</div>
     <h1>Touché <span>Coulé</span></h1>
     <div class="header-sub">SYSTÈME DE COMBAT NAVAL</div>
   </div>
 
-  <!-- PHASE 0 : Chargement -->
   <div id="screen-loading" class="card">
-    <div class="skeleton" style="margin-bottom:12px"></div>
-    <div class="skeleton" style="height:40px"></div>
+    <div class="skeleton" style="margin-bottom:10px"></div>
+    <div class="skeleton" style="height:38px"></div>
   </div>
 
-  <!-- PHASE 1 : Inscription -->
   <div id="screen-inscription" class="card" style="display:none">
     <div class="card-title">⚡ Identification</div>
-
-    <div class="input-group">
-      <label class="input-label" for="nom-input">Votre nom de capitaine</label>
-      <input
-        id="nom-input"
-        class="input-field"
-        type="text"
-        placeholder="Ex: Dupont"
-        maxlength="20"
-        autocomplete="off"
-        autocorrect="off"
-        spellcheck="false"
-      >
+    <div id="flash-inscription" class="flash"></div>
+    <div style="margin-bottom:16px">
+      <label class="input-label" for="pseudo-input">Votre pseudo de capitaine</label>
+      <input id="pseudo-input" class="input-field" type="text" placeholder="Ex : Leblond" maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="pseudo-status" id="pseudo-status"></div>
     </div>
-
-    <div id="flash-inscription" class="flash" style="margin-bottom:16px"></div>
-
-    <button id="btn-inscrire" class="btn-primary" disabled>
-      REJOINDRE LE TOURNOI
-    </button>
+    <div class="profil-card" id="profil-existant">
+      <div class="profil-avatar" id="profil-avatar-display">⚓</div>
+      <div class="profil-grade" id="profil-grade-display">—</div>
+      <div class="profil-stats">
+        <div class="stat-box"><div class="stat-val" id="pv">0</div><div class="stat-lbl">VICTOIRES</div></div>
+        <div class="stat-box"><div class="stat-val" id="pm">0</div><div class="stat-lbl">MATCHS</div></div>
+        <div class="stat-box"><div class="stat-val" id="pr">—</div><div class="stat-lbl">RATIO</div></div>
+      </div>
+      <div class="badge-row" id="profil-recompenses"></div>
+      <div style="font-family:'Courier New',monospace;font-size:11px;color:var(--green);text-align:center;letter-spacing:1px">✓ Profil reconnu — vos stats seront conservées</div>
+    </div>
+    <button id="btn-inscrire" class="btn-primary" disabled style="margin-top:14px">REJOINDRE LE TOURNOI</button>
   </div>
 
-  <!-- PHASE 2 : Salle d'attente -->
-  <div id="screen-attente" style="display:none">
+  <div id="screen-attente" class="waiting-card">
     <div class="card">
       <div class="card-title">🎖 Capitaine inscrit</div>
-
       <div class="player-name-display">
-        <div class="label">Vous combattez sous le nom de</div>
-        <div class="name" id="display-nom">—</div>
-      </div>
-
-      <div id="bye-notice" style="display:none; text-align:center; margin:12px 0;">
-        <span class="bye-badge">⚡ BYE — EXEMPTION CE TOUR</span>
+        <div class="pname-label">Vous combattez sous le nom de</div>
+        <div class="pname-val" id="display-nom">—</div>
+        <div class="grade-display" id="display-grade">—</div>
       </div>
     </div>
-
-    <div class="card" style="margin-top:16px">
+    <div class="card">
       <div class="card-title">👥 Salle d'embarquement</div>
-
       <div class="counter">
-        <div class="counter-nums">
-          <span id="count-inscrits">0</span> / <span id="count-cible">—</span>
-        </div>
+        <div class="counter-nums"><span id="count-inscrits">0</span> / <span id="count-cible">—</span></div>
         <div class="counter-label">joueurs embarqués</div>
       </div>
-
-      <div id="players-list" class="players-list" style="margin-top:16px">
-        <!-- Rempli dynamiquement -->
-      </div>
-
-      <div class="waiting-label" id="waiting-label">
-        <span class="pulse-dot"></span>
-        EN ATTENTE DU SIGNAL DE L'AMIRAL
-      </div>
+      <div id="players-list" class="players-list" style="margin-top:13px"></div>
+      <div class="waiting-label"><span class="pulse-dot"></span>EN ATTENTE DU SIGNAL DE L'AMIRAL</div>
     </div>
   </div>
 
-  <!-- PHASE 3 : Tournoi lancé -->
   <div id="screen-go" class="card go-screen">
     <span class="go-icon">⚓</span>
     <div class="go-title">À VOS POSTES !</div>
-    <div class="go-sub">Le tournoi commence — chargement de votre interface…</div>
+    <div style="font-family:'Courier New',monospace;font-size:11px;color:var(--text-dim);letter-spacing:2px">Le tournoi commence…</div>
   </div>
 
-  <!-- ERREUR : lien invalide -->
-  <div id="screen-error" class="card error-screen">
-    <div class="error-icon">🚫</div>
-    <div class="error-title">Lien invalide</div>
-    <div class="error-sub">Ce token de capitaine est introuvable ou expiré.<br>Contactez l'administrateur du tournoi.</div>
+  <div id="screen-error" class="card err-screen">
+    <div style="font-size:38px;margin-bottom:10px">🚫</div>
+    <div style="font-size:19px;color:var(--red);margin-bottom:5px">Lien invalide</div>
+    <div style="font-family:'Courier New',monospace;font-size:11px;color:var(--text-dim)">Contactez l'administrateur du tournoi.</div>
   </div>
-
 </div>
 
 <script>
-// ══════════════════════════════════════════════════════════════
-//  CONFIG SUPABASE
-// ══════════════════════════════════════════════════════════════
-const SUPABASE_URL    = 'https://pwtqeyiynrtiprjgqzuw.supabase.co';
-const SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3dHFleWl5bnJ0aXByamdxenV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDMzMzMsImV4cCI6MjA4OTc3OTMzM30.acIEmilzlTCScWoKoyAX5rq1EwBWMzSQAmXQBPbX3Yw'; // ← remplacer par ta vraie clé anon
+const SUPABASE_URL='https://pwtqeyiynrtiprjgqzuw.supabase.co';
+const SUPABASE_ANON='SUPABASE_ANON_KEY';
+const BASE_JEU=location.href.replace(/[^/]*$/,'tournoi-jeu.html');
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const GRADES=[
+  {label:'Matelot',min:0},{label:'Matelot 1ère classe',min:5},
+  {label:'Matelot 2nde classe',min:10},{label:'Quartier-maître 1ère classe',min:15},
+  {label:'Second maître',min:20},{label:'Maître',min:25},
+  {label:'Premier maître',min:35},{label:'Maître principal',min:45},
+  {label:'Major',min:55},{label:'Aspirant',min:65},
+  {label:'Enseigne de vaisseau',min:80},{label:'Lieutenant de vaisseau',min:95},
+  {label:'Capitaine de corvette',min:110},{label:'Capitaine de frégate',min:125},
+  {label:'Capitaine de vaisseau',min:140},{label:'Commodore',min:155},
+  {label:'Contre-amiral',min:170},{label:'Vice-amiral',min:185},
+  {label:"Vice-amiral d'escadre",min:200},{label:'Amiral',min:215},
+];
+const REWARDS_META={
+  medaille_victoire:{icon:'🎖',label:'Médaille de la victoire'},
+  medaille_honneur:{icon:'🏅',label:"Médaille d'honneur"},
+  grande_medaille:{icon:'🌟',label:'Grande médaille'},
+  sixieme_sens:{icon:'🔮',label:'Sixième sens'},
+  aiguille:{icon:'🪡',label:'Aiguille dans une botte de foin'},
+  bronze:{icon:'🥉',label:'Médaille de bronze'},
+  argent:{icon:'🥈',label:"Médaille d'argent"},
+  or:{icon:'🥇',label:"Médaille d'or"},
+  diamant:{icon:'💎',label:'Médaille de diamant'},
+};
 
-// ══════════════════════════════════════════════════════════════
-//  ÉTAT LOCAL
-// ══════════════════════════════════════════════════════════════
-let monToken      = null;
-let monJoueur     = null;   // ligne tournoi_joueurs
-let tournoi       = null;   // ligne tournois
-let allJoueurs    = [];
-let realtimeSubs  = [];
+function getGrade(v){let g=GRADES[0];for(const gr of GRADES){if(v>=gr.min)g=gr;else break;}return g.label;}
+function getRatio(v,m){return m>0?Math.round((v/m)*100)+'%':'—';}
 
-// ══════════════════════════════════════════════════════════════
-//  HELPERS UI
-// ══════════════════════════════════════════════════════════════
-const $ = id => document.getElementById(id);
+let monToken=null,monJoueur=null,tournoi=null,allJoueurs=[],profilFound=null,checkTimer=null,realtimeSubs=[];
+const $=id=>document.getElementById(id);
 
-function showScreen(id) {
-  ['screen-loading','screen-inscription','screen-attente','screen-go','screen-error']
-    .forEach(s => {
-      const el = $(s);
-      el.style.display = (s === id) ? (id === 'screen-attente' ? 'block' : (id === 'screen-go' || id === 'screen-error' ? 'flex' : 'block')) : 'none';
-    });
+function showScreen(id){
+  ['screen-loading','screen-inscription','screen-attente','screen-go','screen-error'].forEach(s=>{
+    const el=$(s);if(!el)return;
+    el.style.display=s===id?(s==='screen-attente'?'flex':'block'):'none';
+  });
+}
+function flash(z,t,m){const el=$(z);el.className='flash '+t;el.textContent=m;el.style.display='block';if(t!=='error')setTimeout(()=>el.style.display='none',4000);}
+
+$('pseudo-input').addEventListener('input',()=>{
+  const val=$('pseudo-input').value.trim();
+  $('btn-inscrire').disabled=true;$('pseudo-status').textContent='';
+  $('pseudo-input').classList.remove('valid','taken');$('profil-existant').style.display='none';profilFound=null;
+  clearTimeout(checkTimer);
+  if(val.length<2)return;
+  $('pseudo-status').className='pseudo-status ps-check';$('pseudo-status').textContent='⌛ Vérification…';
+  checkTimer=setTimeout(()=>checkPseudo(val),500);
+});
+
+async function checkPseudo(pseudo){
+  const{data}=await sb.from('joueur_profils').select('*').ilike('pseudo',pseudo).maybeSingle();
+  if(data){
+    profilFound=data;
+    $('pseudo-input').classList.add('valid');
+    $('pseudo-status').className='pseudo-status ps-ok';
+    $('pseudo-status').textContent='✓ Profil existant — bienvenue de retour !';
+    $('profil-avatar-display').textContent=data.avatar||'⚓';
+    $('profil-grade-display').textContent=getGrade(data.victoires);
+    $('pv').textContent=data.victoires;$('pm').textContent=data.matchs_joues;
+    $('pr').textContent=getRatio(data.victoires,data.matchs_joues);
+    const rw=$('profil-recompenses');rw.innerHTML='';
+    (data.recompenses_affichees||[]).forEach(k=>{const m=REWARDS_META[k];if(!m)return;const b=document.createElement('div');b.className='reward-badge';b.title=m.label;b.textContent=m.icon;rw.appendChild(b);});
+    $('profil-existant').style.display='block';
+    $('btn-inscrire').disabled=false;
+  }else{
+    profilFound=null;
+    $('pseudo-input').classList.add('valid');
+    $('pseudo-status').className='pseudo-status ps-ok';
+    $('pseudo-status').textContent='✓ Pseudo disponible — nouveau profil créé';
+    $('profil-existant').style.display='none';
+    $('btn-inscrire').disabled=false;
+  }
 }
 
-function flash(zone, type, msg) {
-  const el = $(zone);
-  el.className = `flash ${type}`;
-  el.textContent = msg;
-  el.style.display = 'block';
-  if (type !== 'error') setTimeout(() => { el.style.display = 'none'; }, 4000);
+async function init(){
+  monToken=new URLSearchParams(location.search).get('token');
+  if(!monToken){showScreen('screen-error');return;}
+  try{
+    const{data:joueur,error}=await sb.from('tournoi_joueurs').select('*').eq('token',monToken).maybeSingle();
+    if(error||!joueur){showScreen('screen-error');return;}
+    monJoueur=joueur;
+    const{data:t}=await sb.from('tournois').select('*').eq('id',joueur.tournoi_id).maybeSingle();
+    if(!t){showScreen('screen-error');return;}
+    tournoi=t;
+    if(t.statut!=='inscription'){handleTournoiLance();return;}
+    if(joueur.nom){await chargerSalleAttente();return;}
+    showScreen('screen-inscription');
+    setTimeout(()=>$('pseudo-input')?.focus(),100);
+    $('btn-inscrire').addEventListener('click',soumettre);
+    $('pseudo-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!$('btn-inscrire').disabled)soumettre();});
+  }catch(e){console.error(e);showScreen('screen-error');}
 }
 
-function initiales(nom) {
-  return nom.trim().split(' ').map(p => p[0]).join('').toUpperCase().slice(0,2);
+async function soumettre(){
+  const pseudo=$('pseudo-input').value.trim();
+  if(pseudo.length<2)return;
+  $('btn-inscrire').disabled=true;$('btn-inscrire').textContent='ENREGISTREMENT…';
+  try{
+    let profilId;
+    if(profilFound){
+      profilId=profilFound.id;
+    }else{
+      const{data:np,error}=await sb.from('joueur_profils').insert({pseudo,avatar:'⚓',drapeau:'fr'}).select().single();
+      if(error){flash('flash-inscription','error','Ce pseudo vient d\'être pris. Choisissez-en un autre.');$('btn-inscrire').disabled=false;$('btn-inscrire').textContent='REJOINDRE LE TOURNOI';return;}
+      profilId=np.id;
+    }
+    const{error:errU}=await sb.from('tournoi_joueurs').update({nom:pseudo,profil_id:profilId}).eq('id',monJoueur.id);
+    if(errU)throw errU;
+    monJoueur.nom=pseudo;monJoueur.profil_id=profilId;
+    await chargerSalleAttente();
+  }catch(e){console.error(e);flash('flash-inscription','error','Erreur réseau. Réessayez.');$('btn-inscrire').disabled=false;$('btn-inscrire').textContent='REJOINDRE LE TOURNOI';}
 }
 
-// ══════════════════════════════════════════════════════════════
-//  RENDU LISTE JOUEURS
-// ══════════════════════════════════════════════════════════════
-function renderJoueurs() {
-  const list   = $('players-list');
-  const cible  = tournoi?.nb_joueurs_cible ?? 0;
-  list.innerHTML = '';
+async function chargerSalleAttente(){
+  $('display-nom').textContent=monJoueur.nom;
+  if(monJoueur.profil_id){
+    const{data:p}=await sb.from('joueur_profils').select('victoires').eq('id',monJoueur.profil_id).maybeSingle();
+    if(p)$('display-grade').textContent=getGrade(p.victoires);
+  }
+  $('screen-inscription').style.display='none';$('screen-loading').style.display='none';
+  $('screen-attente').style.display='flex';
+  await refreshJoueurs();abonnerRealtime();
+}
 
-  // Joueurs inscrits
-  allJoueurs.forEach(j => {
-    const isMe  = j.id === monJoueur?.id;
-    const isBye = j.bye;
+async function refreshJoueurs(){
+  const{data}=await sb.from('tournoi_joueurs').select('*').eq('tournoi_id',monJoueur.tournoi_id).not('nom','is',null).order('created_at');
+  allJoueurs=data||[];renderJoueurs();
+}
 
-    const row = document.createElement('div');
-    row.className = `player-row ${isMe ? 'me' : ''} ${isBye ? 'bye-player' : ''}`;
-    row.style.animationDelay = '0s';
-    row.innerHTML = `
-      <div class="player-avatar">${initiales(j.nom)}</div>
-      <div class="player-info">
-        <div class="pname">${j.nom}${isMe ? ' <small style="color:var(--teal);font-size:11px">(vous)</small>' : ''}</div>
-        <div class="ptag">${isBye ? '⚡ Exemption accordée' : 'CAPITAINE ENREGISTRÉ'}</div>
-      </div>
-      <div class="player-status">${isBye ? '⚡' : '✅'}</div>
-    `;
+function renderJoueurs(){
+  const list=$('players-list'),cible=tournoi?.nb_joueurs_cible||0;
+  list.innerHTML='';
+  allJoueurs.forEach(j=>{
+    const isMe=j.id===monJoueur.id;
+    const row=document.createElement('div');row.className='player-row '+(isMe?'me':'');
+    const initials=j.nom.trim().split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,2);
+    row.innerHTML=`<div class="player-avatar-box">${initials}</div><div class="player-info"><div class="pname">${j.nom}${isMe?' <small style="color:var(--teal);font-size:10px">(vous)</small>':''}</div><div class="ptag">CAPITAINE ENREGISTRÉ</div></div><div>✅</div>`;
     list.appendChild(row);
   });
-
-  // Slots vides
-  const vides = cible - allJoueurs.length;
-  for (let i = 0; i < vides; i++) {
-    const slot = document.createElement('div');
-    slot.className = 'slot-empty';
-    slot.innerHTML = `
-      <div class="slot-avatar">?</div>
-      <div class="slot-label">EN ATTENTE D'UN CAPITAINE…</div>
-    `;
-    list.appendChild(slot);
-  }
-
-  $('count-inscrits').textContent = allJoueurs.length;
-  $('count-cible').textContent    = cible || '—';
+  for(let i=0;i<cible-allJoueurs.length;i++){const s=document.createElement('div');s.className='slot-empty';s.innerHTML='<div class="slot-avatar">?</div><div style="font-family:\'Courier New\',monospace;font-size:10px;color:var(--text-dim)">EN ATTENTE…</div>';list.appendChild(s);}
+  $('count-inscrits').textContent=allJoueurs.length;$('count-cible').textContent=cible||'—';
 }
 
-// ══════════════════════════════════════════════════════════════
-//  CHARGEMENT INITIAL
-// ══════════════════════════════════════════════════════════════
-async function init() {
-  // Lire token URL
-  monToken = new URLSearchParams(location.search).get('token');
-  if (!monToken) { showScreen('screen-error'); return; }
-
-  try {
-    // Vérifier que le token existe
-    const { data: joueur, error: errJ } = await sb
-      .from('tournoi_joueurs')
-      .select('*')
-      .eq('token', monToken)
-      .maybeSingle();
-
-    if (errJ || !joueur) { showScreen('screen-error'); return; }
-    monJoueur = joueur;
-
-    // Charger le tournoi
-    const { data: t, error: errT } = await sb
-      .from('tournois')
-      .select('*')
-      .eq('id', joueur.tournoi_id)
-      .maybeSingle();
-
-    if (errT || !t) { showScreen('screen-error'); return; }
-    tournoi = t;
-
-    // Si tournoi déjà lancé → rediriger vers interface de jeu
-    if (t.statut !== 'inscription') {
-      handleTournoiLance();
-      return;
-    }
-
-    // Si ce joueur a déjà un nom → aller directement en salle d'attente
-    if (joueur.nom) {
-      await chargerSalleAttente();
-      return;
-    }
-
-    // Sinon → montrer l'écran d'inscription
-    showScreen('screen-inscription');
-    setupInscriptionUI();
-
-  } catch (e) {
-    console.error(e);
-    showScreen('screen-error');
-  }
+function abonnerRealtime(){
+  const s1=sb.channel('insc-j').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_joueurs',filter:'tournoi_id=eq.'+monJoueur.tournoi_id},async()=>{await refreshJoueurs();}).subscribe();
+  const s2=sb.channel('insc-t').on('postgres_changes',{event:'UPDATE',schema:'public',table:'tournois',filter:'id=eq.'+monJoueur.tournoi_id},({new:n})=>{tournoi=n;if(n.statut!=='inscription')handleTournoiLance();}).subscribe();
+  realtimeSubs.push(s1,s2);
 }
 
-// ══════════════════════════════════════════════════════════════
-//  UI INSCRIPTION
-// ══════════════════════════════════════════════════════════════
-function setupInscriptionUI() {
-  const input  = $('nom-input');
-  const btn    = $('btn-inscrire');
-
-  input.addEventListener('input', () => {
-    btn.disabled = input.value.trim().length < 2;
-  });
-
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !btn.disabled) soumettrePseudo();
-  });
-
-  btn.addEventListener('click', soumettrePseudo);
-  input.focus();
+function handleTournoiLance(){
+  realtimeSubs.forEach(s=>sb.removeChannel(s));
+  ['screen-inscription','screen-attente','screen-loading','screen-error'].forEach(id=>{const el=$(id);if(el)el.style.display='none';});
+  $('screen-go').style.display='block';
+  setTimeout(()=>{location.href=BASE_JEU+'?token='+monToken;},2500);
 }
 
-async function soumettrePseudo() {
-  const nom = $('nom-input').value.trim();
-  if (nom.length < 2) return;
-
-  $('btn-inscrire').disabled = true;
-  $('btn-inscrire').textContent = 'ENREGISTREMENT…';
-
-  try {
-    // Vérifier unicité du nom dans ce tournoi
-    const { data: existants } = await sb
-      .from('tournoi_joueurs')
-      .select('id')
-      .eq('tournoi_id', monJoueur.tournoi_id)
-      .ilike('nom', nom);
-
-    if (existants && existants.some(j => j.id !== monJoueur.id)) {
-      flash('flash-inscription', 'error', 'Ce nom est déjà pris par un autre capitaine.');
-      $('btn-inscrire').disabled = false;
-      $('btn-inscrire').textContent = 'REJOINDRE LE TOURNOI';
-      return;
-    }
-
-    // Mettre à jour le nom
-    const { error } = await sb
-      .from('tournoi_joueurs')
-      .update({ nom })
-      .eq('id', monJoueur.id);
-
-    if (error) throw error;
-
-    monJoueur.nom = nom;
-    await chargerSalleAttente();
-
-  } catch (e) {
-    console.error(e);
-    flash('flash-inscription', 'error', 'Erreur réseau. Réessayez.');
-    $('btn-inscrire').disabled = false;
-    $('btn-inscrire').textContent = 'REJOINDRE LE TOURNOI';
-  }
-}
-
-// ══════════════════════════════════════════════════════════════
-//  SALLE D'ATTENTE
-// ══════════════════════════════════════════════════════════════
-async function chargerSalleAttente() {
-  showScreen('screen-attente');
-
-  $('display-nom').textContent = monJoueur.nom;
-
-  // Badge BYE si applicable
-  if (monJoueur.bye) {
-    $('bye-notice').style.display = 'block';
-  }
-
-  // Charger la liste des joueurs inscrits
-  await refreshJoueurs();
-
-  // Abonnements real-time
-  abonnerRealtime();
-}
-
-async function refreshJoueurs() {
-  const { data } = await sb
-    .from('tournoi_joueurs')
-    .select('*')
-    .eq('tournoi_id', monJoueur.tournoi_id)
-    .not('nom', 'is', null)
-    .order('created_at');
-
-  allJoueurs = data || [];
-  renderJoueurs();
-}
-
-function abonnerRealtime() {
-  // Écouter les nouveaux inscrits
-  const subJoueurs = sb
-    .channel('tournoi-joueurs')
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'tournoi_joueurs',
-      filter: `tournoi_id=eq.${monJoueur.tournoi_id}`
-    }, async () => {
-      await refreshJoueurs();
-    })
-    .subscribe();
-
-  // Écouter le statut du tournoi
-  const subTournoi = sb
-    .channel('tournoi-statut')
-    .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'tournois',
-      filter: `id=eq.${monJoueur.tournoi_id}`
-    }, payload => {
-      tournoi = payload.new;
-      if (tournoi.statut !== 'inscription') {
-        handleTournoiLance();
-      }
-    })
-    .subscribe();
-
-  realtimeSubs.push(subJoueurs, subTournoi);
-}
-
-// ══════════════════════════════════════════════════════════════
-//  TOURNOI LANCÉ
-// ══════════════════════════════════════════════════════════════
-function handleTournoiLance() {
-  // Nettoyer les abonnements
-  realtimeSubs.forEach(s => sb.removeChannel(s));
-
-  // Afficher l'écran "GO"
-  showScreen('screen-go');
-
-  // Rediriger vers l'interface de jeu après 2.5s
-  // (URL à adapter selon l'archi finale)
-  setTimeout(() => {
-    location.href = `tournoi-jeu.html?token=${monToken}`;
-  }, 2500);
-}
-
-// ══════════════════════════════════════════════════════════════
-//  LANCEMENT
-// ══════════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
 </html>
