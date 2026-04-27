@@ -1517,7 +1517,7 @@ function renderTournoi() {
   if (statut !== 'inscription') {
     h += `<div class="card">
       <div class="card-title">🚨 Actions d'urgence</div>
-      <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1px;margin-bottom:12px">
+      <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:1px;margin-bottom:12px">
         Intervenir sur un match en cours
       </div>
       <div id="matchsUrgenceList"></div>
@@ -1526,8 +1526,105 @@ function renderTournoi() {
 
   el.innerHTML = h;
 
-  // Charger les matchs d'urgence si besoin
-  if (statut !== 'inscription') adminChargerMatchsUrgence();
+  // Charger les matchs d'urgence + bracket si besoin
+  if (statut !== 'inscription') {
+    adminChargerMatchsUrgence();
+    adminRenderBracket();
+  }
+}
+
+async function adminRenderBracket() {
+  if (!TOURNOI) return;
+  const tournoiId = TOURNOI.id;
+
+  const [{ data: allMatchs }, { data: allJoueurs }] = await Promise.all([
+    sbT.from('tournoi_matchs').select('*').eq('tournoi_id', tournoiId).order('created_at'),
+    sbT.from('tournoi_joueurs').select('id,nom,poule_id,bye').eq('tournoi_id', tournoiId),
+  ]);
+
+  const pouleMatchs = allMatchs?.filter(m => m.phase === 'poule') || [];
+  const demiMatchs  = allMatchs?.filter(m => m.phase === 'demi')  || [];
+  const finaleMatch = allMatchs?.find(m  => m.phase === 'finale');
+  const pouleIds    = [...new Set(allJoueurs?.map(j => j.poule_id).filter(Boolean))].sort();
+  const nomById = {};
+  (allJoueurs||[]).forEach(j => nomById[j.id] = j.nom || '?');
+
+  const bracketEl = document.createElement('div');
+  bracketEl.className = 'card';
+
+  let h = `<div class="card-title">🏆 Bracket du tournoi</div>`;
+
+  // Poules
+  for (const pouleId of pouleIds) {
+    const pJoueurs = (allJoueurs||[]).filter(j => j.poule_id === pouleId && !j.bye);
+    const pMatchs  = pouleMatchs.filter(m => m.poule_id === pouleId);
+    const standings = pJoueurs.map(j => {
+      let pts=0,bonusNet=0;
+      pMatchs.filter(m=>m.statut==='terminé').forEach(m=>{
+        const isJ1=m.joueur1_id===j.id,isJ2=m.joueur2_id===j.id;
+        if(!isJ1&&!isJ2)return;
+        if(isJ1){pts+=m.pts_j1||0;bonusNet+=(m.bonus_j1||0)-(m.malus_j1||0);}
+        else{pts+=m.pts_j2||0;bonusNet+=(m.bonus_j2||0)-(m.malus_j2||0);}
+      });
+      return {...j,pts,bonusNet};
+    }).sort((a,b)=>b.pts-a.pts||b.bonusNet-a.bonusNet);
+
+    const done = pMatchs.filter(m=>m.statut==='terminé').length;
+    h += `<div style="margin-bottom:14px">
+      <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan);letter-spacing:2px;margin-bottom:8px;display:flex;justify-content:space-between">
+        <span>POULE ${pouleId}</span><span style="color:var(--text2)">${done}/${pMatchs.length}</span>
+      </div>
+      <table class="rank-table"><thead><tr><th>Rg</th><th style="text-align:left">Joueur</th><th>Pts</th><th>B/M</th><th>Statut</th></tr></thead><tbody>`;
+
+    standings.forEach((j,i) => {
+      const inDemi = demiMatchs.some(m=>m.joueur1_id===j.id||m.joueur2_id===j.id);
+      h += `<tr>
+        <td><span style="font-family:'Orbitron',monospace;font-size:.65rem">#${i+1}</span></td>
+        <td style="text-align:left;font-weight:700">${esc(j.nom||'?')}${inDemi?'<span style="font-size:.55rem;color:var(--gold);margin-left:4px">★ QUALIFIÉ</span>':''}</td>
+        <td><span style="font-family:'Orbitron',monospace;font-weight:900;font-size:.95rem;color:var(--gold)">${j.pts}</span></td>
+        <td style="font-family:'Orbitron',monospace;font-size:.58rem">+${Math.max(0,j.bonusNet)}/-${Math.abs(Math.min(0,j.bonusNet))}</td>
+        <td>${done===pMatchs.length?'<span style="color:var(--green);font-size:.75rem">✓</span>':'<span style="color:var(--cyan);font-size:.75rem">⚔️</span>'}</td>
+      </tr>`;
+    });
+    h += `</tbody></table></div>`;
+  }
+
+  // Phases finales
+  if (demiMatchs.length || finaleMatch) {
+    const adminBracketCard = (m, label) => {
+      const j1=nomById[m.joueur1_id]||'?',j2=nomById[m.joueur2_id]||'?';
+      const w=m.vainqueur_id;
+      const stCol={en_attente:'var(--text2)',placement:'var(--text2)',en_cours:'var(--cyan)',terminé:'var(--gold)'}[m.statut];
+      return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px;margin-bottom:8px">
+        <div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);letter-spacing:1px;margin-bottom:7px">${label}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-weight:700;color:${w===m.joueur1_id?'var(--gold)':'var(--text)'}">${esc(j1)}</span>
+          ${m.statut==='terminé'?`<span style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;color:${w===m.joueur1_id?'var(--green)':'var(--red)'}">${m.pts_j1||0}pts</span>`:''}
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:700;color:${w===m.joueur2_id?'var(--gold)':'var(--text)'}">${esc(j2)}</span>
+          ${m.statut==='terminé'?`<span style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;color:${w===m.joueur2_id?'var(--green)':'var(--red)'}">${m.pts_j2||0}pts</span>`:''}
+        </div>
+        <div style="margin-top:6px;font-family:'Orbitron',monospace;font-size:.52rem;color:${stCol};letter-spacing:1px">${m.statut.toUpperCase()}</div>
+      </div>`;
+    };
+
+    h += `<div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--gold);letter-spacing:2px;margin:14px 0 10px">PHASES FINALES</div>`;
+    demiMatchs.forEach((m,i) => { h += adminBracketCard(m, `DEMI-FINALE ${i+1}`); });
+    if (finaleMatch) h += adminBracketCard(finaleMatch, 'FINALE');
+
+    if (TOURNOI.statut==='terminé' && finaleMatch?.vainqueur_id) {
+      h += `<div style="text-align:center;padding:14px;background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.3);border-radius:8px;margin-top:10px">
+        <div style="font-size:30px;margin-bottom:6px">🏆</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:3px">CHAMPION</div>
+        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-top:4px">${esc(nomById[finaleMatch.vainqueur_id]||'?')}</div>
+      </div>`;
+    }
+  }
+
+  bracketEl.innerHTML = h;
+  const tabEl = document.getElementById('tab-tournoi');
+  if (tabEl) tabEl.appendChild(bracketEl);
 }
 
 /* ── Tournoi helpers ── */
