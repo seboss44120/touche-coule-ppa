@@ -145,7 +145,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 
 <script>
 const SUPABASE_URL='https://pwtqeyiynrtiprjgqzuw.supabase.co';
-const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3dHFleWl5bnJ0aXByamdxenV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDMzMzMsImV4cCI6MjA4OTc3OTMzM30.acIEmilzlTCScWoKoyAX5rq1EwBWMzSQAmXQBPbX3Yw';
+const SUPABASE_ANON='SUPABASE_ANON_KEY';
 const BASE_JEU=location.href.replace(/[^/]*$/,'tournoi-jeu.html');
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
 
@@ -295,6 +295,13 @@ function abonnerRealtime(){
   const s1=sb.channel('insc-j').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_joueurs',filter:'tournoi_id=eq.'+monJoueur.tournoi_id},async()=>{await refreshJoueurs();}).subscribe();
   const s2=sb.channel('insc-t').on('postgres_changes',{event:'UPDATE',schema:'public',table:'tournois',filter:'id=eq.'+monJoueur.tournoi_id},({new:n})=>{tournoi=n;if(n.statut!=='inscription')handleTournoiLance();}).subscribe();
   realtimeSubs.push(s1,s2);
+
+  // Polling de secours — vérifie toutes les 5s si le tournoi a démarré
+  const pollInterval=setInterval(async()=>{
+    const{data:t}=await sb.from('tournois').select('statut').eq('id',monJoueur.tournoi_id).maybeSingle();
+    if(t&&t.statut!=='inscription'){clearInterval(pollInterval);handleTournoiLance();}
+  },5000);
+  realtimeSubs.push({unsubscribe:()=>clearInterval(pollInterval)});
 }
 
 function handleTournoiLance(){
