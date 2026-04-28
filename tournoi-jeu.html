@@ -495,7 +495,7 @@ async function init(){
   MATCHS=matchs||[];
   const advIds=[...new Set(MATCHS.map(m=>getAdvId(m)).filter(Boolean))];
   if(advIds.length){const{data:a}=await sb.from('tournoi_joueurs').select('id,nom').in('id',advIds);(a||[]).forEach(j=>ADVERSAIRES[j.id]=j);}
-  for(const m of MATCHS){await loadGrilles(m.id);await loadTourEnCours(m.id);initPL(m.id);}
+  for(const m of MATCHS){await loadGrilles(m.id);await loadTourEnCours(m.id);initPL(m.id);initSeenSets(m.id);}
   if(moi.poule_id){
     const{data:pj}=await sb.from('tournoi_joueurs').select('id,nom,bye').eq('tournoi_id',moi.tournoi_id).eq('poule_id',moi.poule_id);
     POULE_JOUEURS=pj||[];
@@ -519,6 +519,26 @@ function initPL(matchId){
     _pl[matchId]={step:'ships',selectedShip:null,orient:'H',gridData:{},shipCells:{},bonusCells:[],malusCells:[],preview:{}};
   }
   _shots[matchId]=[];
+}
+
+// Initialise les sets "déjà vus" depuis l'historique des tirs
+// pour éviter que les animations se rejouent au rechargement de page
+function initSeenSets(matchId){
+  _seenSunkOff[matchId]=new Set();
+  _seenSunkDef[matchId]=new Set();
+  _seenHitOff[matchId]=new Set();
+  _seenHitDef[matchId]=new Set();
+  const g=GRILLES[matchId];if(!g)return;
+  (g.theirs?.tirs_recus||[]).forEach(t=>{
+    const key=t.coord+(t.shipKey||'');
+    if(t.result==='sunk')_seenSunkOff[matchId].add(key);
+    else if(t.result==='hit')_seenHitOff[matchId].add(t.coord);
+  });
+  (g.mine?.tirs_recus||[]).forEach(t=>{
+    const key=t.coord+(t.shipKey||'');
+    if(t.result==='sunk')_seenSunkDef[matchId].add(key);
+    else if(t.result==='hit')_seenHitDef[matchId].add(t.coord);
+  });
 }
 
 async function loadGrilles(matchId){
