@@ -540,28 +540,26 @@ async function chargerOuCreerProfil(){
       const{data:p}=await sb.from('joueur_profils').select('*').eq('id',MOI.profil_id).maybeSingle();
       if(p){MON_PROFIL=p;PROFILS_CACHE[p.id]=p;return;}
     }
-    // 2. Chercher par pseudo (exact, insensible à la casse)
-    const{data:ps}=await sb.from('joueur_profils').select('*').ilike('pseudo',MOI.nom);
-    const p=ps?.[0]||null;
+    // 2. Chercher par pseudo exact (eq plus fiable que ilike pour les noms spéciaux)
+    const nomNorm=MOI.nom.trim().toLowerCase();
+    const{data:ps}=await sb.from('joueur_profils').select('*').limit(5);
+    const p=(ps||[]).find(j=>j.pseudo.trim().toLowerCase()===nomNorm)||null;
     if(p){
       MON_PROFIL=p;PROFILS_CACHE[p.id]=p;
-      // Lier rétroactivement
-      await sb.from('tournoi_joueurs').update({profil_id:p.id}).eq('id',MOI.id).eq('profil_id',null);
+      sb.from('tournoi_joueurs').update({profil_id:p.id}).eq('id',MOI.id).then(()=>{});
       MOI.profil_id=p.id;
       return;
     }
-    // 3. Créer un nouveau profil (maybeSingle pour éviter crash sur doublon)
+    // 3. Créer un nouveau profil
     const{data:np,error:errNp}=await sb.from('joueur_profils')
-      .insert({pseudo:MOI.nom,avatar:'⚓',drapeau:'fr'})
-      .select().maybeSingle();
+      .insert({pseudo:MOI.nom,avatar:'⚓',drapeau:'fr'}).select().maybeSingle();
     if(np&&!errNp){
       MON_PROFIL=np;PROFILS_CACHE[np.id]=np;
-      await sb.from('tournoi_joueurs').update({profil_id:np.id}).eq('id',MOI.id);
+      sb.from('tournoi_joueurs').update({profil_id:np.id}).eq('id',MOI.id).then(()=>{});
       MOI.profil_id=np.id;
     }
   }catch(e){
-    console.warn('chargerOuCreerProfil error (non-bloquant):', e.message);
-    // Non-bloquant : le jeu peut continuer sans profil
+    console.warn('chargerOuCreerProfil (non-bloquant):', e.message);
   }
 }
 
@@ -1780,7 +1778,23 @@ function abonnerRealtime(){
   }).subscribe();
 }
 
-document.addEventListener('DOMContentLoaded',init);
+/* ══ BOOT ══ */
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Timeout de sécurité — si init() ne répond pas en 12s
+  const loadTimeout = setTimeout(()=>{
+    showError('Délai dépassé. Vérifiez votre connexion et rechargez la page.');
+  }, 12000);
+
+  // Vérifier que la lib Supabase est chargée
+  if(!window.supabase){
+    clearTimeout(loadTimeout);
+    showError('Bibliothèque réseau non chargée. Vérifiez votre connexion.');
+    return;
+  }
+
+  init().then(()=> clearTimeout(loadTimeout))
+        .catch(e=>{ clearTimeout(loadTimeout); showError('Erreur : '+e.message); });
+});
 </script>
 </body>
 </html>
