@@ -479,12 +479,13 @@ function showError(msg){
 
 /* ══ INIT ══ */
 async function init(){
-  const token=new URLSearchParams(location.search).get('token');
-  if(!token){showError('Token manquant.');return;}
-  const{data:moi}=await sb.from('tournoi_joueurs').select('*').eq('token',token).maybeSingle();
-  if(!moi?.nom){showError('Lien invalide ou expiré.');return;}
-  MOI=moi;
-  document.getElementById('hdrPlayer').textContent=moi.nom.toUpperCase();
+  try{
+    const token=new URLSearchParams(location.search).get('token');
+    if(!token){showError('Token manquant.');return;}
+    const{data:moi}=await sb.from('tournoi_joueurs').select('*').eq('token',token).maybeSingle();
+    if(!moi?.nom){showError('Lien invalide ou expiré.');return;}
+    MOI=moi;
+    document.getElementById('hdrPlayer').textContent=moi.nom.toUpperCase();
 
   // Charger ou retrouver le profil persistant
   await chargerOuCreerProfil();
@@ -516,7 +517,6 @@ async function init(){
 
   // Onglet par défaut
   if(MATCHS.length===0){
-    // Pas de matchs → écran d'attente
     currentTab='attente';
     renderNav();
     renderAttenteMatchs();
@@ -525,29 +525,41 @@ async function init(){
     currentTab=fa?'match-'+fa.id:'poule';
     renderNav();renderTab(currentTab);
   }
+  }catch(e){
+    console.error('init() error:', e);
+    showError('Erreur de chargement : '+e.message);
+  }
 }
 
 async function chargerOuCreerProfil(){
-  // 1. profil_id déjà lié → charger directement
-  if(MOI.profil_id){
-    const{data:p}=await sb.from('joueur_profils').select('*').eq('id',MOI.profil_id).maybeSingle();
-    if(p){MON_PROFIL=p;return;}
-  }
-  // 2. Chercher par pseudo
-  const{data:p}=await sb.from('joueur_profils').select('*').ilike('pseudo',MOI.nom).maybeSingle();
-  if(p){
-    MON_PROFIL=p;
-    // Lier rétroactivement
-    await sb.from('tournoi_joueurs').update({profil_id:p.id}).eq('id',MOI.id);
-    MOI.profil_id=p.id;
-    return;
-  }
-  // 3. Créer un nouveau profil
-  const{data:np}=await sb.from('joueur_profils').insert({pseudo:MOI.nom,avatar:'⚓',drapeau:'fr'}).select().single();
-  if(np){
-    MON_PROFIL=np;
-    await sb.from('tournoi_joueurs').update({profil_id:np.id}).eq('id',MOI.id);
-    MOI.profil_id=np.id;
+  try{
+    // 1. profil_id déjà lié → charger directement
+    if(MOI.profil_id){
+      const{data:p}=await sb.from('joueur_profils').select('*').eq('id',MOI.profil_id).maybeSingle();
+      if(p){MON_PROFIL=p;PROFILS_CACHE[p.id]=p;return;}
+    }
+    // 2. Chercher par pseudo (exact, insensible à la casse)
+    const{data:ps}=await sb.from('joueur_profils').select('*').ilike('pseudo',MOI.nom);
+    const p=ps?.[0]||null;
+    if(p){
+      MON_PROFIL=p;PROFILS_CACHE[p.id]=p;
+      // Lier rétroactivement
+      await sb.from('tournoi_joueurs').update({profil_id:p.id}).eq('id',MOI.id).eq('profil_id',null);
+      MOI.profil_id=p.id;
+      return;
+    }
+    // 3. Créer un nouveau profil (maybeSingle pour éviter crash sur doublon)
+    const{data:np,error:errNp}=await sb.from('joueur_profils')
+      .insert({pseudo:MOI.nom,avatar:'⚓',drapeau:'fr'})
+      .select().maybeSingle();
+    if(np&&!errNp){
+      MON_PROFIL=np;PROFILS_CACHE[np.id]=np;
+      await sb.from('tournoi_joueurs').update({profil_id:np.id}).eq('id',MOI.id);
+      MOI.profil_id=np.id;
+    }
+  }catch(e){
+    console.warn('chargerOuCreerProfil error (non-bloquant):', e.message);
+    // Non-bloquant : le jeu peut continuer sans profil
   }
 }
 
