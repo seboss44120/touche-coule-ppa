@@ -1472,8 +1472,17 @@ function renderTournoi() {
     <button class="btn btn-sm" style="width:100%;margin-top:6px;background:rgba(139,0,0,.2);border:1px solid #8b0000;color:#ff6666"
       onclick="adminPurgerBase()">⚠️ PURGE COMPLÈTE (TESTS)</button>`;
   } else {
+    const statutLabel={'poules':'⚔️ PHASE DE POULES EN COURS','finales':'🏆 PHASES FINALES EN COURS','terminé':'✅ TOURNOI TERMINÉ'}[statut]||statut.toUpperCase();
     h += `<div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:2px;text-align:center;padding:8px">
-      ${{'poules':'⚔️ PHASE DE POULES EN COURS','finales':'🏆 PHASES FINALES EN COURS','terminé':'✅ TOURNOI TERMINÉ'}[statut]||statut.toUpperCase()}
+      ${statutLabel}
+    </div>
+    <div id="alertTournoi" class="alert" style="margin-bottom:8px"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <button class="btn btn-sm" style="background:rgba(14,165,233,.15);border:1px solid var(--cyan);color:var(--cyan)"
+        onclick="adminRegenererMatchs()">🔄 REGÉNÉRER LES MATCHS</button>
+      <button class="btn btn-danger btn-sm" onclick="adminAnnulerTournoi()">🗑️ SUPPRIMER LE TOURNOI</button>
+      <button class="btn btn-sm" style="background:rgba(139,0,0,.2);border:1px solid #8b0000;color:#ff6666"
+        onclick="adminPurgerBase()">⚠️ PURGE (TESTS)</button>
     </div>`;
   }
   h += `</div>`;
@@ -1589,6 +1598,62 @@ async function adminLancerTournoi() {
   }catch(e){
     if(alertEl){alertEl.className='alert err show';alertEl.textContent='Erreur : '+e.message;}
   }
+}
+
+async function adminRegenererMatchs(){
+  if(!confirm('Regénérer tous les matchs de poules ?\nLes matchs existants seront d\'abord supprimés.'))return;
+  const alertEl=document.getElementById('alertTournoi');
+  const showErr=msg=>{if(alertEl){alertEl.className='alert err show';alertEl.textContent=msg;}};
+  if(alertEl){alertEl.className='alert info show';alertEl.textContent='Suppression des anciens matchs…';}
+
+  try{
+    // Supprimer matchs et grilles existants
+    const{data:oldMatchs}=await sbT.from('tournoi_matchs').select('id').eq('tournoi_id',TOURNOI.id);
+    if(oldMatchs?.length){
+      const ids=oldMatchs.map(m=>m.id);
+      await sbT.from('tournoi_tours').delete().in('match_id',ids);
+      await sbT.from('tournoi_grilles').delete().in('match_id',ids);
+      await sbT.from('tournoi_matchs').delete().in('id',ids);
+    }
+
+    // Recharger les joueurs inscrits
+    const{data:jData}=await sbT.from('tournoi_joueurs').select('*').eq('tournoi_id',TOURNOI.id).not('nom','is',null);
+    const inscrits=jData||[];
+
+    if(alertEl)alertEl.textContent='Tirage des poules…';
+
+    // Regénérer
+    const poules=tirerPoules(inscrits);
+    for(const[pi,groupe] of poules.entries()){
+      for(const j of groupe){
+        const{error:e1}=await sbT.from('tournoi_joueurs').update({poule_id:pi+1,bye:j.bye||false}).eq('id',j.id);
+        if(e1){showErr('Erreur poule : '+e1.message);return;}
+      }
+      const reels=groupe.filter(j=>!j.bye);
+      for(const[j1,j2] of roundRobin(reels)){
+        const{data:m,error:e2}=await sbT.from('tournoi_matchs').insert({
+          tournoi_id:TOURNOI.id,phase:'poule',poule_id:pi+1,
+          joueur1_id:j1.id,joueur2_id:j2.id,statut:'placement'
+        }).select().single();
+        if(e2){showErr('Erreur match : '+e2.message);return;}
+        if(m){
+          const{error:e3}=await sbT.from('tournoi_grilles').insert([
+            {match_id:m.id,joueur_id:j1.id},
+            {match_id:m.id,joueur_id:j2.id},
+          ]);
+          if(e3){showErr('Erreur grilles : '+e3.message);return;}
+        }
+      }
+    }
+
+    // S'assurer que le statut est bien 'poules'
+    await sbT.from('tournois').update({statut:'poules'}).eq('id',TOURNOI.id);
+    TOURNOI.statut='poules';
+    const{data:newJ}=await sbT.from('tournoi_joueurs').select('*').eq('tournoi_id',TOURNOI.id).order('created_at');
+    TOURNOI_JOUEURS=newJ||[];
+    if(alertEl)alertEl.style.display='none';
+    renderTournoi();
+  }catch(e){showErr('Erreur inattendue : '+e.message);}
 }
 
 async function adminAnnulerTournoi(){
