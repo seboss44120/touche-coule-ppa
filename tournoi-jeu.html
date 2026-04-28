@@ -504,15 +504,17 @@ async function init(){
   const advIds=[...new Set(MATCHS.map(m=>getAdvId(m)).filter(Boolean))];
   if(advIds.length){const{data:a}=await sb.from('tournoi_joueurs').select('id,nom,profil_id').in('id',advIds);(a||[]).forEach(j=>ADVERSAIRES[j.id]=j);}
 
-  // Charger les profils (avatar, drapeau) pour tous les joueurs de mes matchs
-  await chargerProfilsJoueurs();
   for(const m of MATCHS){await loadGrilles(m.id);await loadTourEnCours(m.id);initPL(m.id);initSeenSets(m.id);}
+
   if(moi.poule_id){
-    const{data:pj}=await sb.from('tournoi_joueurs').select('id,nom,bye').eq('tournoi_id',moi.tournoi_id).eq('poule_id',moi.poule_id);
+    const{data:pj}=await sb.from('tournoi_joueurs').select('id,nom,bye,profil_id').eq('tournoi_id',moi.tournoi_id).eq('poule_id',moi.poule_id);
     POULE_JOUEURS=pj||[];
     const{data:pm}=await sb.from('tournoi_matchs').select('*').eq('tournoi_id',moi.tournoi_id).eq('poule_id',moi.poule_id);
     POULE_MATCHS=pm||[];
   }
+
+  // Charger les profils avatar/drapeau APRÈS avoir POULE_JOUEURS
+  await chargerProfilsJoueurs();
   buildNav();abonnerRealtime();
 
   // Onglet par défaut
@@ -564,14 +566,21 @@ async function chargerOuCreerProfil(){
 }
 
 async function chargerProfilsJoueurs(){
-  // Rassembler tous les profil_id connus
   const pids=new Set();
   if(MOI.profil_id)pids.add(MOI.profil_id);
   Object.values(ADVERSAIRES).forEach(j=>{if(j.profil_id)pids.add(j.profil_id);});
   POULE_JOUEURS.forEach(j=>{if(j.profil_id)pids.add(j.profil_id);});
-  if(!pids.size)return;
-  const{data:profils}=await sb.from('joueur_profils').select('id,pseudo,avatar,drapeau,victoires,recompenses_affichees').in('id',[...pids]);
-  (profils||[]).forEach(p=>{PROFILS_CACHE[p.id]=p;});
+  if(!pids.size)return; // ← guard : rien à charger
+  try{
+    const{data:profils}=await sb.from('joueur_profils')
+      .select('id,pseudo,avatar,drapeau,victoires,recompenses_affichees')
+      .in('id',[...pids]);
+    (profils||[]).forEach(p=>{PROFILS_CACHE[p.id]=p;});
+    // Mettre à jour le cache avec les données fraîches de MON_PROFIL
+    if(MOI.profil_id&&PROFILS_CACHE[MOI.profil_id]){
+      MON_PROFIL={...MON_PROFIL,...PROFILS_CACHE[MOI.profil_id]};
+    }
+  }catch(e){console.warn('chargerProfilsJoueurs:', e);}
 }
 
 function getProfilById(joueurId){
