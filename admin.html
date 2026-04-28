@@ -551,7 +551,37 @@ function renderTab(t) {
 
 function updateHeaderStatus() {
   const el = document.getElementById('hdrStatus');
-  if (!el || !PARTIE) { if(el) el.innerHTML=`<span class="sdot"></span>Aucune partie`; return; }
+  if (!el) return;
+
+  // Mode tournoi actif
+  if (TOURNOI && TOURNOI.statut !== 'terminé') {
+    const statutLabel = {
+      inscription: 'Inscriptions',
+      poules: 'Phase de poules',
+      finales: 'Phases finales',
+    }[TOURNOI.statut] || TOURNOI.statut;
+
+    // Calculer les matchs restants depuis TOURNOI_JOUEURS (approx)
+    const matchsRestants = (async () => {
+      // On utilise le cache si dispo, sinon on affiche juste le statut
+    })();
+
+    el.innerHTML = `<span class="sdot on"></span>Tournoi en cours — ${statutLabel}`;
+
+    // Charger le nb de matchs restants en async
+    sbT.from('tournoi_matchs')
+      .select('statut')
+      .eq('tournoi_id', TOURNOI.id)
+      .neq('statut', 'terminé')
+      .then(({ data }) => {
+        const restants = data?.length || 0;
+        el.innerHTML = `<span class="sdot on"></span>Tournoi · ${statutLabel} · <strong>${restants} match${restants>1?'s':''} en cours</strong>`;
+      });
+    return;
+  }
+
+  // Mode duel classique
+  if (!PARTIE) { el.innerHTML = `<span class="sdot"></span>Aucune partie`; return; }
   const on = PARTIE.started;
   const defs = getDuelDefs();
   const finished = defs.filter(d => getDuelState(d.id).status==='finished').length;
@@ -1487,13 +1517,21 @@ function renderTournoi() {
   }
   h += `</div>`;
 
-  // ── Liens capitaines ──
+  // ── Liens capitaines (déroulant, fermé par défaut si tournoi lancé) ──
+  const liensOpen = statut === 'inscription' ? 'block' : 'none';
+  const liensIcon = statut === 'inscription' ? '▲' : '▼';
   h += `<div class="card">
-    <div class="card-title">🔗 Liens capitaines</div>
-    <button class="btn btn-cyan btn-sm" style="margin-bottom:12px" onclick="adminCopierTousLiens()">
-      📋 Copier tous les liens
-    </button>
-    <div id="alertCopyAll" class="alert" style="margin-bottom:8px"></div>`;
+    <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:2px 0"
+      onclick="const b=document.getElementById('liens-body');const ic=document.getElementById('liens-ic');const open=b.style.display!=='none';b.style.display=open?'none':'block';ic.textContent=open?'▼':'▲'">
+      <div class="card-title" style="margin:0">🔗 Liens capitaines</div>
+      <span id="liens-ic" style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--teal);padding:4px 8px">${liensIcon}</span>
+    </div>
+    <div id="liens-body" style="display:${liensOpen}">
+      <div style="margin-top:12px">
+        <button class="btn btn-cyan btn-sm" style="margin-bottom:12px" onclick="adminCopierTousLiens()">
+          📋 Copier tous les liens
+        </button>
+        <div id="alertCopyAll" class="alert" style="margin-bottom:8px"></div>`;
 
   TOURNOI_JOUEURS.forEach((j, i) => {
     const url      = `${BASE_URL_TOURNOI}?token=${j.token}`;
@@ -1504,12 +1542,12 @@ function renderTournoi() {
       border-radius:8px;margin-bottom:6px;${isBye?'border-color:rgba(245,200,66,.4)':''}">
       <div style="width:28px;height:28px;border-radius:50%;background:var(--border2);
         display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;
-        font-size:.65rem;font-weight:900;color:${inscrit?'var(--green)':'var(--text3)'};flex-shrink:0">
+        font-size:.65rem;font-weight:900;color:${inscrit?'var(--green)':'var(--text2)'};flex-shrink:0">
         ${i+1}
       </div>
       <div style="flex:1;min-width:0">
-        <div style="font-weight:700;font-size:.9rem;color:${inscrit?'var(--text)':'var(--text3)'}">
-          ${inscrit ? esc(j.nom) : '<em style="color:var(--text3);font-size:.8rem">En attente…</em>'}
+        <div style="font-weight:700;font-size:.9rem;color:${inscrit?'var(--text)':'var(--text2)'}">
+          ${inscrit ? esc(j.nom) : '<em style="color:var(--text2);font-size:.8rem">En attente…</em>'}
           ${isBye ? '&nbsp;<span style="font-family:\'Orbitron\',monospace;font-size:.5rem;padding:2px 7px;border-radius:10px;background:rgba(245,200,66,.15);border:1px solid var(--gold);color:var(--gold)">BYE</span>' : ''}
         </div>
         <div class="url-box" onclick="copyUrl('${esc(url)}')" style="margin-top:3px" title="Cliquer pour copier">
@@ -1519,7 +1557,7 @@ function renderTournoi() {
       <button class="btn btn-outline btn-xs" onclick="copyUrl('${esc(url)}')">📋</button>
     </div>`;
   });
-  h += `</div>`;
+  h += `</div></div></div>`;
 
   // ── Actions d'urgence (si tournoi lancé) ──
   if (statut !== 'inscription') {
@@ -1754,8 +1792,10 @@ async function adminPurgerBase(){
   try{
     const{error}=await sbT.rpc('purge_tournoi_complet');
     if(error)throw error;
-    TOURNOI=null;TOURNOI_JOUEURS=[];
-    currentTab='config';buildNav();renderTab('config');
+    TOURNOI=null;TOURNOI_JOUEURS=[];PARTIE=null;ALL_EQUIPES=[];ALL_GRILLES=[];
+    currentTab='config';
+    buildNav();
+    renderTab('config');
     alert('✓ Base purgée avec succès.');
   }catch(e){alert('Erreur purge : '+e.message);}
 }
