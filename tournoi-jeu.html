@@ -483,11 +483,9 @@ async function init(){
   if(!moi?.nom){showError('Lien invalide ou expiré.');return;}
   MOI=moi;document.getElementById('hdrPlayer').textContent=moi.nom.toUpperCase();
 
-  // Charger le profil persistant
-  if(moi.profil_id){
-    const{data:p}=await sb.from('joueur_profils').select('*').eq('id',moi.profil_id).maybeSingle();
-    MON_PROFIL=p||null;
-  }
+  // Charger ou retrouver le profil persistant
+  await chargerOuCreerProfil();
+
   const{data:t}=await sb.from('tournois').select('*').eq('id',moi.tournoi_id).maybeSingle();
   TOURNOI=t;
   const{data:matchs}=await sb.from('tournoi_matchs').select('*')
@@ -503,9 +501,66 @@ async function init(){
     POULE_MATCHS=pm||[];
   }
   buildNav();abonnerRealtime();
-  const fa=MATCHS.find(m=>m.statut!=='terminé');
-  currentTab=fa?'match-'+fa.id:'poule';
-  renderNav();renderTab(currentTab);
+
+  // Onglet par défaut
+  if(MATCHS.length===0){
+    // Pas de matchs → écran d'attente
+    currentTab='attente';
+    renderNav();
+    renderAttenteMatchs();
+  } else {
+    const fa=MATCHS.find(m=>m.statut!=='terminé');
+    currentTab=fa?'match-'+fa.id:'poule';
+    renderNav();renderTab(currentTab);
+  }
+}
+
+async function chargerOuCreerProfil(){
+  // 1. profil_id déjà lié → charger directement
+  if(MOI.profil_id){
+    const{data:p}=await sb.from('joueur_profils').select('*').eq('id',MOI.profil_id).maybeSingle();
+    if(p){MON_PROFIL=p;return;}
+  }
+  // 2. Chercher par pseudo
+  const{data:p}=await sb.from('joueur_profils').select('*').ilike('pseudo',MOI.nom).maybeSingle();
+  if(p){
+    MON_PROFIL=p;
+    // Lier rétroactivement
+    await sb.from('tournoi_joueurs').update({profil_id:p.id}).eq('id',MOI.id);
+    MOI.profil_id=p.id;
+    return;
+  }
+  // 3. Créer un nouveau profil
+  const{data:np}=await sb.from('joueur_profils').insert({pseudo:MOI.nom,avatar:'⚓',drapeau:'fr'}).select().single();
+  if(np){
+    MON_PROFIL=np;
+    await sb.from('tournoi_joueurs').update({profil_id:np.id}).eq('id',MOI.id);
+    MOI.profil_id=np.id;
+  }
+}
+
+function renderAttenteMatchs(){
+  document.getElementById('mainContent').innerHTML=`
+    <div class="card" style="text-align:center;padding:32px">
+      <div style="font-size:48px;margin-bottom:14px">⏳</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:2px;color:var(--cyan);margin-bottom:8px">EN ATTENTE DES MATCHS</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:1.5px;line-height:2">
+        Le tournoi est lancé mais tes matchs ne sont pas encore disponibles.<br>
+        L'administrateur va les générer dans quelques instants.
+      </div>
+      <div style="margin-top:16px;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text2)">
+        <span class="pulse-dot"></span>EN ATTENTE…
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🏅 Poule ${MOI.poule_id||'?'}</div>
+      ${POULE_JOUEURS.length?`<div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);margin-bottom:10px;letter-spacing:1px">TES ADVERSAIRES :</div>
+      ${POULE_JOUEURS.filter(j=>j.id!==MOI.id).map(j=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border2)">
+          <div style="font-size:1.1rem">⚓</div>
+          <div style="font-weight:700">${esc(j.nom)}</div>
+        </div>`).join('')}`:'<p style="color:var(--text2)">Chargement…</p>'}
+    </div>`;
 }
 
 function initPL(matchId){
@@ -1526,22 +1581,28 @@ function abonnerRealtime(){
     const idx=MATCHS.findIndex(m=>m.id===n.id);
     if(idx>=0)MATCHS[idx]=n;
     else{
-      // Nouveau match — vérifier si ce joueur en fait partie
       const concerne=n.joueur1_id===MOI.id||n.joueur2_id===MOI.id;
       if(concerne){
         MATCHS.push(n);
         await loadGrilles(n.id);
-        initPL(n.id);
+        initPL(n.id);initSeenSets(n.id);
         _shots[n.id]=[];
         if(!_seenSunkOff[n.id])_seenSunkOff[n.id]=new Set();
         if(!_seenSunkDef[n.id])_seenSunkDef[n.id]=new Set();
         if(!_seenHitOff[n.id])_seenHitOff[n.id]=new Set();
         if(!_seenHitDef[n.id])_seenHitDef[n.id]=new Set();
-        // Notifier
-        const phaseLabel={demi:'demi-finale',finale:'finale'}[n.phase]||n.phase;
-        showToastPhase(`⚔️ Tu es qualifié pour la ${phaseLabel} !`,'var(--gold)');
-        // Aller directement sur ce match
-        setTimeout(()=>goTab('match-'+n.id),1000);
+        // Sortir de l'écran d'attente si on y était
+        if(currentTab==='attente'){
+          const adId=n.joueur1_id===MOI.id?n.joueur2_id:n.joueur1_id;
+          const{data:adv}=await sb.from('tournoi_joueurs').select('id,nom').eq('id',adId).maybeSingle();
+          if(adv)ADVERSAIRES[adv.id]=adv;
+          showToastPhase(`⚔️ Ton match est prêt !`,'var(--gold)');
+          setTimeout(()=>goTab('match-'+n.id),800);
+        } else {
+          const phaseLabel={demi:'demi-finale',finale:'finale'}[n.phase]||n.phase;
+          showToastPhase(`⚔️ Tu es qualifié pour la ${phaseLabel} !`,'var(--gold)');
+          setTimeout(()=>goTab('match-'+n.id),1000);
+        }
       }
     }
     if(n.poule_id===MOI.poule_id){
