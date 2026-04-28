@@ -845,16 +845,35 @@ function demanderConfirmTirs(matchId){
 async function soumettreCoups(matchId){
   const match=MATCHS.find(m=>m.id===matchId),shots=_shots[matchId]||[];
   if(shots.length!==3)return;
-  const role=getMyRole(match),tour=TOURS[matchId];
+  const role=getMyRole(match);
   const tf=role===1?'tirs_j1':'tirs_j2',sf=role===1?'soumis_j1':'soumis_j2';
+
+  // Toujours recharger le tour en cours depuis la base avant d'agir
+  await loadTourEnCours(matchId);
+  let tour=TOURS[matchId];
+
   let updTour;
   if(!tour){
-    const{data:nt,error}=await sb.from('tournoi_tours').insert({match_id:matchId,numero_tour:1,[tf]:shots,[sf]:true,statut:'en_cours'}).select().single();
-    if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau.');return;}updTour=nt;
+    // Pas de tour en cours → créer
+    const{data:nt,error}=await sb.from('tournoi_tours').insert({
+      match_id:matchId,numero_tour:1,[tf]:shots,[sf]:true,statut:'en_cours'
+    }).select().single();
+    if(error){
+      // Peut-être créé entre-temps par l'adversaire — recharger et mettre à jour
+      await loadTourEnCours(matchId);
+      tour=TOURS[matchId];
+      if(tour){
+        const{data:ut,error:e2}=await sb.from('tournoi_tours').update({[tf]:shots,[sf]:true}).eq('id',tour.id).select().single();
+        if(e2){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+        updTour=ut;
+      }else{showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+    }else{updTour=nt;}
   }else{
     const{data:ut,error}=await sb.from('tournoi_tours').update({[tf]:shots,[sf]:true}).eq('id',tour.id).select().single();
-    if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau.');return;}updTour=ut;
+    if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+    updTour=ut;
   }
+
   TOURS[matchId]=updTour;_shots[matchId]=[];
   const advSub=role===1?updTour.soumis_j2:updTour.soumis_j1;
   if(advSub)await resoudreTour(matchId,updTour);
