@@ -47,7 +47,7 @@ main{padding:12px}
 /* CARD */
 .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px}
 .card-title{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--gold);margin-bottom:10px}
-.stitle{font-family:'Orbitron',monospace;font-size:.62rem;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.stitle{font-family:'Orbitron',monospace;font-size:.62rem;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
 
 /* DUEL PANEL */
 .duel-panel{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:14px;overflow:hidden}
@@ -82,7 +82,7 @@ main{padding:12px}
 /* FORMS */
 .form-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px}
 .form-group{display:flex;flex-direction:column;gap:4px}
-.form-label{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase}
+.form-label{font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
 input,select{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:600;padding:6px 10px;border-radius:5px;outline:none}
 input:focus,select:focus{border-color:var(--cyan)}
 input::placeholder{color:var(--text3);opacity:.5}
@@ -138,10 +138,10 @@ select option{background:var(--bg2)}
 
 /* CLASSEMENT */
 .rank-table{width:100%;border-collapse:collapse;font-size:.85rem}
-.rank-table th{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:1px;padding:6px 8px;border-bottom:1px solid var(--border);text-align:center}
+.rank-table th{font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);letter-spacing:1px;padding:6px 8px;border-bottom:1px solid var(--border);text-align:center}
 .rank-table td{padding:7px 8px;border-bottom:1px solid var(--border2);text-align:center}
 .pts{font-family:'Orbitron',monospace;font-weight:900;font-size:1rem;color:var(--gold)}
-.turn-chip{font-family:'Orbitron',monospace;font-size:.58rem;padding:2px 6px;border-radius:8px;background:rgba(122,171,204,.1);border:1px solid var(--border);color:var(--text2)}
+.turn-chip{font-family:'Orbitron',monospace;font-size:.58rem;padding:2px 6px;border-radius:8px;background:rgba(122,171,204,.1);border:1px solid var(--border);color:var(--text3)}
 .status-badge{font-family:'Orbitron',monospace;font-size:.55rem;padding:3px 8px;border-radius:12px;letter-spacing:1px;font-weight:700}
 .status-badge.ready{background:rgba(122,171,204,.12);border:1px solid var(--text3);color:var(--text3)}
 .status-badge.battle{background:rgba(0,212,255,.12);border:1px solid var(--cyan);color:var(--cyan)}
@@ -334,18 +334,11 @@ async function doLogin() {
   alert.className = 'alert info show';
   alert.textContent = 'Connexion…';
 
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: pwd });
+  const { error } = await sb.auth.signInWithPassword({ email, password: pwd });
   if (error) {
     alert.className = 'alert err show';
     alert.textContent = 'Erreur : ' + error.message;
     return;
-  }
-  // Synchroniser la session auth sur sbT (schéma public)
-  if (data?.session) {
-    await sbT.auth.setSession({
-      access_token:  data.session.access_token,
-      refresh_token: data.session.refresh_token,
-    });
   }
   await init();
 }
@@ -363,11 +356,6 @@ async function doLogout() {
 async function checkAuthAndInit() {
   const { data: { session } } = await sb.auth.getSession();
   if (session) {
-    // Synchroniser la session sur sbT (schéma public tournoi)
-    await sbT.auth.setSession({
-      access_token:  session.access_token,
-      refresh_token: session.refresh_token,
-    });
     await init();
   } else {
     document.getElementById('loginScreen').style.display = 'flex';
@@ -520,12 +508,10 @@ const TABS_DUEL = [
   { id:'classement', label:'🏆 Classement' },
   { id:'flottes',    label:'⚓ Flottes' },
   { id:'historique', label:'📋 Historique' },
-  { id:'dashboard',  label:'📊 Dashboard' },
 ];
 const TABS_TOURNOI = [
-  { id:'config',    label:'⚙️ Config' },
-  { id:'tournoi',   label:'🏆 Tournoi' },
-  { id:'dashboard', label:'📊 Dashboard' },
+  { id:'config',   label:'⚙️ Config' },
+  { id:'tournoi',  label:'🏆 Tournoi' },
 ];
 function getTabs() {
   return TOURNOI ? TABS_TOURNOI : TABS_DUEL;
@@ -561,7 +547,6 @@ function renderTab(t) {
   if (t === 'flottes')    renderFlottes();
   if (t === 'historique') renderHistorique();
   if (t === 'tournoi')    renderTournoi();
-  if (t === 'dashboard')  renderDashboard();
 }
 
 function updateHeaderStatus() {
@@ -1234,7 +1219,7 @@ function renderClassement() {
     const total  = hist.length;
     const isBonus = PARTIE?.global_bonus_team_id === e.id;
     rankHtml += `<tr>
-      <td><span style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--text2)">#${i+1}</span></td>
+      <td><span style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--text3)">#${i+1}</span></td>
       <td style="text-align:left;font-weight:700">
         ${esc(e.nom)} ${isBonus?'<span style="color:var(--gold)">⭐</span>':''}
       </td>
@@ -1483,7 +1468,9 @@ function renderTournoi() {
       ${complet ? '⚓ LANCER LE TOURNOI' : `⚓ LANCER QUAND MÊME (${inscrits.length}/${cible})`}
     </button>
     <button class="btn btn-danger btn-sm" style="width:100%;margin-top:8px"
-      onclick="adminAnnulerTournoi()">🗑️ ANNULER ET SUPPRIMER CE TOURNOI</button>`;
+      onclick="adminAnnulerTournoi()">🗑️ ANNULER ET SUPPRIMER CE TOURNOI</button>
+    <button class="btn btn-sm" style="width:100%;margin-top:6px;background:rgba(139,0,0,.2);border:1px solid #8b0000;color:#ff6666"
+      onclick="adminPurgerBase()">⚠️ PURGE COMPLÈTE (TESTS)</button>`;
   } else {
     h += `<div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:2px;text-align:center;padding:8px">
       ${{'poules':'⚔️ PHASE DE POULES EN COURS','finales':'🏆 PHASES FINALES EN COURS','terminé':'✅ TOURNOI TERMINÉ'}[statut]||statut.toUpperCase()}
@@ -1529,7 +1516,7 @@ function renderTournoi() {
   if (statut !== 'inscription') {
     h += `<div class="card">
       <div class="card-title">🚨 Actions d'urgence</div>
-      <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:1px;margin-bottom:12px">
+      <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1px;margin-bottom:12px">
         Intervenir sur un match en cours
       </div>
       <div id="matchsUrgenceList"></div>
@@ -1538,105 +1525,8 @@ function renderTournoi() {
 
   el.innerHTML = h;
 
-  // Charger les matchs d'urgence + bracket si besoin
-  if (statut !== 'inscription') {
-    adminChargerMatchsUrgence();
-    adminRenderBracket();
-  }
-}
-
-async function adminRenderBracket() {
-  if (!TOURNOI) return;
-  const tournoiId = TOURNOI.id;
-
-  const [{ data: allMatchs }, { data: allJoueurs }] = await Promise.all([
-    sbT.from('tournoi_matchs').select('*').eq('tournoi_id', tournoiId).order('created_at'),
-    sbT.from('tournoi_joueurs').select('id,nom,poule_id,bye').eq('tournoi_id', tournoiId),
-  ]);
-
-  const pouleMatchs = allMatchs?.filter(m => m.phase === 'poule') || [];
-  const demiMatchs  = allMatchs?.filter(m => m.phase === 'demi')  || [];
-  const finaleMatch = allMatchs?.find(m  => m.phase === 'finale');
-  const pouleIds    = [...new Set(allJoueurs?.map(j => j.poule_id).filter(Boolean))].sort();
-  const nomById = {};
-  (allJoueurs||[]).forEach(j => nomById[j.id] = j.nom || '?');
-
-  const bracketEl = document.createElement('div');
-  bracketEl.className = 'card';
-
-  let h = `<div class="card-title">🏆 Bracket du tournoi</div>`;
-
-  // Poules
-  for (const pouleId of pouleIds) {
-    const pJoueurs = (allJoueurs||[]).filter(j => j.poule_id === pouleId && !j.bye);
-    const pMatchs  = pouleMatchs.filter(m => m.poule_id === pouleId);
-    const standings = pJoueurs.map(j => {
-      let pts=0,bonusNet=0;
-      pMatchs.filter(m=>m.statut==='terminé').forEach(m=>{
-        const isJ1=m.joueur1_id===j.id,isJ2=m.joueur2_id===j.id;
-        if(!isJ1&&!isJ2)return;
-        if(isJ1){pts+=m.pts_j1||0;bonusNet+=(m.bonus_j1||0)-(m.malus_j1||0);}
-        else{pts+=m.pts_j2||0;bonusNet+=(m.bonus_j2||0)-(m.malus_j2||0);}
-      });
-      return {...j,pts,bonusNet};
-    }).sort((a,b)=>b.pts-a.pts||b.bonusNet-a.bonusNet);
-
-    const done = pMatchs.filter(m=>m.statut==='terminé').length;
-    h += `<div style="margin-bottom:14px">
-      <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan);letter-spacing:2px;margin-bottom:8px;display:flex;justify-content:space-between">
-        <span>POULE ${pouleId}</span><span style="color:var(--text2)">${done}/${pMatchs.length}</span>
-      </div>
-      <table class="rank-table"><thead><tr><th>Rg</th><th style="text-align:left">Joueur</th><th>Pts</th><th>B/M</th><th>Statut</th></tr></thead><tbody>`;
-
-    standings.forEach((j,i) => {
-      const inDemi = demiMatchs.some(m=>m.joueur1_id===j.id||m.joueur2_id===j.id);
-      h += `<tr>
-        <td><span style="font-family:'Orbitron',monospace;font-size:.65rem">#${i+1}</span></td>
-        <td style="text-align:left;font-weight:700">${esc(j.nom||'?')}${inDemi?'<span style="font-size:.55rem;color:var(--gold);margin-left:4px">★ QUALIFIÉ</span>':''}</td>
-        <td><span style="font-family:'Orbitron',monospace;font-weight:900;font-size:.95rem;color:var(--gold)">${j.pts}</span></td>
-        <td style="font-family:'Orbitron',monospace;font-size:.58rem">+${Math.max(0,j.bonusNet)}/-${Math.abs(Math.min(0,j.bonusNet))}</td>
-        <td>${done===pMatchs.length?'<span style="color:var(--green);font-size:.75rem">✓</span>':'<span style="color:var(--cyan);font-size:.75rem">⚔️</span>'}</td>
-      </tr>`;
-    });
-    h += `</tbody></table></div>`;
-  }
-
-  // Phases finales
-  if (demiMatchs.length || finaleMatch) {
-    const adminBracketCard = (m, label) => {
-      const j1=nomById[m.joueur1_id]||'?',j2=nomById[m.joueur2_id]||'?';
-      const w=m.vainqueur_id;
-      const stCol={en_attente:'var(--text2)',placement:'var(--text2)',en_cours:'var(--cyan)',terminé:'var(--gold)'}[m.statut];
-      return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px;margin-bottom:8px">
-        <div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);letter-spacing:1px;margin-bottom:7px">${label}</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <span style="font-weight:700;color:${w===m.joueur1_id?'var(--gold)':'var(--text)'}">${esc(j1)}</span>
-          ${m.statut==='terminé'?`<span style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;color:${w===m.joueur1_id?'var(--green)':'var(--red)'}">${m.pts_j1||0}pts</span>`:''}
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-weight:700;color:${w===m.joueur2_id?'var(--gold)':'var(--text)'}">${esc(j2)}</span>
-          ${m.statut==='terminé'?`<span style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;color:${w===m.joueur2_id?'var(--green)':'var(--red)'}">${m.pts_j2||0}pts</span>`:''}
-        </div>
-        <div style="margin-top:6px;font-family:'Orbitron',monospace;font-size:.52rem;color:${stCol};letter-spacing:1px">${m.statut.toUpperCase()}</div>
-      </div>`;
-    };
-
-    h += `<div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--gold);letter-spacing:2px;margin:14px 0 10px">PHASES FINALES</div>`;
-    demiMatchs.forEach((m,i) => { h += adminBracketCard(m, `DEMI-FINALE ${i+1}`); });
-    if (finaleMatch) h += adminBracketCard(finaleMatch, 'FINALE');
-
-    if (TOURNOI.statut==='terminé' && finaleMatch?.vainqueur_id) {
-      h += `<div style="text-align:center;padding:14px;background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.3);border-radius:8px;margin-top:10px">
-        <div style="font-size:30px;margin-bottom:6px">🏆</div>
-        <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:3px">CHAMPION</div>
-        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-top:4px">${esc(nomById[finaleMatch.vainqueur_id]||'?')}</div>
-      </div>`;
-    }
-  }
-
-  bracketEl.innerHTML = h;
-  const tabEl = document.getElementById('tab-tournoi');
-  if (tabEl) tabEl.appendChild(bracketEl);
+  // Charger les matchs d'urgence si besoin
+  if (statut !== 'inscription') adminChargerMatchsUrgence();
 }
 
 /* ── Tournoi helpers ── */
@@ -1669,41 +1559,35 @@ async function adminLancerTournoi() {
   const inscrits = TOURNOI_JOUEURS.filter(j=>!!j.nom);
   if(!confirm(`Lancer le tournoi avec ${inscrits.length} joueur(s) ?`))return;
   const alertEl=document.getElementById('alertTournoi');
-  const showErr = msg => { if(alertEl){alertEl.className='alert err show';alertEl.textContent=msg;} };
   if(alertEl){alertEl.className='alert info show';alertEl.textContent='Tirage en cours…';}
 
   try{
     const poules=tirerPoules(inscrits);
     for(const [pi,groupe] of poules.entries()){
       for(const j of groupe){
-        const{error:e1}=await sbT.from('tournoi_joueurs').update({poule_id:pi+1,bye:j.bye||false}).eq('id',j.id);
-        if(e1){showErr('Erreur tirage poules : '+e1.message);return;}
+        await sbT.from('tournoi_joueurs').update({poule_id:pi+1,bye:j.bye||false}).eq('id',j.id);
       }
       const reels=groupe.filter(j=>!j.bye);
       for(const [j1,j2] of roundRobin(reels)){
-        const{data:m,error:e2}=await sbT.from('tournoi_matchs').insert({
+        const {data:m}=await sbT.from('tournoi_matchs').insert({
           tournoi_id:TOURNOI.id,phase:'poule',poule_id:pi+1,
           joueur1_id:j1.id,joueur2_id:j2.id,statut:'placement'
         }).select().single();
-        if(e2){showErr('Erreur création match : '+e2.message);return;}
         if(m){
-          const{error:e3}=await sbT.from('tournoi_grilles').insert([
+          await sbT.from('tournoi_grilles').insert([
             {match_id:m.id,joueur_id:j1.id},
             {match_id:m.id,joueur_id:j2.id},
           ]);
-          if(e3){showErr('Erreur création grilles : '+e3.message);return;}
         }
       }
     }
-    const{error:e4}=await sbT.from('tournois').update({statut:'poules'}).eq('id',TOURNOI.id);
-    if(e4){showErr('Erreur mise à jour statut : '+e4.message);return;}
+    await sbT.from('tournois').update({statut:'poules'}).eq('id',TOURNOI.id);
     TOURNOI.statut='poules';
     const{data:jData}=await sbT.from('tournoi_joueurs').select('*').eq('tournoi_id',TOURNOI.id).order('created_at');
     TOURNOI_JOUEURS=jData||[];
-    if(alertEl)alertEl.style.display='none';
     renderTournoi();
   }catch(e){
-    showErr('Erreur inattendue : '+e.message);
+    if(alertEl){alertEl.className='alert err show';alertEl.textContent='Erreur : '+e.message;}
   }
 }
 
@@ -1729,235 +1613,86 @@ async function adminChargerMatchsUrgence(){
     .select('*').eq('tournoi_id',TOURNOI.id).neq('statut','terminé').order('created_at');
   const container=document.getElementById('matchsUrgenceList');
   if(!container)return;
-  if(!matchs||!matchs.length){container.innerHTML='<div style="font-family:\'Orbitron\',monospace;font-size:.58rem;color:var(--text3);text-align:center;padding:12px">Aucun match en cours</div>';return;}
-
-  // Récupérer les noms des joueurs
+  if(!matchs||!matchs.length){
+    container.innerHTML='<div style="font-family:\'Orbitron\',monospace;font-size:.58rem;color:var(--text2);text-align:center;padding:12px">Aucun match en cours</div>';
+    return;
+  }
   const ids=[...new Set(matchs.flatMap(m=>[m.joueur1_id,m.joueur2_id]).filter(Boolean))];
-  const{data:joueurs}=await sbT.from('tournoi_joueurs').select('id,nom').in('id',ids);
+  const[{data:joueurs},{data:tours}]=await Promise.all([
+    sbT.from('tournoi_joueurs').select('id,nom').in('id',ids),
+    sbT.from('tournoi_tours').select('*').in('match_id',matchs.map(m=>m.id)).eq('statut','en_cours'),
+  ]);
   const nomById=Object.fromEntries((joueurs||[]).map(j=>[j.id,j.nom]));
+  const tourByMatch=Object.fromEntries((tours||[]).map(t=>[t.match_id,t]));
 
-  container.innerHTML=matchs.map(m=>`
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px">
-      <div>
-        <div style="font-size:.9rem;font-weight:700">
-          ${esc(nomById[m.joueur1_id]||'?')}
-          <span style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);margin:0 6px">VS</span>
-          ${esc(nomById[m.joueur2_id]||'?')}
+  container.innerHTML=matchs.map(m=>{
+    const j1=esc(nomById[m.joueur1_id]||'?'),j2=esc(nomById[m.joueur2_id]||'?');
+    const tour=tourByMatch[m.id];
+    const tourNum=tour?.numero_tour||'—';
+    const phaseLabel={poule:'Poule',demi:'Demi-finale',finale:'Finale'}[m.phase]||m.phase;
+    const stCol={placement:'var(--text2)',en_cours:'var(--cyan)',en_attente:'var(--text2)'}[m.statut]||'var(--text2)';
+    let tourLabel='';
+    if(tour&&m.statut==='en_cours'){
+      if(!tour.soumis_j1&&!tour.soumis_j2) tourLabel=`⏳ En attente de <strong>${j1}</strong> et <strong>${j2}</strong>`;
+      else if(tour.soumis_j1&&!tour.soumis_j2) tourLabel=`⏳ En attente de <strong>${j2}</strong> — ${j1} a joué`;
+      else if(!tour.soumis_j1&&tour.soumis_j2) tourLabel=`⏳ En attente de <strong>${j1}</strong> — ${j2} a joué`;
+      else tourLabel='✓ Les deux ont soumis — résolution en cours';
+    } else if(m.statut==='placement') tourLabel='⚓ Placement des flottes';
+    return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+        <div>
+          <div style="font-weight:700;font-size:.9rem">${j1} <span style="color:var(--text2);font-size:.75rem">vs</span> ${j2}</div>
+          <div style="font-family:'Orbitron',monospace;font-size:.52rem;color:${stCol};letter-spacing:1px;margin-top:3px">${phaseLabel} · ${m.statut.toUpperCase()}</div>
         </div>
-        <div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);margin-top:2px">
-          POULE ${m.poule_id||'—'} · ${m.statut.toUpperCase()}
+        <div style="text-align:right">
+          <div style="font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:var(--cyan)">${tourNum}</div>
+          <div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text2)">TOUR</div>
         </div>
       </div>
-      <button class="btn btn-danger btn-xs" onclick="adminAnnulerTourTournoi('${m.id}')">ANNULER TOUR</button>
-    </div>`).join('');
-}
-
-async function adminAnnulerTourTournoi(matchId){
-  if(!confirm('Annuler le tour en cours de ce match ?'))return;
-  const{data:tours}=await sbT.from('tournoi_tours')
-    .select('id').eq('match_id',matchId).eq('statut','en_cours')
-    .order('created_at',{ascending:false}).limit(1);
-  const showToast=(msg)=>{const a=document.createElement('div');a.className='alert info show';a.textContent=msg;a.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:999;min-width:200px;text-align:center';document.body.appendChild(a);setTimeout(()=>a.remove(),2500);};
-  if(tours&&tours.length){
-    await sbT.from('tournoi_tours').delete().eq('id',tours[0].id);
-    showToast('✓ Tour annulé.');
-  }else{showToast('Aucun tour en cours à annuler.');}
-}
-
-/* ════════════════════════════════════════════════════════
-   TAB : DASHBOARD
-════════════════════════════════════════════════════════ */
-async function renderDashboard() {
-  const tabId = TOURNOI ? 'tab-dashboard' : 'tab-dashboard';
-  const el = document.getElementById('tab-dashboard');
-  if (!el) return;
-  el.innerHTML = `<div class="card" style="text-align:center;padding:20px"><span class="spin">⚓</span><span style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--cyan);letter-spacing:2px;margin-left:10px">CHARGEMENT…</span></div>`;
-
-  const GRADES=[
-    {label:'Matelot',min:0},{label:'Matelot 1ère classe',min:5},
-    {label:'Matelot 2nde classe',min:10},{label:'Quartier-maître 1ère classe',min:15},
-    {label:'Second maître',min:20},{label:'Maître',min:25},
-    {label:'Premier maître',min:35},{label:'Maître principal',min:45},
-    {label:'Major',min:55},{label:'Aspirant',min:65},
-    {label:'Enseigne de vaisseau',min:80},{label:'Lieutenant de vaisseau',min:95},
-    {label:'Capitaine de corvette',min:110},{label:'Capitaine de frégate',min:125},
-    {label:'Capitaine de vaisseau',min:140},{label:'Commodore',min:155},
-    {label:'Contre-amiral',min:170},{label:'Vice-amiral',min:185},
-    {label:"Vice-amiral d'escadre",min:200},{label:'Amiral',min:215},
-  ];
-  const getGrade=v=>{let g=GRADES[0];for(const gr of GRADES){if(v>=gr.min)g=gr;else break;}return g.label;};
-  const getRatio=(v,m)=>m>0?Math.round((v/m)*100)+'%':'—';
-
-  try {
-    // ── 1. Top 5 joueurs ──
-    const { data: topJoueurs } = await sbT
-      .from('joueur_profils')
-      .select('*')
-      .gt('matchs_joues', 0)
-      .order('victoires', { ascending: false })
-      .limit(5);
-
-    // ── 2. Tournois en cours (statut != terminé) ──
-    const { data: tournoiActifs } = await sbT
-      .from('tournois')
-      .select('*')
-      .neq('statut', 'terminé')
-      .order('created_at', { ascending: false });
-
-    // ── 3. Historique tournois terminés ──
-    const { data: tournoiHisto } = await sbT
-      .from('tournois')
-      .select('*')
-      .eq('statut', 'terminé')
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    // ── 4. Matchs terminés (pour stats globales) ──
-    const { data: matchsTermines } = await sbT
-      .from('tournoi_matchs')
-      .select('*')
-      .eq('statut', 'terminé');
-
-    const totalMatchs = matchsTermines?.length || 0;
-    const totalTournois = (tournoiHisto?.length || 0) + (tournoiActifs?.length || 0);
-
-    const TROPHEES = ['🥇','🥈','🥉','🎖️','🎖️'];
-
-    // ══ RENDER ══
-    let h = '';
-
-    // Compteurs globaux
-    h += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
-      <div class="card" style="text-align:center;padding:12px">
-        <div style="font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:var(--cyan)">${totalTournois}</div>
-        <div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);letter-spacing:1px;margin-top:3px">TOURNOIS</div>
-      </div>
-      <div class="card" style="text-align:center;padding:12px">
-        <div style="font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:var(--gold)">${totalMatchs}</div>
-        <div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);letter-spacing:1px;margin-top:3px">MATCHS</div>
-      </div>
-      <div class="card" style="text-align:center;padding:12px">
-        <div style="font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:var(--green)">${topJoueurs?.length||0}</div>
-        <div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);letter-spacing:1px;margin-top:3px">JOUEURS</div>
+      ${tourLabel?`<div style="font-size:.8rem;color:var(--text2);margin-bottom:8px">${tourLabel}</div>`:''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm" style="background:rgba(255,136,68,.15);border:1px solid var(--orange);color:var(--orange)"
+          onclick="adminAnnulerTourMatch('${m.id}')">🔄 ANNULER LE TOUR</button>
+        <button class="btn btn-sm" style="background:rgba(255,68,85,.15);border:1px solid var(--red);color:var(--red)"
+          onclick="adminSupprimerMatch('${m.id}')">🗑️ SUPPRIMER CE MATCH</button>
       </div>
     </div>`;
+  }).join('');
+}
 
-    // ── Top 5 joueurs ──
-    h += `<div class="card"><div class="card-title">🏆 Top 5 Capitaines</div>`;
-    if (!topJoueurs?.length) {
-      h += `<p style="color:var(--text2);font-size:.85rem">Aucun joueur avec des matchs joués.</p>`;
-    } else {
-      topJoueurs.forEach((j, i) => {
-        const grade = getGrade(j.victoires);
-        const ratio = getRatio(j.victoires, j.matchs_joues);
-        const pct   = j.matchs_joues > 0 ? Math.round((j.victoires/j.matchs_joues)*100) : 0;
-        const rewAffichees = (j.recompenses_affichees||[]);
-        const RICONS = {medaille_victoire:'🎖',medaille_honneur:'🏅',grande_medaille:'🌟',sixieme_sens:'🔮',aiguille:'🪡',bronze:'🥉',argent:'🥈',or:'🥇',diamant:'💎'};
-        const rewBadges = rewAffichees.map(k=>RICONS[k]||'').join(' ');
+async function adminAnnulerTourMatch(matchId){
+  if(!confirm('Annuler le tour en cours ? Les joueurs pourront rejouer ce tour.'))return;
+  const{data:tours}=await sbT.from('tournoi_tours').select('id,numero_tour')
+    .eq('match_id',matchId).eq('statut','en_cours')
+    .order('numero_tour',{ascending:false}).limit(1);
+  if(tours?.length){
+    await sbT.from('tournoi_tours').delete().eq('id',tours[0].id);
+    await sbT.from('tournoi_tours').insert({
+      match_id:matchId,numero_tour:tours[0].numero_tour,
+      soumis_j1:false,soumis_j2:false,statut:'en_cours'
+    });
+    await adminChargerMatchsUrgence();
+  } else { alert('Aucun tour en cours à annuler.'); }
+}
 
-        h += `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border2)">
-          <div style="font-size:1.4rem;width:32px;text-align:center;flex-shrink:0">${TROPHEES[i]}</div>
-          <div style="font-size:1.6rem;flex-shrink:0">${j.avatar||'⚓'}</div>
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
-              <span style="font-weight:700;font-size:.95rem">${esc(j.pseudo)}</span>
-              ${rewBadges?`<span style="font-size:13px">${rewBadges}</span>`:''}
-            </div>
-            <div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--gold);letter-spacing:1.5px;margin-top:2px">${grade}</div>
-            <div style="display:flex;gap:12px;margin-top:4px;flex-wrap:wrap">
-              <span style="font-size:.78rem;color:var(--green)">✓ ${j.victoires}V</span>
-              <span style="font-size:.78rem;color:var(--red)">✗ ${j.defaites}D</span>
-              <span style="font-size:.78rem;color:var(--text2)">${j.matchs_joues} matchs</span>
-              <span style="font-size:.78rem;color:${pct>=75?'var(--gold)':'var(--text2)'};font-weight:${pct>=75?'700':'400'}">${ratio}</span>
-            </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0">
-            <div style="font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--cyan)">${j.victoires}</div>
-            <div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text2);letter-spacing:1px">VICTOIRES</div>
-          </div>
-        </div>`;
-      });
-    }
-    h += `</div>`;
+async function adminSupprimerMatch(matchId){
+  if(!confirm('Supprimer ce match ? Les stats joueurs ne seront pas affectées.'))return;
+  await sbT.from('tournoi_tours').delete().eq('match_id',matchId);
+  await sbT.from('tournoi_grilles').delete().eq('match_id',matchId);
+  await sbT.from('tournoi_matchs').delete().eq('id',matchId);
+  await adminChargerMatchsUrgence();
+}
 
-    // ── Tournois en cours ──
-    h += `<div class="card"><div class="card-title">⚔️ Tournois en cours</div>`;
-    if (!tournoiActifs?.length) {
-      h += `<p style="color:var(--text2);font-size:.85rem">Aucun tournoi actif.</p>`;
-    } else {
-      for (const t of tournoiActifs) {
-        // Charger les matchs de ce tournoi
-        const { data: mTournoi } = await sbT.from('tournoi_matchs').select('*').eq('tournoi_id', t.id);
-        const total   = mTournoi?.length || 0;
-        const termines = mTournoi?.filter(m => m.statut === 'terminé').length || 0;
-        const enCours  = mTournoi?.filter(m => m.statut === 'en_cours').length || 0;
-        const statutColor = {inscription:'var(--text2)',poules:'var(--cyan)',finales:'var(--gold)',terminé:'var(--green)'}[t.statut]||'var(--text2)';
-        const statutLabel = {inscription:'INSCRIPTIONS',poules:'PHASE DE POULES',finales:'PHASES FINALES',terminé:'TERMINÉ'}[t.statut]||t.statut.toUpperCase();
-
-        h += `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">
-            <div>
-              <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:${statutColor};letter-spacing:2px;font-weight:700">${statutLabel}</div>
-              <div style="font-size:.75rem;color:var(--text2);margin-top:2px">${new Date(t.created_at).toLocaleDateString('fr-FR')} · ${t.nb_joueurs_cible} joueurs</div>
-            </div>
-            <div style="text-align:right">
-              <div style="font-family:'Orbitron',monospace;font-size:.75rem;color:var(--cyan);font-weight:700">${termines}/${total}</div>
-              <div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text2)">MATCHS TERMINÉS</div>
-            </div>
-          </div>
-          ${total > 0 ? `
-          <div style="background:var(--border);border-radius:3px;height:4px;overflow:hidden;margin-bottom:6px">
-            <div style="height:100%;width:${Math.round((termines/total)*100)}%;background:var(--cyan);border-radius:3px"></div>
-          </div>` : ''}
-          <div style="display:flex;gap:10px;font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2)">
-            <span style="color:var(--cyan)">⚔️ ${enCours} en cours</span>
-            <span style="color:var(--green)">✓ ${termines} terminés</span>
-            <span>${total-termines-enCours} en attente</span>
-          </div>
-        </div>`;
-      }
-    }
-    h += `</div>`;
-
-    // ── Historique tournois terminés ──
-    if (tournoiHisto?.length) {
-      h += `<div class="card"><div class="card-title">📋 Historique des tournois</div>`;
-      for (const t of tournoiHisto) {
-        // Chercher le vainqueur (joueur avec le plus de victoires dans ce tournoi)
-        const { data: mHisto } = await sbT.from('tournoi_matchs')
-          .select('vainqueur_id').eq('tournoi_id', t.id).eq('statut', 'terminé');
-        
-        // Compter les victoires par joueur
-        const vcount = {};
-        (mHisto||[]).forEach(m => { if(m.vainqueur_id) vcount[m.vainqueur_id]=(vcount[m.vainqueur_id]||0)+1; });
-        const winnerId = Object.entries(vcount).sort((a,b)=>b[1]-a[1])[0]?.[0];
-        
-        let winnerNom = '—';
-        if (winnerId) {
-          const { data: wj } = await sbT.from('tournoi_joueurs').select('nom,profil_id').eq('id', winnerId).maybeSingle();
-          winnerNom = wj?.nom || '—';
-        }
-
-        h += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border2)">
-          <div>
-            <div style="font-size:.85rem;font-weight:700">${new Date(t.created_at).toLocaleDateString('fr-FR')}</div>
-            <div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);letter-spacing:1px;margin-top:2px">${t.nb_joueurs_cible} joueurs · ${(mHisto||[]).length} matchs</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:.78rem;color:var(--gold)">🏆 ${esc(winnerNom)}</div>
-            <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2)">VAINQUEUR</div>
-          </div>
-        </div>`;
-      }
-      h += `</div>`;
-    }
-
-    el.innerHTML = h;
-
-  } catch(err) {
-    console.error(err);
-    el.innerHTML = `<div class="card"><p style="color:var(--red)">Erreur de chargement : ${esc(err.message)}</p></div>`;
-  }
+async function adminPurgerBase(){
+  if(!confirm('⚠️ PURGE COMPLÈTE\n\nSupprime tous les tournois, matchs et remet les stats joueurs à zéro.\n\nCette action est IRRÉVERSIBLE. Continuer ?'))return;
+  if(!confirm('Êtes-vous VRAIMENT sûr ? Toutes les données de jeu seront perdues.'))return;
+  try{
+    const{error}=await sbT.rpc('purge_tournoi_complet');
+    if(error)throw error;
+    TOURNOI=null;TOURNOI_JOUEURS=[];
+    currentTab='config';buildNav();renderTab('config');
+    alert('✓ Base purgée avec succès.');
+  }catch(e){alert('Erreur purge : '+e.message);}
 }
 
 /* ════════════════════════════════════════════════════════
