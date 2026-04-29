@@ -306,6 +306,36 @@ main{padding:12px}
   opacity:0;animation:cardRise .5s ease forwards;
   animation-delay:.35s;animation-fill-mode:both;
 }
+
+/* ══ SHIP TRACKER ══ */
+.ship-tracker{display:flex;flex-direction:column;gap:5px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border2)}
+.st-label{font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text3);letter-spacing:2px;margin-bottom:4px}
+.st-ship{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:5px;border:1px solid transparent;transition:border-color .2s}
+.st-ship.st-sunk{background:rgba(255,68,85,.06);border-color:rgba(255,68,85,.25)}
+.st-ship.st-hit{background:rgba(255,136,68,.06);border-color:rgba(255,136,68,.25)}
+.st-ship.st-ok{background:rgba(0,50,100,.15);border-color:var(--border2)}
+.st-icon{font-size:.95rem;width:22px;text-align:center;flex-shrink:0}
+.st-cells{display:flex;gap:3px;flex:1}
+.st-cell{width:10px;height:10px;border-radius:2px;border:1px solid rgba(26,47,74,.6);background:rgba(0,40,80,.3);flex-shrink:0}
+.st-cell.c-hit{background:rgba(255,136,68,.55);border-color:var(--orange)}
+.st-cell.c-sunk{background:rgba(255,68,85,.6);border-color:var(--red)}
+.st-status{font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:1px;white-space:nowrap;flex-shrink:0}
+.st-status.ss-ok{color:var(--text3)}
+.st-status.ss-hit{color:var(--orange)}
+.st-status.ss-sunk{color:var(--red);font-weight:700}
+
+/* ══ MMR ══ */
+.mmr-badge{display:inline-flex;align-items:center;gap:6px;font-family:'Orbitron',monospace;
+  font-size:.55rem;letter-spacing:2px;padding:5px 12px;border-radius:20px;margin-top:8px;font-weight:700}
+.mmr-iron   {background:rgba(120,120,140,.15);border:1px solid rgba(120,120,140,.4);color:#9090a0}
+.mmr-bronze {background:rgba(180,100,40,.12);border:1px solid rgba(180,100,40,.4);color:#c87840}
+.mmr-silver {background:rgba(160,180,200,.12);border:1px solid rgba(160,180,200,.4);color:#b0c8dc}
+.mmr-gold   {background:rgba(245,200,66,.14);border:1px solid rgba(245,200,66,.4);color:var(--gold)}
+.mmr-plat   {background:rgba(180,120,255,.12);border:1px solid rgba(180,120,255,.4);color:#c890ff}
+.mmr-card{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:11px 14px;
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.mmr-delta-pos{font-family:'Orbitron',monospace;font-size:.75rem;color:var(--green);font-weight:900}
+.mmr-delta-neg{font-family:'Orbitron',monospace;font-size:.75rem;color:var(--red);font-weight:900}
 </style>
 </head>
 <body>
@@ -399,6 +429,7 @@ let MON_PROFIL=null;
 let PROFILS_CACHE={}; // profilId → {avatar, drapeau, pseudo}
 let _pl={};   // matchId → placement state
 let _shots={}; // matchId → [coords]
+let _mmrDelta=null; // delta MMR du dernier match pour affichage résultat
 
 const GRADES=[
   {label:'Matelot',min:0},{label:'Matelot 1ère classe',min:5},
@@ -413,6 +444,11 @@ const GRADES=[
   {label:"Vice-amiral d'escadre",min:200},{label:'Amiral',min:215},
 ];
 const REWARDS_META={
+  // 🏆 ELO / MMR
+  mmr_silver:  {icon:'🥈',cat:'ELO',label:'Rang Argent',    desc:'Atteindre 1100 MMR',       progress:null},
+  mmr_gold:    {icon:'🥇',cat:'ELO',label:'Rang Or',         desc:'Atteindre 1200 MMR',       progress:null},
+  mmr_plat:    {icon:'💎',cat:'ELO',label:'Rang Platine',    desc:'Atteindre 1500 MMR',       progress:null},
+  remontada:   {icon:'📈',cat:'ELO',label:'Remontada',       desc:'Gagner contre un adversaire ayant +150 MMR',progress:null},
   // 🔰 Premières armes
   bapteme:        {icon:'🔰',cat:'Premières armes', label:'Baptême du feu',               desc:'Participer à son 1er match',                               progress:(p)=>({c:Math.min(p.matchs_joues,1),t:1})},
   premiere_salve: {icon:'💨',cat:'Premières armes', label:'Première salve',               desc:'Effectuer son premier tir en combat',                       progress:(p)=>({c:Math.min(p.matchs_joues,1),t:1})},
@@ -1167,6 +1203,7 @@ function renderBataille(match,el){
         ${myTurn?`Sélectionne 3 cases — <strong style="color:var(--gold)">${shots.length}/3</strong>`:'Tirs soumis — en attente…'}
       </div>
       <div class="grid-wrap">${buildGrid(match.id,'attack')}</div>
+      ${buildShipTracker(match.id)}
       <div id="alertB-${match.id}" class="alert" style="margin-top:8px"></div>
       ${myTurn?`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
         <button class="btn btn-gold" onclick="demanderConfirmTirs('${match.id}')" ${shots.length===3?'':'disabled'}>🎯 ENVOYER LES TIRS</button>
@@ -1186,6 +1223,36 @@ function renderBataille(match,el){
   const defGrid=document.getElementById(`grid-${match.id}-defense`);
   if(defGrid)attachCoordTooltip(defGrid);
   checkNewAnimEvents(match.id);
+}
+
+
+/* ══ SHIP TRACKER — état flotte adverse ══ */
+function buildShipTracker(matchId){
+  const mesTirs=GRILLES[matchId]?.theirs?.tirs_recus||[];
+  const rows=SHIP_KEYS.map(k=>{
+    const ship=SHIPS[k];
+    const isSunk=mesTirs.some(t=>t.shipKey===k&&t.result==='sunk');
+    const hitsOnShip=mesTirs.filter(t=>t.shipKey===k&&['hit','sunk'].includes(t.result)).length;
+    const isHit=!isSunk&&hitsOnShip>0;
+    const stateClass=isSunk?'st-sunk':isHit?'st-hit':'st-ok';
+    const statusClass=isSunk?'ss-sunk':isHit?'ss-hit':'ss-ok';
+    const statusText=isSunk?'☠ COULÉ':isHit?`TOUCHÉ ${hitsOnShip}/?`:'—';
+    const cells=Array.from({length:ship.size},(_,i)=>{
+      let cls='st-cell';
+      if(isSunk)cls+=' c-sunk';
+      else if(i<hitsOnShip)cls+=' c-hit';
+      return `<div class="${cls}"></div>`;
+    }).join('');
+    return `<div class="st-ship ${stateClass}">
+      <span class="st-icon">${ship.icon}</span>
+      <div class="st-cells">${cells}</div>
+      <span class="st-status ${statusClass}">${statusText}</span>
+    </div>`;
+  });
+  return `<div class="ship-tracker">
+    <div class="st-label">FLOTTE ADVERSE</div>
+    ${rows.join('')}
+  </div>`;
 }
 
 function onAttackClick(matchId,coord){
@@ -1318,7 +1385,6 @@ function processShots(shots,placement,tirsAv,bonus,malus,turn){
 
 /* ══ MISE À JOUR PROFILS APRÈS MATCH ══ */
 async function updateProfils({match,vainqueur_id,draw,tirs_j1,tirs_j2,nb_tours}){
-  // Charger les tournoi_joueurs pour récupérer les profil_id
   const{data:joueurs}=await sb.from('tournoi_joueurs')
     .select('id,profil_id').in('id',[match.joueur1_id,match.joueur2_id]);
   if(!joueurs)return;
@@ -1326,20 +1392,43 @@ async function updateProfils({match,vainqueur_id,draw,tirs_j1,tirs_j2,nb_tours})
   const tj1=joueurs.find(j=>j.id===match.joueur1_id);
   const tj2=joueurs.find(j=>j.id===match.joueur2_id);
 
-  // Traiter chaque joueur
+  // ── Calcul MMR Elo ──
+  let mmrDelta1=0,mmrDelta2=0;
+  try{
+    const pids=[tj1?.profil_id,tj2?.profil_id].filter(Boolean);
+    if(pids.length===2){
+      const{data:profils}=await sb.from('joueur_profils').select('id,mmr,matchs_joues').in('id',pids);
+      const p1=profils?.find(p=>p.id===tj1.profil_id);
+      const p2=profils?.find(p=>p.id===tj2.profil_id);
+      if(p1&&p2){
+        const mmr1=p1.mmr??1000,mmr2=p2.mmr??1000;
+        const K1=((p1.matchs_joues||0)<10)?50:32;
+        const K2=((p2.matchs_joues||0)<10)?50:32;
+        const E1=1/(1+Math.pow(10,(mmr2-mmr1)/400));
+        const E2=1-E1;
+        const S1=draw?.5:vainqueur_id===match.joueur1_id?1:0;
+        const S2=draw?.5:vainqueur_id===match.joueur2_id?1:0;
+        mmrDelta1=Math.round(K1*(S1-E1));
+        mmrDelta2=Math.round(K2*(S2-E2));
+        // Récompense remontada : victoire avec ≥150 MMR de moins
+        if(S1===1&&mmr1<=mmr2-150) mmrDelta1={...{delta:mmrDelta1},remontada:match.joueur1_id};
+        if(S2===1&&mmr2<=mmr1-150) mmrDelta2={...{delta:mmrDelta2},remontada:match.joueur2_id};
+      }
+    }
+  }catch(e){console.warn('MMR calc error',e);}
+
   const jobs=[];
-  if(tj1?.profil_id) jobs.push(updateUnProfil(tj1.profil_id,'j1',{vainqueur_id,draw,match,tirs:tirs_j1,tirs_adv:tirs_j2,nb_tours}));
-  if(tj2?.profil_id) jobs.push(updateUnProfil(tj2.profil_id,'j2',{vainqueur_id,draw,match,tirs:tirs_j2,tirs_adv:tirs_j1,nb_tours}));
+  if(tj1?.profil_id) jobs.push(updateUnProfil(tj1.profil_id,'j1',{vainqueur_id,draw,match,tirs:tirs_j1,tirs_adv:tirs_j2,nb_tours,mmrDelta:mmrDelta1}));
+  if(tj2?.profil_id) jobs.push(updateUnProfil(tj2.profil_id,'j2',{vainqueur_id,draw,match,tirs:tirs_j2,tirs_adv:tirs_j1,nb_tours,mmrDelta:mmrDelta2}));
   await Promise.all(jobs);
 
-  // Rafraîchir le profil du joueur courant si concerné
   if(MOI.profil_id&&(tj1?.profil_id===MOI.profil_id||tj2?.profil_id===MOI.profil_id)){
     const{data:p}=await sb.from('joueur_profils').select('*').eq('id',MOI.profil_id).maybeSingle();
     if(p)MON_PROFIL=p;
   }
 }
 
-async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_adv,nb_tours}){
+async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_adv,nb_tours,mmrDelta=0}){
   // Charger le profil actuel
   const{data:p}=await sb.from('joueur_profils').select('*').eq('id',profilId).maybeSingle();
   if(!p)return;
@@ -1474,6 +1563,16 @@ async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_a
     }
   }catch(e){}
 
+  // ── MMR ──
+  const deltaVal=typeof mmrDelta==='object'?mmrDelta.delta:mmrDelta;
+  const hasRemontada=typeof mmrDelta==='object'&&mmrDelta.remontada===joueurId;
+  const oldMmr=p.mmr??1000;
+  const newMmr=Math.max(100,oldMmr+deltaVal);
+  if(hasRemontada) rewExisting.add('remontada');
+  if(newMmr>=1100) rewExisting.add('mmr_silver');
+  if(newMmr>=1200) rewExisting.add('mmr_gold');
+  if(newMmr>=1500) rewExisting.add('mmr_plat');
+
   // Sauvegarder
   await sb.from('joueur_profils').update({
     matchs_joues, victoires, defaites, egalites,
@@ -1482,6 +1581,7 @@ async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_a
     premier_tir_touches, coule_premier_tour,
     recompenses:[...rewExisting],
     grade_cache:getGrade(victoires),
+    mmr:newMmr,
     updated_at:new Date().toISOString(),
   }).eq('id',profilId);
 
@@ -1491,6 +1591,13 @@ async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_a
     const nouveauGrade=getGrade(victoires);
     if(nouveauGrade!==ancienGrade){
       setTimeout(()=>showUnlockToast(`⚓ NOUVEAU GRADE : ${nouveauGrade}`,'var(--gold)'),3000);
+    }
+    // Toast MMR
+    if(deltaVal!==0){
+      _mmrDelta=deltaVal;
+      const mmrSign=deltaVal>0?'+':'';
+      const mmrToastColor=deltaVal>0?'var(--green)':'var(--red)';
+      setTimeout(()=>showUnlockToast(`⚡ MMR : ${mmrSign}${deltaVal}  (${newMmr} pts)`,mmrToastColor),2200);
     }
     const nouvelles=[...rewExisting].filter(k=>!(p.recompenses||[]).includes(k));
     nouvelles.forEach((k,i)=>{
@@ -1574,6 +1681,12 @@ function renderResultat(match,el){
         </div>
         <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-top:3px;letter-spacing:1px">ADV. SCORE</div>
       </div>
+      ${_mmrDelta!==null?`<div style="background:var(--bg3);border:1px solid ${_mmrDelta>=0?'rgba(0,232,120,.25)':'rgba(255,68,85,.25)'};border-radius:7px;padding:11px 8px;text-align:center;grid-column:span 2">
+        <div style="font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:${_mmrDelta>=0?'var(--green)':'var(--red)'}">
+          ${_mmrDelta>=0?'+':''}${_mmrDelta}
+        </div>
+        <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-top:3px;letter-spacing:1px">MMR</div>
+      </div>`:''}
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:11px 8px;text-align:center">
         <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:900;color:var(--orange)">${mesBateauxCoules}<span style="font-size:.58rem;color:var(--text3)">/5</span></div>
         <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-top:3px;letter-spacing:1px">COULÉS</div>
@@ -1843,6 +1956,7 @@ async function renderProfil(profilId){
     <div style="font-size:40px;line-height:1;margin-bottom:8px">${flagEmoji}</div>
     <div style="font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:2px;color:var(--text)">${esc(p.pseudo)}</div>
     <div style="font-family:'Orbitron',monospace;font-size:.8rem;color:var(--gold);letter-spacing:2px;margin-top:4px;font-weight:700">${grade}</div>
+    ${(()=>{const mv=p.mmr??1000;const mt=mv>=1500?['💎','Platine','mmr-plat']:mv>=1200?['🥇','Or','mmr-gold']:mv>=1100?['🥈','Argent','mmr-silver']:mv>=1000?['⚓','Bronze','mmr-bronze']:['⚙️','Fer','mmr-iron'];return `<span class="mmr-badge ${mt[2]}" style="margin-top:6px">${mt[0]} ${mt[1].toUpperCase()} — ${mv} MMR</span>`;})()}
     ${badgesHtml?`<div style="margin-top:8px">${badgesHtml}</div>`:''}
 
     ${gradeNext?`<div style="margin-top:14px">
@@ -1863,6 +1977,21 @@ async function renderProfil(profilId){
       <span id="pchev-stats" style="color:var(--gold);font-size:.9rem;transition:transform .2s">▼</span>
     </div>
     <div id="psec-stats" style="display:none;padding:14px 12px">
+      ${(()=>{
+        const mmrVal=p.mmr??1000;
+        const mmrTier=mmrVal>=1500?['💎','Platine','mmr-plat']:mmrVal>=1200?['🥇','Or','mmr-gold']:mmrVal>=1100?['🥈','Argent','mmr-silver']:mmrVal>=1000?['⚓','Bronze','mmr-bronze']:['⚙️','Fer','mmr-iron'];
+        const mmrBar=Math.min(100,mmrVal>=1500?100:mmrVal>=1200?Math.round((mmrVal-1200)/3):mmrVal>=1100?Math.round((mmrVal-1100)/1):mmrVal>=1000?Math.round((mmrVal-1000)/1):Math.round(mmrVal/10));
+        return `<div class="mmr-card">
+          <div>
+            <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);letter-spacing:2px;margin-bottom:4px">RANG MMR</div>
+            <span class="mmr-badge ${mmrTier[2]}">${mmrTier[0]} ${mmrTier[1].toUpperCase()}</span>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:var(--gold);line-height:1">${mmrVal}</div>
+            <div style="font-family:'Orbitron',monospace;font-size:.44rem;color:var(--text2);margin-top:2px">MMR</div>
+          </div>
+        </div>`;
+      })()}
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
           <div style="font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;color:var(--green)">${p.victoires}</div>
@@ -1913,7 +2042,7 @@ async function renderProfil(profilId){
   }
 
   // Grouper par catégorie
-  const cats=['Premières armes','Précision','Puissance','Régularité','Exploits'];
+  const cats=['ELO','Premières armes','Précision','Puissance','Régularité','Exploits'];
   cats.forEach(cat=>{
     const entries=Object.entries(REWARDS_META).filter(([,m])=>m.cat===cat);
     h+=`<div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text2);letter-spacing:2px;margin:10px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">${cat.toUpperCase()}</div>`;
