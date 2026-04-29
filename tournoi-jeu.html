@@ -981,7 +981,7 @@ async function initVoteIfNeeded(matchId){
   _voteInitialized[matchId]=true;
   const match=MATCHS.find(m=>m.id===matchId);
   if(!match||match.vote_expire_at||match.mode_jeu)return;
-  const expire=new Date(Date.now()+60000).toISOString();
+  const expire=new Date(Date.now()+180000).toISOString(); // 3 minutes
   const{data}=await sb.from('tournoi_matchs')
     .update({vote_expire_at:expire})
     .eq('id',matchId).is('vote_expire_at',null).select().maybeSingle();
@@ -1000,13 +1000,24 @@ function startVoteTimer(matchId){
   const match=MATCHS.find(m=>m.id===matchId);
   if(!match?.vote_expire_at)return;
   const expireTime=new Date(match.vote_expire_at).getTime();
+  // Protection : si l'expiry est déjà dépassée au démarrage (ex : refresh de page)
+  // → ne pas résoudre immédiatement, attendre que les votes soient bien chargés
+  const initialRemaining=expireTime-Date.now();
+  if(initialRemaining<0){
+    // Expiry passée → résoudre avec un délai de 1,5s pour laisser le temps aux données de se charger
+    _voteTimers[matchId]=setTimeout(async()=>{
+      delete _voteTimers[matchId];
+      await resolveVote(matchId,true);
+    },1500);
+    return;
+  }
   _voteTimers[matchId]=setInterval(async()=>{
     const remaining=Math.max(0,Math.ceil((expireTime-Date.now())/1000));
     const el=document.getElementById(`vote-countdown-${matchId}`);
     if(el){el.textContent=remaining+'s';el.className=`vote-timer${remaining<=15?' urgent':''}`;}
     if(Date.now()>=expireTime){
       clearInterval(_voteTimers[matchId]);delete _voteTimers[matchId];
-      await resolveVote(matchId);
+      await resolveVote(matchId,true); // fromTimer=true
     }
   },1000);
 }
@@ -1015,33 +1026,43 @@ async function soumettreVote(matchId,mode){
   const match=MATCHS.find(m=>m.id===matchId);if(!match)return;
   const role=getMyRole(match);
   const field=role===1?'vote_mode_j1':'vote_mode_j2';
-  const{data}=await sb.from('tournoi_matchs').update({[field]:mode}).eq('id',matchId).select().maybeSingle();
-  if(data){
-    const idx=MATCHS.findIndex(m=>m.id===matchId);
-    if(idx>=0)MATCHS[idx]={...MATCHS[idx],...data};
-    // Check si les deux ont voté
-    const updated=MATCHS[idx]||data;
-    if(updated.vote_mode_j1&&updated.vote_mode_j2)await resolveVote(matchId);
-    else if(currentTab===`match-${matchId}`)renderTab(currentTab);
+  // 1. Écrire le vote en DB
+  await sb.from('tournoi_matchs').update({[field]:mode}).eq('id',matchId);
+  // 2. Re-lire l'état COMPLET depuis la DB (les deux votes, évite les états périmés locaux)
+  const{data:fresh}=await sb.from('tournoi_matchs').select('*').eq('id',matchId).maybeSingle();
+  if(!fresh)return;
+  const idx=MATCHS.findIndex(m=>m.id===matchId);
+  if(idx>=0)MATCHS[idx]={...MATCHS[idx],...fresh};
+  // 3. Si les deux ont voté → résoudre immédiatement (fromTimer=false)
+  if(fresh.vote_mode_j1&&fresh.vote_mode_j2){
+    await resolveVote(matchId,false);
+  }else{
+    // Un seul vote pour l'instant → juste re-rendre pour afficher l'état
+    if(currentTab===`match-${matchId}`)renderTab(currentTab);
   }
 }
 
-async function resolveVote(matchId){
+// fromTimer=true  → timeout dépassé, résoudre même avec un seul vote (→ Rush par défaut)
+// fromTimer=false → appelé après un vote, résoudre seulement si les DEUX ont voté
+async function resolveVote(matchId, fromTimer=false){
   const match=MATCHS.find(m=>m.id===matchId);if(!match||match.mode_jeu)return;
-  // Si déjà résolu par l'autre client : vérifier en DB
+  // Vérifier en DB si déjà résolu par l'autre client
   const{data:fresh}=await sb.from('tournoi_matchs').select('*').eq('id',matchId).maybeSingle();
   if(!fresh)return;
   if(fresh.mode_jeu){
+    // Déjà résolu → mettre à jour le cache local et re-rendre
     const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)MATCHS[idx]=fresh;
     if(currentTab===`match-${matchId}`)renderTab(currentTab);return;
   }
-  // Déterminer le mode
-  const v1=fresh.vote_mode_j1,v2=fresh.vote_mode_j2;
+  const v1=fresh.vote_mode_j1, v2=fresh.vote_mode_j2;
+  // Si pas depuis le timer : attendre que les deux aient voté (évite le défaut Rush prématuré)
+  if(!fromTimer&&(!v1||!v2))return;
+  // Résolution : mêmes votes → mode choisi, sinon Rush
   const resolvedMode=(v1&&v2&&v1===v2)?v1:'rush';
   await sb.from('tournoi_matchs').update({mode_jeu:resolvedMode}).eq('id',matchId);
   const idx=MATCHS.findIndex(m=>m.id===matchId);
   if(idx>=0)MATCHS[idx]={...MATCHS[idx],...fresh,mode_jeu:resolvedMode};
-  showToastPhase(`⚡ Mode : ${MODES[resolvedMode].label}`,MODES[resolvedMode].color);
+  showToastPhase(`⚡ Mode : ${MODES[resolvedMode]?.label||resolvedMode}`,MODES[resolvedMode]?.color||'var(--cyan)');
   if(currentTab===`match-${matchId}`)renderTab(currentTab);
 }
 
@@ -2425,6 +2446,10 @@ function abonnerRealtime(){
       // Vote résolu par l'autre joueur
       if(!prev.mode_jeu&&n.mode_jeu&&currentTab===`match-${n.id}`){
         showToastPhase(`⚡ Mode : ${MODES[n.mode_jeu]?.label||n.mode_jeu}`,MODES[n.mode_jeu]?.color||'var(--cyan)');
+      }
+      // Filet de sécurité : si les deux votes viennent d'arriver via realtime → résoudre
+      if(!prev.mode_jeu&&!n.mode_jeu&&n.vote_mode_j1&&n.vote_mode_j2){
+        await resolveVote(n.id,false);
       }
       // Revanche acceptée par les deux → créer match
       if(n.revanche_j1===true&&n.revanche_j2===true){
