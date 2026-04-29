@@ -1515,7 +1515,9 @@ function renderTournoi() {
     <button class="btn btn-danger btn-sm" style="width:100%;margin-top:8px"
       onclick="adminAnnulerTournoi()">🗑️ ANNULER ET SUPPRIMER CE TOURNOI</button>
     <button class="btn btn-sm" style="width:100%;margin-top:6px;background:rgba(139,0,0,.2);border:1px solid #8b0000;color:#ff6666"
-      onclick="adminPurgerBase()">⚠️ PURGE COMPLÈTE (TESTS)</button>`;
+      onclick="adminPurgerBase()">⚠️ PURGE PARTIES (garde profils)</button>
+    <button class="btn btn-sm" style="width:100%;margin-top:6px;background:rgba(80,0,0,.35);border:1px solid #cc0000;color:#ff3333;font-weight:700"
+      onclick="adminFullReset()">☠️ RESET TOTAL (profils inclus)</button>`;
   } else {
     const statutLabel={'poules':'⚔️ PHASE DE POULES EN COURS','finales':'🏆 PHASES FINALES EN COURS','terminé':'✅ TOURNOI TERMINÉ'}[statut]||statut.toUpperCase();
     h += `<div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:2px;text-align:center;padding:8px">
@@ -1531,7 +1533,9 @@ function renderTournoi() {
         onclick="adminRegenererMatchs()">🔄 REGÉNÉRER LES MATCHS</button>
       <button class="btn btn-danger btn-sm" onclick="adminAnnulerTournoi()">🗑️ SUPPRIMER LE TOURNOI</button>
       <button class="btn btn-sm" style="background:rgba(139,0,0,.2);border:1px solid #8b0000;color:#ff6666"
-        onclick="adminPurgerBase()">⚠️ PURGE (TESTS)</button>
+        onclick="adminPurgerBase()">⚠️ PURGE (garde profils)</button>
+      <button class="btn btn-sm" style="background:rgba(80,0,0,.35);border:1px solid #cc0000;color:#ff3333;font-weight:700"
+        onclick="adminFullReset()">☠️ RESET TOTAL</button>
     </div>`;
   }
   h += `</div>`;
@@ -1859,6 +1863,25 @@ async function adminSupprimerMatch(matchId){
   await sbT.from('tournoi_grilles').delete().eq('match_id',matchId);
   await sbT.from('tournoi_matchs').delete().eq('id',matchId);
   await adminChargerMatchsUrgence();
+}
+
+async function adminFullReset(){
+  if(!confirm('☠️ RESET TOTAL\n\nSupprime :\n• Tous les tournois et matchs\n• Tous les profils joueurs\n• Toutes les stats, grades, MMR et récompenses\n\nCette action est IRRÉVERSIBLE.\nÀ utiliser uniquement en fin de période de tests.\n\nContinuer ?'))return;
+  if(!confirm('DERNIÈRE CONFIRMATION\n\nTous les profils, MMR et récompenses seront définitivement perdus.\n\nVraiment continuer ?'))return;
+  try{
+    // 1. Purge des tables de tournoi via RPC existant
+    const{error:e1}=await sbT.rpc('purge_tournoi_complet');
+    if(e1)throw e1;
+    // 2. Reset complet des profils joueurs
+    const{error:e2}=await sbT.from('joueur_profils').delete().gte('created_at','2000-01-01');
+    if(e2)throw e2;
+    // 3. Reset état local
+    TOURNOI=null;TOURNOI_JOUEURS=[];PARTIE=null;ALL_EQUIPES=[];ALL_GRILLES=[];
+    currentTab='config';
+    buildNav();
+    renderTab('config');
+    alert('✓ Reset total effectué. Tous les tournois et profils ont été supprimés.');
+  }catch(e){alert('Erreur reset total : '+e.message);}
 }
 
 async function adminPurgerBase(){
