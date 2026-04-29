@@ -164,6 +164,14 @@ select option{background:var(--bg2)}
 /* SETUP */
 .setup-screen{max-width:480px;margin:0 auto;padding:16px 0}
 
+/* URGENCE DROPDOWN */
+.urgence-select{background:var(--bg3);border:1px solid var(--border);color:var(--text);
+  font-family:'Rajdhani',sans-serif;font-size:.82rem;font-weight:600;padding:6px 10px;
+  border-radius:5px;outline:none;flex:1;min-width:0}
+.urgence-select:focus{border-color:var(--orange)}
+.mode-badge-admin{font-family:'Orbitron',monospace;font-size:.5rem;padding:2px 7px;
+  border-radius:8px;letter-spacing:1px;font-weight:700;display:inline-block}
+
 @media(max-width:500px){main{padding:8px}}
 .spin{display:inline-block;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -226,6 +234,13 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const COLS      = ['A','B','C','D','E','F','G','H','I','J'];
 const ROWS      = [1,2,3,4,5,6,7,8,9,10];
 const SHIP_KEYS = ['PA','CU','CR','SM','TP'];
+const MODES_ADMIN = {
+  rush:          { label:'Rush',               icon:'⚡', color:'var(--cyan)' },
+  classique:     { label:'Classique',          icon:'⚓', color:'var(--gold)' },
+  mort_subite:   { label:'Mort Subite',        icon:'💀', color:'var(--red)' },
+  petite_victime:{ label:'Petite Victime',     icon:'🚤', color:'var(--orange)' },
+  leviathan:     { label:'Opé. Léviathan',     icon:'✈️', color:'var(--purple)' },
+};
 const SHIPS = {
   PA: { name:'Porte-avions', icon:'✈️', size:5, points:5 },
   CU: { name:'Cuirassé',     icon:'⚔️', size:4, points:4 },
@@ -1506,6 +1521,10 @@ function renderTournoi() {
     h += `<div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:2px;text-align:center;padding:8px">
       ${statutLabel}
     </div>
+    <div id="mode-summary-tournoi" style="font-family:'Orbitron',monospace;font-size:.52rem;
+      color:var(--text2);letter-spacing:1px;text-align:center;padding:4px 0 8px;min-height:18px">
+      <span class="spin" style="font-size:.8rem">⚓</span>
+    </div>
     <div id="alertTournoi" class="alert" style="margin-bottom:8px"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
       <button class="btn btn-sm" style="background:rgba(14,165,233,.15);border:1px solid var(--cyan);color:var(--cyan)"
@@ -1571,6 +1590,9 @@ function renderTournoi() {
   }
 
   el.innerHTML = h;
+
+  // Charger le résumé des modes de façon asynchrone
+  if (statut !== 'inscription') updateModeSummary(TOURNOI.id);
 
   // Charger les matchs d'urgence si besoin
   if (statut !== 'inscription') adminChargerMatchsUrgence();
@@ -1711,6 +1733,24 @@ async function adminCopierTousLiens(){
   if(alertEl){alertEl.className='alert ok show';alertEl.textContent='✓ Tous les liens copiés !';setTimeout(()=>alertEl.style.display='none',3000);}
 }
 
+async function updateModeSummary(tournoiId) {
+  const el = document.getElementById('mode-summary-tournoi');
+  if (!el) return;
+  const { data: matchs } = await sbT.from('tournoi_matchs')
+    .select('mode_jeu, statut').eq('tournoi_id', tournoiId);
+  if (!matchs?.length) { el.textContent = ''; return; }
+  const counts = {}, nonResolus = matchs.filter(m => !m.mode_jeu && m.statut !== 'terminé').length;
+  matchs.filter(m => m.mode_jeu).forEach(m => {
+    counts[m.mode_jeu] = (counts[m.mode_jeu] || 0) + 1;
+  });
+  const parts = Object.entries(counts).map(([k, v]) => {
+    const m = MODES_ADMIN[k];
+    return `<span style="color:${m?.color||'var(--text2)'}">${m?.icon||''} ${m?.label||k} ×${v}</span>`;
+  });
+  if (nonResolus) parts.push(`<span style="color:var(--text2)">⏳ Vote en cours ×${nonResolus}</span>`);
+  el.innerHTML = parts.length ? parts.join('  ·  ') : '<span style="color:var(--text3)">—</span>';
+}
+
 async function adminChargerMatchsUrgence(){
   const {data:matchs}=await sbT.from('tournoi_matchs')
     .select('*').eq('tournoi_id',TOURNOI.id).neq('statut','terminé').order('created_at');
@@ -1734,33 +1774,68 @@ async function adminChargerMatchsUrgence(){
     const tourNum=tour?.numero_tour||'—';
     const phaseLabel={poule:'Poule',demi:'Demi-finale',finale:'Finale'}[m.phase]||m.phase;
     const stCol={placement:'var(--text2)',en_cours:'var(--cyan)',en_attente:'var(--text2)'}[m.statut]||'var(--text2)';
+
+    // Mode de jeu
+    const modeObj=m.mode_jeu?MODES_ADMIN[m.mode_jeu]:null;
+    const modeBadge=modeObj
+      ?`<span class="mode-badge-admin" style="background:rgba(0,0,0,.25);border:1px solid ${modeObj.color};color:${modeObj.color}">${modeObj.icon} ${modeObj.label}</span>`
+      :`<span class="mode-badge-admin" style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text2)">⏳ Vote en cours</span>`;
+
+    // Statut du tour en classique
     let tourLabel='';
     if(tour&&m.statut==='en_cours'){
-      if(!tour.soumis_j1&&!tour.soumis_j2) tourLabel=`⏳ En attente de <strong>${j1}</strong> et <strong>${j2}</strong>`;
-      else if(tour.soumis_j1&&!tour.soumis_j2) tourLabel=`⏳ En attente de <strong>${j2}</strong> — ${j1} a joué`;
-      else if(!tour.soumis_j1&&tour.soumis_j2) tourLabel=`⏳ En attente de <strong>${j1}</strong> — ${j2} a joué`;
-      else tourLabel='✓ Les deux ont soumis — résolution en cours';
+      const mode=m.mode_jeu||'rush';
+      if(mode==='classique'){
+        const ph=tour.classique_phase||'j1_turn';
+        const quiJoue=ph==='j1_turn'?j1:j2;
+        tourLabel=`🎯 <strong>${quiJoue}</strong> doit tirer (Classique · Tour ${tour.numero_tour})`;
+      }else{
+        if(!tour.soumis_j1&&!tour.soumis_j2) tourLabel=`⏳ En attente de <strong>${j1}</strong> et <strong>${j2}</strong>`;
+        else if(tour.soumis_j1&&!tour.soumis_j2) tourLabel=`⏳ En attente de <strong>${j2}</strong> — ${j1} a joué`;
+        else if(!tour.soumis_j1&&tour.soumis_j2) tourLabel=`⏳ En attente de <strong>${j1}</strong> — ${j2} a joué`;
+        else tourLabel='✓ Les deux ont soumis — résolution en cours';
+      }
     } else if(m.statut==='placement') tourLabel='⚓ Placement des flottes';
+
+    // Partie série (revanche/belle)
+    const partieLabel=m.partie_numero>1?`<span style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--gold);margin-left:6px">PARTIE ${m.partie_numero}</span>`:'';
+
     return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:6px">
         <div>
-          <div style="font-weight:700;font-size:.9rem">${j1} <span style="color:var(--text2);font-size:.75rem">vs</span> ${j2}</div>
-          <div style="font-family:'Orbitron',monospace;font-size:.52rem;color:${stCol};letter-spacing:1px;margin-top:3px">${phaseLabel} · ${m.statut.toUpperCase()}</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-weight:700;font-size:.9rem">${j1} <span style="color:var(--text2);font-size:.75rem">vs</span> ${j2}</span>
+            ${partieLabel}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:${stCol};letter-spacing:1px">${phaseLabel} · ${m.statut.toUpperCase()}</span>
+            ${modeBadge}
+          </div>
         </div>
-        <div style="text-align:right">
+        <div style="text-align:right;flex-shrink:0">
           <div style="font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:var(--cyan)">${tourNum}</div>
           <div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text2)">TOUR</div>
         </div>
       </div>
-      ${tourLabel?`<div style="font-size:.8rem;color:var(--text2);margin-bottom:8px">${tourLabel}</div>`:''}
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-sm" style="background:rgba(255,136,68,.15);border:1px solid var(--orange);color:var(--orange)"
-          onclick="adminAnnulerTourMatch('${m.id}')">🔄 ANNULER LE TOUR</button>
-        <button class="btn btn-sm" style="background:rgba(255,68,85,.15);border:1px solid var(--red);color:var(--red)"
-          onclick="adminSupprimerMatch('${m.id}')">🗑️ SUPPRIMER CE MATCH</button>
+      ${tourLabel?`<div style="font-size:.8rem;color:var(--text2);margin-bottom:10px">${tourLabel}</div>`:''}
+      <div style="display:flex;gap:8px;align-items:center">
+        <select class="urgence-select" id="urgence-sel-${m.id}">
+          <option value="">— Choisir une action —</option>
+          ${m.statut==='en_cours'?`<option value="annuler_tour">🔄 Annuler le tour en cours (rejouable)</option>`:''}
+          <option value="supprimer_match">🗑️ Supprimer ce match</option>
+        </select>
+        <button class="btn btn-danger btn-sm" onclick="execUrgenceAction('${m.id}')">▶ GO</button>
       </div>
     </div>`;
   }).join('');
+}
+
+async function execUrgenceAction(matchId){
+  const sel=document.getElementById(`urgence-sel-${matchId}`);
+  const action=sel?.value;
+  if(!action){alert('Choisissez une action.');return;}
+  if(action==='annuler_tour') await adminAnnulerTourMatch(matchId);
+  else if(action==='supprimer_match') await adminSupprimerMatch(matchId);
 }
 
 async function adminAnnulerTourMatch(matchId){
