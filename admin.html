@@ -1611,8 +1611,8 @@ function shuffle(arr) {
 
 function tirerPoules(joueurs) {
   const n=joueurs.length, mel=shuffle(joueurs);
-  const configs={2:[[2]],3:[[3]],4:[[4]],5:[[3,2]],6:[[3,3]],7:[[4,3]],8:[[4,4]]};
-  const tailles=configs[n]||[[n]];
+  const configs={2:[2],3:[3],4:[4],5:[3,2],6:[3,3],7:[4,3],8:[4,4]};
+  const tailles=configs[n]||[n];
   const poules=[];let idx=0;
   for(const taille of tailles){
     const groupe=mel.slice(idx,idx+taille).map(j=>({...j,bye:false}));
