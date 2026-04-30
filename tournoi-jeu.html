@@ -232,6 +232,91 @@ main{padding:12px}
 .rules-mode-item{padding:14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px}
 .rules-mode-header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
 .rules-mode-title{font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;letter-spacing:1px}
+
+/* ══ BATTLE HUD ══ */
+.battle-hud{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px}
+.hud-stat{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center}
+.hud-stat-val{font-family:'Orbitron',monospace;font-weight:900;font-size:1.05rem;line-height:1}
+.hud-stat-lbl{font-family:'Orbitron',monospace;font-size:.4rem;color:var(--text2);letter-spacing:1px;margin-top:3px;text-transform:uppercase}
+.hud-ship-icons{display:flex;gap:2px;justify-content:center;margin-top:4px;flex-wrap:wrap}
+.hud-ship-dot{width:7px;height:7px;border-radius:1px;background:var(--green)}
+.hud-ship-dot.sunk{background:var(--border);opacity:.5}
+.tour-log{margin-top:8px;padding-top:8px;border-top:1px solid var(--border2)}
+.tlog-title{font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text3);letter-spacing:2px;margin-bottom:5px}
+.tlog-row{display:flex;align-items:flex-start;gap:8px;padding:4px 0;border-bottom:1px solid rgba(26,47,74,.3)}
+.tlog-row:last-child{border-bottom:none}
+.tlog-turn{font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text3);letter-spacing:1px;min-width:26px;padding-top:2px}
+.tlog-shots{display:flex;gap:4px;flex-wrap:wrap}
+.tlog-shot{font-family:'Orbitron',monospace;font-size:.5rem;padding:2px 5px;border-radius:3px;letter-spacing:.3px;display:inline-flex;align-items:center;gap:2px}
+.tlog-miss{background:rgba(0,80,160,.15);color:var(--text3);border:1px solid rgba(26,47,74,.5)}
+.tlog-hit{background:rgba(255,136,68,.18);color:var(--orange);border:1px solid rgba(255,136,68,.3)}
+.tlog-sunk{background:rgba(255,68,85,.2);color:var(--red);border:1px solid rgba(255,68,85,.35);font-weight:700}
+.tlog-bonus{background:rgba(204,136,255,.18);color:var(--purple);border:1px solid rgba(204,136,255,.3)}
+.tlog-malus{background:rgba(255,136,68,.12);color:var(--orange);border:1px solid rgba(255,136,68,.25)}
+/* ══ SHIP TRACKER ══ */
+.ship-tracker{display:flex;flex-direction:column;gap:5px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border2)}
+.st-label{font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text3);letter-spacing:2px;margin-bottom:4px}
+.st-ship{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:5px;border:1px solid transparent}
+.st-ship.st-sunk{background:rgba(255,68,85,.06);border-color:rgba(255,68,85,.25)}
+.st-ship.st-hit{background:rgba(255,136,68,.06);border-color:rgba(255,136,68,.25)}
+.st-ship.st-ok{background:rgba(0,50,100,.15);border-color:var(--border2)}
+.st-icon{font-size:.95rem;width:22px;text-align:center;flex-shrink:0}
+.st-cells{display:flex;gap:3px;flex:1}
+.st-cell{width:10px;height:10px;border-radius:2px;border:1px solid rgba(26,47,74,.6);background:rgba(0,40,80,.3);flex-shrink:0}
+.st-cell.c-hit{background:rgba(255,136,68,.55);border-color:var(--orange)}
+.st-cell.c-sunk{background:rgba(255,68,85,.6);border-color:var(--red)}
+.st-status{font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:1px;white-space:nowrap;flex-shrink:0}
+.st-status.ss-ok{color:var(--text3)}.st-status.ss-hit{color:var(--orange)}.st-status.ss-sunk{color:var(--red);font-weight:700}
+/* ══ BRACKET VISUEL ══ */
+.bk-phase-label{display:flex;align-items:center;gap:10px;font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:3px;text-transform:uppercase;margin:14px 0 10px}
+.bk-phase-label::before,.bk-phase-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.bk-semis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0}
+.bk-connector{text-align:center;padding:8px 0;font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text3);letter-spacing:2px;display:flex;align-items:center;justify-content:center;gap:8px}
+.bk-connector::before,.bk-connector::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.bk-match{background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:0}
+.bk-match.is-me{border-color:rgba(0,212,255,.35);box-shadow:0 0 10px rgba(0,212,255,.06)}
+.bk-match-hdr{padding:6px 10px;background:rgba(0,0,0,.15);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:6px}
+.bk-match-lbl{font-family:'Orbitron',monospace;font-size:.44rem;color:var(--text3);letter-spacing:2px;white-space:nowrap}
+.bk-match-status{font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:1px;font-weight:700;white-space:nowrap}
+.bk-player{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-bottom:1px solid rgba(26,47,74,.4);gap:8px}
+.bk-player:last-child{border-bottom:none}
+.bk-player.bk-winner{background:rgba(245,200,66,.06)}
+.bk-player.bk-draw{background:rgba(0,212,255,.04)}
+.bk-player-left{display:flex;align-items:center;gap:6px;min-width:0;flex:1}
+.bk-player-name{font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk-player-score{font-family:'Orbitron',monospace;font-weight:900;font-size:.88rem;white-space:nowrap;flex-shrink:0}
+.bk-star{color:var(--gold);font-size:.7rem;flex-shrink:0}
+.bk-me-tag{font-family:'Orbitron',monospace;font-size:.4rem;color:var(--cyan);letter-spacing:1px;flex-shrink:0;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.25);padding:1px 4px;border-radius:3px}
+.bk-champion{text-align:center;padding:18px 16px;background:linear-gradient(135deg,rgba(245,200,66,.06),rgba(245,200,66,.03));border:1px solid rgba(245,200,66,.3);border-radius:8px;margin-top:10px}
+@media(max-width:360px){.bk-semis{grid-template-columns:1fr}}
+/* ══ ANIMATIONS FIN DE MATCH ══ */
+@keyframes goldFlash{0%{opacity:.55}15%{opacity:.8}100%{opacity:0}}
+@keyframes defeatDark{0%{opacity:0}30%{opacity:.55}100%{opacity:.72}}
+@keyframes titleSlam{0%{transform:translateY(-120px) scaleY(1.4) scaleX(.8);opacity:0}60%{transform:translateY(8px) scaleY(.88) scaleX(1.06);opacity:1}75%{transform:translateY(-4px) scaleY(1.04) scaleX(.98)}88%{transform:translateY(2px) scaleY(.98) scaleX(1.01)}100%{transform:translateY(0) scaleY(1) scaleX(1);opacity:1}}
+@keyframes subFadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes cardRise{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
+@keyframes defeatFadeIn{0%{opacity:0;filter:blur(6px) brightness(.4)}40%{opacity:.5;filter:blur(2px) brightness(.7)}100%{opacity:1;filter:blur(0) brightness(1)}}
+@keyframes confettiFall{0%{transform:translateY(-30px) rotate(0deg);opacity:1}80%{opacity:1}100%{transform:translateY(110vh) rotate(var(--rot,720deg));opacity:0}}
+@keyframes goldGlow{0%,100%{text-shadow:0 0 20px rgba(245,200,66,.6),0 0 60px rgba(245,200,66,.3)}50%{text-shadow:0 0 40px rgba(245,200,66,.9),0 0 80px rgba(245,200,66,.5)}}
+@keyframes starPop{0%{opacity:0;transform:scale(0) rotate(0deg)}50%{opacity:1;transform:scale(1.3) rotate(180deg)}100%{opacity:.8;transform:scale(1) rotate(360deg)}}
+#resultFlash{position:fixed;inset:0;z-index:450;pointer-events:none;background:var(--flash-bg,#f5c842);opacity:0}
+#defeatOverlay{position:fixed;inset:0;z-index:449;pointer-events:none;background:rgba(0,0,0,.0)}
+#confettiCanvas{position:fixed;inset:0;z-index:448;pointer-events:none;overflow:hidden}
+.cfti{position:absolute;top:0;width:9px;height:9px;border-radius:2px;animation:confettiFall var(--dur,3s) var(--delay,0s) ease-in forwards}
+.result-hero{text-align:center;padding:28px 16px 20px;position:relative;overflow:hidden}
+.result-hero-bg{position:absolute;inset:0;opacity:.04;background:radial-gradient(ellipse 80% 60% at 50% 30%,currentColor 0%,transparent 70%);pointer-events:none}
+.result-main-icon{font-size:72px;display:block;margin-bottom:6px;line-height:1;position:relative;z-index:1}
+.result-main-title{font-family:'Bebas Neue',sans-serif;letter-spacing:5px;line-height:.95;position:relative;z-index:1;display:block}
+.result-vs{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:2px;margin-top:8px;position:relative;z-index:1;opacity:0;animation:subFadeUp .4s ease forwards}
+.result-stats-card{opacity:0;animation:cardRise .5s ease forwards;animation-delay:.35s;animation-fill-mode:both}
+/* ══ MMR ══ */
+.mmr-badge{display:inline-flex;align-items:center;gap:6px;font-family:'Orbitron',monospace;font-size:.55rem;letter-spacing:2px;padding:5px 12px;border-radius:20px;margin-top:8px;font-weight:700}
+.mmr-iron{background:rgba(120,120,140,.15);border:1px solid rgba(120,120,140,.4);color:#9090a0}
+.mmr-bronze{background:rgba(180,100,40,.12);border:1px solid rgba(180,100,40,.4);color:#c87840}
+.mmr-silver{background:rgba(160,180,200,.12);border:1px solid rgba(160,180,200,.4);color:#b0c8dc}
+.mmr-gold{background:rgba(245,200,66,.14);border:1px solid rgba(245,200,66,.4);color:var(--gold)}
+.mmr-plat{background:rgba(180,120,255,.12);border:1px solid rgba(180,120,255,.4);color:#c890ff}
+.mmr-card{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -411,6 +496,7 @@ let MON_PROFIL=null;
 let PROFILS_CACHE={};
 let _pl={};
 let _shots={};
+let _mmrDelta=null;
 // Vote & mode state
 let _voteInitialized={};
 let _voteTimers={};
@@ -430,6 +516,11 @@ const GRADES=[
   {label:"Vice-amiral d'escadre",min:200},{label:'Amiral',min:215},
 ];
 const REWARDS_META={
+  // 🏆 ELO / MMR
+  mmr_silver:  {icon:'🥈',cat:'ELO',label:'Rang Argent',  desc:'Atteindre 1100 MMR',progress:null},
+  mmr_gold:    {icon:'🥇',cat:'ELO',label:'Rang Or',       desc:'Atteindre 1200 MMR',progress:null},
+  mmr_plat:    {icon:'💎',cat:'ELO',label:'Rang Platine',  desc:'Atteindre 1500 MMR',progress:null},
+  remontada:   {icon:'📈',cat:'ELO',label:'Remontada',     desc:'Gagner avec +150 MMR de moins',progress:null},
   // 🔰 Premières armes
   bapteme:        {icon:'🔰',cat:'Premières armes', label:'Baptême du feu',               desc:'Participer à son 1er match',                               progress:(p)=>({c:Math.min(p.matchs_joues,1),t:1})},
   premiere_salve: {icon:'💨',cat:'Premières armes', label:'Première salve',               desc:'Effectuer son premier tir en combat',                       progress:(p)=>({c:Math.min(p.matchs_joues,1),t:1})},
@@ -1499,8 +1590,43 @@ function renderBataille(match,el){
         ${match.partie_numero>1?`<div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--gold);letter-spacing:1px;margin-left:8px">PARTIE ${match.partie_numero}</div>`:''}
       </div>
       ${showScore?`
-      <div class="score-row">${playerTag(MOI.id,MOI.nom)}<div class="score-pts">${calcScore(mesTirs)}</div></div>
-      <div class="score-row">${playerTag(getAdvId(match),getAdvNom(match))}<div class="score-pts">${calcScore(sesTirs)}</div></div>`:''}
+      ${(()=>{
+        const signif=mesTirs.filter(t=>!['bonus','malus'].includes(t.result));
+        const precT=signif.filter(t=>['hit','sunk'].includes(t.result)).length;
+        const precD=signif.length;
+        const precPct=precD>=3?Math.round(precT/precD*100):null;
+        const shipsSunk=mesTirs.filter(t=>t.result==='sunk').length;
+        const shipsLost=sesTirs.filter(t=>t.result==='sunk').length;
+        const theirSunkKeys=new Set(mesTirs.filter(t=>t.result==='sunk').map(t=>t.shipKey));
+        const mySunkKeys=new Set(sesTirs.filter(t=>t.result==='sunk').map(t=>t.shipKey));
+        const theirDots=SHIP_KEYS.map(k=>`<div class="hud-ship-dot${theirSunkKeys.has(k)?' sunk':''}" title="${SHIPS[k].name}"></div>`).join('');
+        const myDots=SHIP_KEYS.map(k=>`<div class="hud-ship-dot${mySunkKeys.has(k)?' sunk':''}" title="${SHIPS[k].name}"></div>`).join('');
+        const precColor=precPct===null?'var(--text3)':precPct>=70?'var(--green)':precPct>=45?'var(--orange)':'var(--red)';
+        const byTurn={};mesTirs.forEach(t=>{const n=t.turn||0;if(!byTurn[n])byTurn[n]=[];byTurn[n].push(t);});
+        const recentTurns=Object.keys(byTurn).map(Number).sort((a,b)=>b-a).slice(0,4);
+        const ICONS={PA:'✈️',CU:'⚔️',CR:'🚢',SM:'🤿',TP:'🚤'};
+        const tourLogRows=recentTurns.map(n=>{
+          const rs=byTurn[n];
+          const sh=rs.map(t=>{
+            const cls={miss:'tlog-miss',hit:'tlog-hit',sunk:'tlog-sunk',bonus:'tlog-bonus',malus:'tlog-malus'}[t.result]||'tlog-miss';
+            const ic={miss:'🌊',hit:'💥',sunk:ICONS[t.shipKey]||'💀',bonus:'⭐',malus:'💣'}[t.result]||'🌊';
+            const ex={miss:'',hit:'',sunk:' COULÉ',bonus:'+2',malus:'-2'}[t.result]||'';
+            return`<span class="tlog-shot ${cls}">${t.coord} ${ic}${ex}</span>`;
+          }).join('');
+          const tp=rs.reduce((s,t)=>s+(t.pts||0),0);
+          const ptag=tp>0?`<span style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--green);margin-left:4px">+${tp}</span>`:tp<0?`<span style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--red);margin-left:4px">${tp}</span>`:'';
+          return`<div class="tlog-row"><span class="tlog-turn">T${n}${ptag}</span><div class="tlog-shots">${sh}</div></div>`;
+        }).join('');
+        return`<div class="battle-hud">
+          <div class="hud-stat"><div class="hud-stat-val" style="color:var(--cyan)">${tourNum}</div><div class="hud-stat-lbl">Tour</div></div>
+          <div class="hud-stat"><div class="hud-stat-val" style="color:${precColor}">${precPct===null?'—':precPct+'%'}</div><div class="hud-stat-lbl">Précision</div></div>
+          <div class="hud-stat"><div class="hud-stat-val" style="color:${shipsSunk>0?'var(--orange)':'var(--text2)'}">${shipsSunk}<span style="font-size:.58rem;color:var(--text3)">/5</span></div><div class="hud-stat-lbl">Coulés</div><div class="hud-ship-icons">${theirDots}</div></div>
+          <div class="hud-stat"><div class="hud-stat-val" style="color:${shipsLost>0?'var(--red)':'var(--text2)'}">${shipsLost}<span style="font-size:.58rem;color:var(--text3)">/5</span></div><div class="hud-stat-lbl">Perdus</div><div class="hud-ship-icons">${myDots}</div></div>
+        </div>
+        <div class="score-row" style="margin-bottom:5px">${playerTag(MOI.id,MOI.nom)}<div class="score-pts">${calcScore(mesTirs)}</div></div>
+        <div class="score-row">${playerTag(getAdvId(match),getAdvNom(match))}<div class="score-pts" style="color:var(--text2)">${calcScore(sesTirs)}</div></div>
+        ${recentTurns.length>0?`<div class="tour-log"><div class="tlog-title">↺ HISTORIQUE MES TIRS</div>${tourLogRows}</div>`:''}`;
+      })()}`:''}
     </div>
     ${opsPanel}
     <div class="card">
@@ -1511,6 +1637,7 @@ function renderBataille(match,el){
         ${myTurn?shotsLabel:(isClassique&&!myTurn?'':(myTurn?'':'Tirs soumis — en attente…'))}
       </div>
       <div class="grid-wrap">${buildGrid(match.id,'attack')}</div>
+      ${buildShipTracker(match.id)}
       <div id="alertB-${match.id}" class="alert" style="margin-top:8px"></div>
       ${myTurn?`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
         <button class="btn btn-gold" onclick="demanderConfirmTirs('${match.id}')" ${shots.length===3?'':'disabled'}>🎯 ENVOYER LES TIRS</button>
@@ -1544,6 +1671,29 @@ function renderBataille(match,el){
       </div>
     </div>`;
   }
+
+
+/* ══ SHIP TRACKER — flotte adverse ══ */
+function buildShipTracker(matchId){
+  const mesTirs=GRILLES[matchId]?.theirs?.tirs_recus||[];
+  const rows=SHIP_KEYS.map(k=>{
+    const ship=SHIPS[k];
+    const isSunk=mesTirs.some(t=>t.shipKey===k&&t.result==='sunk');
+    const hitsOnShip=mesTirs.filter(t=>t.shipKey===k&&['hit','sunk'].includes(t.result)).length;
+    const isHit=!isSunk&&hitsOnShip>0;
+    const stateClass=isSunk?'st-sunk':isHit?'st-hit':'st-ok';
+    const statusClass=isSunk?'ss-sunk':isHit?'ss-hit':'ss-ok';
+    const statusText=isSunk?'☠ COULÉ':isHit?`TOUCHÉ ${hitsOnShip}/?`:'—';
+    const cells=Array.from({length:ship.size},(_,i)=>{
+      let cls='st-cell';
+      if(isSunk)cls+=' c-sunk';
+      else if(i<hitsOnShip)cls+=' c-hit';
+      return`<div class="${cls}"></div>`;
+    }).join('');
+    return`<div class="st-ship ${stateClass}"><span class="st-icon">${ship.icon}</span><div class="st-cells">${cells}</div><span class="st-status ${statusClass}">${statusText}</span></div>`;
+  });
+  return`<div class="ship-tracker"><div class="st-label">FLOTTE ADVERSE</div>${rows.join('')}</div>`;
+}
 
 function onAttackClick(matchId,coord){
   const shots=_shots[matchId]||[],tirs=GRILLES[matchId]?.theirs?.tirs_recus||[];
@@ -2084,28 +2234,45 @@ function processShots(shots,placement,tirsAv,bonus,malus,turn){
 
 /* ══ MISE À JOUR PROFILS APRÈS MATCH ══ */
 async function updateProfils({match,vainqueur_id,draw,tirs_j1,tirs_j2,nb_tours}){
-  // Charger les tournoi_joueurs pour récupérer les profil_id
   const{data:joueurs}=await sb.from('tournoi_joueurs')
     .select('id,profil_id').in('id',[match.joueur1_id,match.joueur2_id]);
   if(!joueurs)return;
-
   const tj1=joueurs.find(j=>j.id===match.joueur1_id);
   const tj2=joueurs.find(j=>j.id===match.joueur2_id);
 
-  // Traiter chaque joueur
+  // ── Calcul MMR Elo ──
+  let mmrDelta1=0,mmrDelta2=0;
+  try{
+    const pids=[tj1?.profil_id,tj2?.profil_id].filter(Boolean);
+    if(pids.length===2){
+      const{data:profils}=await sb.from('joueur_profils').select('id,mmr,matchs_joues').in('id',pids);
+      const p1=profils?.find(p=>p.id===tj1.profil_id);
+      const p2=profils?.find(p=>p.id===tj2.profil_id);
+      if(p1&&p2){
+        const mmr1=p1.mmr??1000,mmr2=p2.mmr??1000;
+        const K1=((p1.matchs_joues||0)<10)?50:32,K2=((p2.matchs_joues||0)<10)?50:32;
+        const E1=1/(1+Math.pow(10,(mmr2-mmr1)/400)),E2=1-E1;
+        const S1=draw?.5:vainqueur_id===match.joueur1_id?1:0;
+        const S2=draw?.5:vainqueur_id===match.joueur2_id?1:0;
+        const d1=Math.round(K1*(S1-E1)),d2=Math.round(K2*(S2-E2));
+        mmrDelta1=S1===1&&mmr1<=mmr2-150?{delta:d1,remontada:match.joueur1_id}:d1;
+        mmrDelta2=S2===1&&mmr2<=mmr1-150?{delta:d2,remontada:match.joueur2_id}:d2;
+      }
+    }
+  }catch(e){console.warn('MMR calc error',e);}
+
   const jobs=[];
-  if(tj1?.profil_id) jobs.push(updateUnProfil(tj1.profil_id,'j1',{vainqueur_id,draw,match,tirs:tirs_j1,tirs_adv:tirs_j2,nb_tours}));
-  if(tj2?.profil_id) jobs.push(updateUnProfil(tj2.profil_id,'j2',{vainqueur_id,draw,match,tirs:tirs_j2,tirs_adv:tirs_j1,nb_tours}));
+  if(tj1?.profil_id) jobs.push(updateUnProfil(tj1.profil_id,'j1',{vainqueur_id,draw,match,tirs:tirs_j1,tirs_adv:tirs_j2,nb_tours,mmrDelta:mmrDelta1}));
+  if(tj2?.profil_id) jobs.push(updateUnProfil(tj2.profil_id,'j2',{vainqueur_id,draw,match,tirs:tirs_j2,tirs_adv:tirs_j1,nb_tours,mmrDelta:mmrDelta2}));
   await Promise.all(jobs);
 
-  // Rafraîchir le profil du joueur courant si concerné
   if(MOI.profil_id&&(tj1?.profil_id===MOI.profil_id||tj2?.profil_id===MOI.profil_id)){
     const{data:p}=await sb.from('joueur_profils').select('*').eq('id',MOI.profil_id).maybeSingle();
     if(p)MON_PROFIL=p;
   }
 }
 
-async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_adv,nb_tours}){
+async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_adv,nb_tours,mmrDelta=0}){
   // Charger le profil actuel
   const{data:p}=await sb.from('joueur_profils').select('*').eq('id',profilId).maybeSingle();
   if(!p)return;
@@ -2240,6 +2407,16 @@ async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_a
     }
   }catch(e){}
 
+  // ── MMR ──
+  const deltaVal=typeof mmrDelta==='object'?mmrDelta.delta:mmrDelta;
+  const hasRemontada=typeof mmrDelta==='object'&&mmrDelta.remontada===joueurId;
+  const oldMmr=p.mmr??1000;
+  const newMmr=Math.max(100,oldMmr+deltaVal);
+  if(hasRemontada) rewExisting.add('remontada');
+  if(newMmr>=1100) rewExisting.add('mmr_silver');
+  if(newMmr>=1200) rewExisting.add('mmr_gold');
+  if(newMmr>=1500) rewExisting.add('mmr_plat');
+
   // Sauvegarder
   await sb.from('joueur_profils').update({
     matchs_joues, victoires, defaites, egalites,
@@ -2248,6 +2425,7 @@ async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_a
     premier_tir_touches, coule_premier_tour,
     recompenses:[...rewExisting],
     grade_cache:getGrade(victoires),
+    mmr:newMmr,
     updated_at:new Date().toISOString(),
   }).eq('id',profilId);
 
@@ -2257,6 +2435,11 @@ async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_a
     const nouveauGrade=getGrade(victoires);
     if(nouveauGrade!==ancienGrade){
       setTimeout(()=>showUnlockToast(`⚓ NOUVEAU GRADE : ${nouveauGrade}`,'var(--gold)'),3000);
+    }
+    if(deltaVal!==0){
+      _mmrDelta=deltaVal;
+      const mmrSign=deltaVal>0?'+':'';const mmrColor=deltaVal>0?'var(--green)':'var(--red)';
+      setTimeout(()=>showUnlockToast(`⚡ MMR : ${mmrSign}${deltaVal}  (${newMmr} pts)`,mmrColor),2200);
     }
     const nouvelles=[...rewExisting].filter(k=>!(p.recompenses||[]).includes(k));
     nouvelles.forEach((k,i)=>{
@@ -2395,47 +2578,144 @@ function renderResultat(match,el){
     }
   }
 
-  el.innerHTML=`<div class="card result-screen">
-    ${renderModeBanner(match.id)}
-    <span class="result-icon">${draw?'🤝':won?'🏆':'💀'}</span>
-    <div class="result-title" style="color:${draw?'var(--cyan)':won?'var(--gold)':'var(--red)'}">${draw?'ÉGALITÉ':won?'VICTOIRE !':'DÉFAITE'}</div>
-    <div style="color:var(--text2);margin-bottom:16px;font-size:.9rem">vs <strong style="color:var(--text)">${esc(getAdvNom(match))}</strong>
+  // Précision finale
+  const sigTirs=mesTirs.filter(t=>!['bonus','malus'].includes(t.result));
+  const precFin=sigTirs.length>=3?Math.round(sigTirs.filter(t=>['hit','sunk'].includes(t.result)).length/sigTirs.length*100):null;
+  const titleColor=won?'var(--gold)':draw?'var(--cyan)':'var(--red)';
+  const titleText=won?'VICTOIRE !':draw?'ÉGALITÉ':'DÉFAITE';
+  const titleIcon=won?'🏆':draw?'🤝':'☠️';
+  const titleAnim=won?'animation:titleSlam .55s cubic-bezier(.17,.67,.3,1.35) forwards':draw?'animation:subFadeUp .6s ease forwards':'animation:defeatFadeIn 1.2s ease forwards';
+  const titleSize=won?'3rem':draw?'2.2rem':'2.5rem';
+  const titleGlow=won?'animation:goldGlow 2s ease-in-out 0.6s infinite':'';
+
+  el.innerHTML=`
+  ${renderModeBanner(match.id)}
+  <div class="card result-hero" style="color:${titleColor}">
+    <div class="result-hero-bg"></div>
+    <span class="result-main-icon">${titleIcon}</span>
+    <span class="result-main-title" style="font-size:${titleSize};color:${titleColor};${titleAnim};${titleGlow}">${titleText}</span>
+    <div class="result-vs" style="animation-delay:.25s">
+      VS &nbsp;<strong style="color:var(--text);font-size:.68rem">${esc(getAdvNom(match))}</strong>
       ${partieNum>1?`<span style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--gold);margin-left:8px">PARTIE ${partieNum}</span>`:''}
     </div>
+  </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+  <div class="card result-stats-card">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px">
       ${['rush','classique'].includes(mode)?`
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
-        <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:${won?'var(--gold)':'var(--red)'}">${myPts} pts</div>
-        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);margin-top:2px">MON SCORE</div>
+      <div style="background:var(--bg3);border:1px solid ${won?'rgba(245,200,66,.25)':'var(--border)'};border-radius:7px;padding:11px 8px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:${won?'var(--gold)':'var(--red)'}">
+          ${myPts}<span style="font-size:.6rem;color:var(--text3)"> pts</span>
+        </div>
+        <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-top:3px;letter-spacing:1px">MON SCORE</div>
       </div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
-        <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--text2)">${advPts} pts</div>
-        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);margin-top:2px">ADV. SCORE</div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:11px 8px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:var(--text3)">
+          ${advPts}<span style="font-size:.6rem;color:var(--text3)"> pts</span>
+        </div>
+        <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-top:3px;letter-spacing:1px">ADV. SCORE</div>
       </div>`:''}
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
-        <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:900;color:var(--orange)">${mesBateauxCoules}</div>
-        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);margin-top:2px">COULÉS</div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:11px 8px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:900;color:var(--orange)">${mesBateauxCoules}<span style="font-size:.58rem;color:var(--text3)">/5</span></div>
+        <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-top:3px;letter-spacing:1px">COULÉS</div>
       </div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:11px 8px;text-align:center">
         <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:900;color:var(--cyan)">${nbTours}</div>
-        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);margin-top:2px">TOURS</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-top:3px;letter-spacing:1px">TOURS</div>
       </div>
+      ${_mmrDelta!==null?`<div style="background:var(--bg3);border:1px solid ${_mmrDelta>=0?'rgba(0,232,120,.25)':'rgba(255,68,85,.25)'};border-radius:7px;padding:11px 8px;text-align:center;grid-column:span 2">
+        <div style="font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:${_mmrDelta>=0?'var(--green)':'var(--red)'}">
+          ${_mmrDelta>=0?'+':''}${_mmrDelta}
+        </div>
+        <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-top:3px;letter-spacing:1px">MMR</div>
+      </div>`:''}
     </div>
 
-    ${(myBonus||myMalus)?`<div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text2);text-align:center;margin-bottom:12px">
-      ${myBonus?`<span style="color:var(--purple)">+${myBonus} bonus</span>`:''}
-      ${myMalus?`<span style="color:var(--orange);margin-left:8px">−${myMalus} malus</span>`:''}
+    ${precFin!==null?`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);letter-spacing:1.5px">PRÉCISION FINALE</span>
+      <span style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:${precFin>=70?'var(--green)':precFin>=45?'var(--orange)':'var(--red)'}">${precFin}%</span>
+    </div>`:''}
+
+    ${(myBonus||myMalus)?`<div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);text-align:center;margin-bottom:10px;display:flex;justify-content:center;gap:12px">
+      ${myBonus?`<span style="color:var(--purple)">⭐ +${myBonus} bonus</span>`:''}
+      ${myMalus?`<span style="color:var(--orange)">💣 −${myMalus} malus</span>`:''}
     </div>`:''}
 
     ${revancheHtml}
 
-    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px">
-      <button class="btn btn-outline btn-sm" onclick="goTab('poule')">🏅 VOIR LA POULE</button>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:10px">
+      <button class="btn btn-outline btn-sm" onclick="goTab('poule')">🏅 POULE</button>
       <button class="btn btn-outline btn-sm" onclick="goTab('tournoi')">🏆 BRACKET</button>
-      ${nextMatch?`<button class="btn btn-gold btn-sm" onclick="goTab('match-${nextMatch.id}')">⚔️ MON PROCHAIN MATCH →</button>`:''}
+      ${nextMatch?`<button class="btn btn-gold btn-sm" onclick="goTab('match-${nextMatch.id}')">⚔️ PROCHAIN MATCH →</button>`:''}
     </div>
   </div>`;
+
+  if(won)       triggerVictoire();
+  else if(draw) triggerEgalite();
+  else          triggerDefaite();
+}
+
+/* ── VICTOIRE : flash + confetti ── */
+function triggerVictoire(){
+  const flash=document.getElementById('resultFlash');
+  if(flash){flash.style.setProperty('--flash-bg','rgba(245,200,66,.95)');flash.style.animation='none';flash.offsetWidth;flash.style.animation='goldFlash .7s ease-out forwards';}
+  const COLORS=['#f5c842','#00d4ff','#00e878','#cc88ff','#ff8844','#ffffff','#ff4455'];
+  const canvas=document.getElementById('confettiCanvas');
+  if(!canvas)return;
+  canvas.innerHTML='';
+  for(let i=0;i<60;i++){
+    const p=document.createElement('div');p.className='cfti';
+    const color=COLORS[Math.floor(Math.random()*COLORS.length)];
+    const left=Math.random()*100,delay=(Math.random()*1.2).toFixed(2),dur=(2.5+Math.random()*1.8).toFixed(2);
+    const rot=Math.round(360+Math.random()*720)*(Math.random()>.5?1:-1);
+    const w=6+Math.round(Math.random()*7),h=6+Math.round(Math.random()*10),br=Math.random()>.5?'50%':'2px';
+    p.style.cssText=`left:${left}%;background:${color};width:${w}px;height:${h}px;border-radius:${br};--dur:${dur}s;--delay:${delay}s;--rot:${rot}deg;animation-delay:${delay}s`;
+    canvas.appendChild(p);
+  }
+  setTimeout(()=>{if(canvas)canvas.innerHTML='';},5500);
+  playSoundVictoire();
+}
+function triggerEgalite(){
+  const flash=document.getElementById('resultFlash');
+  if(flash){flash.style.setProperty('--flash-bg','rgba(0,212,255,.5)');flash.style.animation='none';flash.offsetWidth;flash.style.animation='goldFlash .5s ease-out forwards';}
+}
+function triggerDefaite(){
+  const ov=document.getElementById('defeatOverlay');
+  if(ov){ov.style.background='rgba(0,0,0,0)';ov.style.animation='none';ov.offsetWidth;ov.style.animation='defeatDark 2.5s ease forwards';
+    setTimeout(()=>{if(ov)ov.style.animation='defeatDark 1.5s ease reverse forwards';},3500);
+    setTimeout(()=>{if(ov){ov.style.animation='none';ov.style.background='rgba(0,0,0,0)';}},5200);}
+  const flash=document.getElementById('resultFlash');
+  if(flash){flash.style.setProperty('--flash-bg','rgba(255,30,30,.7)');flash.style.animation='none';flash.offsetWidth;flash.style.animation='goldFlash .4s ease-out forwards';}
+  playSoundNaufrage();
+}
+function getAudioCtx(){try{return new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}}
+function playSoundVictoire(){
+  const ctx=getAudioCtx();if(!ctx)return;const t=ctx.currentTime;
+  [[523.25,0],[659.25,.12],[783.99,.24],[1046.5,.38]].forEach(([freq,delay])=>{
+    const osc=ctx.createOscillator(),g=ctx.createGain();osc.connect(g);g.connect(ctx.destination);
+    osc.frequency.value=freq;osc.type='sine';
+    g.gain.setValueAtTime(0,t+delay);g.gain.linearRampToValueAtTime(.18,t+delay+.04);g.gain.exponentialRampToValueAtTime(.001,t+delay+.5);
+    osc.start(t+delay);osc.stop(t+delay+.55);
+  });
+  const shi=ctx.createOscillator(),shig=ctx.createGain();shi.connect(shig);shig.connect(ctx.destination);
+  shi.frequency.value=2093;shi.type='sine';
+  shig.gain.setValueAtTime(0,t+.5);shig.gain.linearRampToValueAtTime(.08,t+.55);shig.gain.exponentialRampToValueAtTime(.001,t+1.1);
+  shi.start(t+.5);shi.stop(t+1.15);
+}
+function playSoundNaufrage(){
+  const ctx=getAudioCtx();if(!ctx)return;const t=ctx.currentTime;
+  const osc1=ctx.createOscillator(),g1=ctx.createGain();osc1.connect(g1);g1.connect(ctx.destination);
+  osc1.type='sawtooth';osc1.frequency.setValueAtTime(180,t);osc1.frequency.exponentialRampToValueAtTime(35,t+2.5);
+  g1.gain.setValueAtTime(.22,t);g1.gain.linearRampToValueAtTime(.28,t+.3);g1.gain.exponentialRampToValueAtTime(.001,t+2.8);
+  osc1.start(t);osc1.stop(t+3);
+  const osc2=ctx.createOscillator(),g2=ctx.createGain();osc2.connect(g2);g2.connect(ctx.destination);
+  osc2.type='sine';osc2.frequency.setValueAtTime(80,t);osc2.frequency.exponentialRampToValueAtTime(28,t+1.5);
+  g2.gain.setValueAtTime(.35,t);g2.gain.exponentialRampToValueAtTime(.001,t+2.2);osc2.start(t);osc2.stop(t+2.5);
+  for(let i=0;i<6;i++){const delay=.4+i*.28+Math.random()*.2;
+    const osc3=ctx.createOscillator(),g3=ctx.createGain();osc3.connect(g3);g3.connect(ctx.destination);
+    osc3.type='sine';osc3.frequency.value=600+Math.random()*400;
+    g3.gain.setValueAtTime(0,t+delay);g3.gain.linearRampToValueAtTime(.07,t+delay+.025);g3.gain.exponentialRampToValueAtTime(.001,t+delay+.18);
+    osc3.start(t+delay);osc3.stop(t+delay+.2);}
 }
 
 function renderRevanchePanel(match,myRevanche,advRevanche,mySerieWins,advSerieWins,title,role){
@@ -2692,7 +2972,7 @@ async function renderProfil(profilId){
   }
 
   // Grouper par catégorie
-  const cats=['Premières armes','Précision','Puissance','Régularité','Exploits'];
+  const cats=['ELO','Premières armes','Précision','Puissance','Régularité','Exploits'];
   cats.forEach(cat=>{
     const entries=Object.entries(REWARDS_META).filter(([,m])=>m.cat===cat);
     h+=`<div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text2);letter-spacing:2px;margin:10px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">${cat.toUpperCase()}</div>`;
@@ -2994,32 +3274,32 @@ async function renderTournoi(){
 
   // ── PHASES FINALES ──
   if(demiMatchs.length>0||finaleMatch){
-    h+=`<div class="card"><div class="card-title">⚔️ Phases finales</div>`;
-
-    // Demi-finales
+    h+=`<div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;flex-wrap:wrap;gap:6px">
+        <div class="card-title" style="margin:0">⚔️ Phases finales</div>
+        <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:${statutColor};letter-spacing:2px;font-weight:700">${statutLabel}</span>
+      </div>`;
     if(demiMatchs.length>0){
-      h+=`<div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:2px;margin-bottom:10px">DEMI-FINALES</div>`;
-      demiMatchs.forEach((m,i)=>{
-        h+=bracketMatchCard(m,nomById,i+1,'Demi-finale');
-      });
+      h+=`<div class="bk-phase-label"><span style="color:var(--text2)">DEMI-FINALES</span></div><div class="bk-semis">`;
+      demiMatchs.forEach((m,i)=>{h+=bracketMatchCard(m,nomById,i+1,'Demi-finale');});
+      h+=`</div>`;
     }
-
-    // Finale
+    if(demiMatchs.length>0&&finaleMatch){
+      h+=`<div class="bk-connector">▼ QUALIFIÉS POUR LA FINALE ▼</div>`;
+    }
     if(finaleMatch){
-      h+=`<div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--gold);letter-spacing:2px;margin:14px 0 10px">FINALE</div>`;
+      h+=`<div class="bk-phase-label"><span style="color:var(--gold)">★ FINALE ★</span></div>`;
       h+=bracketMatchCard(finaleMatch,nomById,null,'Finale');
     }
-
-    // Champion
     if(tData?.statut==='terminé'&&finaleMatch?.vainqueur_id){
       const champNom=nomById[finaleMatch.vainqueur_id]||'?';
-      h+=`<div style="text-align:center;padding:16px;background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.3);border-radius:8px;margin-top:12px">
-        <div style="font-size:36px;margin-bottom:8px">🏆</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--gold)">CHAMPION</div>
-        <div style="font-size:1.1rem;font-weight:700;color:var(--text);margin-top:4px">${esc(champNom)}</div>
+      h+=`<div class="bk-champion">
+        <div style="font-size:44px;margin-bottom:8px;filter:drop-shadow(0 0 16px rgba(245,200,66,.5))">🏆</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:4px;margin-bottom:6px">CHAMPION DU TOURNOI</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:4px;color:var(--gold);text-shadow:0 0 20px rgba(245,200,66,.4)">${esc(champNom)}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:4px;margin-top:6px;opacity:.7">⭐ ⭐ ⭐</div>
       </div>`;
     }
-
     h+=`</div>`;
   }
 
@@ -3031,26 +3311,31 @@ function bracketMatchCard(m,nomById,num,label){
   const j2Nom=nomById[m.joueur2_id]||'?';
   const isDone=m.statut==='terminé';
   const isMe=m.joueur1_id===MOI.id||m.joueur2_id===MOI.id;
-  const stCol={en_attente:'var(--text2)',placement:'var(--text2)',en_cours:'var(--cyan)',terminé:'var(--gold)'}[m.statut];
-  const stLbl={en_attente:'EN ATTENTE',placement:'PLACEMENT',en_cours:'EN COURS',terminé:'TERMINÉ'}[m.statut];
   const w=m.vainqueur_id;
-
-  return `<div style="background:${isMe?'rgba(14,165,233,.04)':'var(--bg3)'};border:1px solid ${isMe?'rgba(14,165,233,.3)':'var(--border)'};border-radius:8px;padding:12px;margin-bottom:8px">
-    ${num?`<div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1.5px;margin-bottom:8px">${label.toUpperCase()} ${num}</div>`:''}
-    <div style="display:flex;flex-direction:column;gap:6px">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <span style="font-weight:700;font-size:.95rem;color:${w===m.joueur1_id?'var(--gold)':w&&w!==m.joueur1_id?'var(--text2)':'var(--text)'}">${esc(j1Nom)}${m.joueur1_id===MOI.id?' <span style="font-size:.6rem;color:var(--cyan)">◀</span>':''}</span>
-        ${isDone?`<span style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;color:${w===m.joueur1_id?'var(--green)':'var(--red)'}">${m.pts_j1||0}pts</span>`:''}
+  const isDraw=isDone&&!w;
+  const stCol={en_attente:'var(--text3)',placement:'var(--text3)',en_cours:'var(--cyan)',terminé:'var(--green)'}[m.statut]||'var(--text3)';
+  const stLbl={en_attente:'EN ATTENTE',placement:'⚓ PLACEMENT',en_cours:'⚡ EN COURS',terminé:'✓ TERMINÉ'}[m.statut]||'—';
+  function playerRow(joueurId,nom,pts,won,draw){
+    const isMe2=joueurId===MOI.id;
+    const nameColor=won?'var(--gold)':draw?'var(--cyan)':isDone?'var(--text2)':'var(--text)';
+    const scoreColor=won?'var(--green)':draw?'var(--cyan)':'var(--text3)';
+    return`<div class="bk-player${won?' bk-winner':draw?' bk-draw':''}">
+      <div class="bk-player-left">
+        ${won?`<span class="bk-star">★</span>`:`<span style="width:12px;display:inline-block;flex-shrink:0"></span>`}
+        <span class="bk-player-name" style="color:${nameColor}">${esc(nom)}</span>
+        ${isMe2?`<span class="bk-me-tag">MOI</span>`:''}
+        ${isMe2&&!isDone?`<span style="font-family:'Orbitron',monospace;font-size:.42rem;color:var(--cyan)">◀</span>`:''}
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <span style="font-weight:700;font-size:.95rem;color:${w===m.joueur2_id?'var(--gold)':w&&w!==m.joueur2_id?'var(--text2)':'var(--text)'}">${esc(j2Nom)}${m.joueur2_id===MOI.id?' <span style="font-size:.6rem;color:var(--cyan)">◀</span>':''}</span>
-        ${isDone?`<span style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;color:${w===m.joueur2_id?'var(--green)':'var(--red)'}">${m.pts_j2||0}pts</span>`:''}
-      </div>
+      ${isDone?`<span class="bk-player-score" style="color:${scoreColor}">${pts||0}<span style="font-size:.55rem;color:var(--text3)"> pts</span></span>`:''}
+    </div>`;
+  }
+  return`<div class="bk-match${isMe?' is-me':''}">
+    <div class="bk-match-hdr">
+      <span class="bk-match-lbl">${num?label.toUpperCase()+' '+num:label.toUpperCase()}</span>
+      <span class="bk-match-status" style="color:${stCol}">${stLbl}${isMe&&!isDone?' · TON MATCH':''}</span>
     </div>
-    <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between">
-      <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:${stCol};letter-spacing:1.5px;font-weight:700">${stLbl}</span>
-      ${isMe&&!isDone?`<span style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--cyan)">TON MATCH !</span>`:''}
-    </div>
+    ${playerRow(m.joueur1_id,j1Nom,m.pts_j1,w===m.joueur1_id,isDraw)}
+    ${playerRow(m.joueur2_id,j2Nom,m.pts_j2,w===m.joueur2_id,isDraw)}
   </div>`;
 }
 
@@ -3178,5 +3463,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
         .catch(e=>{ clearTimeout(loadTimeout); showError('Erreur : '+e.message); });
 });
 </script>
+
+<div id="resultFlash"></div>
+<div id="defeatOverlay"></div>
+<div id="confettiCanvas"></div>
 </body>
 </html>
