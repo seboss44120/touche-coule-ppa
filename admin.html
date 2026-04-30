@@ -1681,8 +1681,11 @@ async function adminRegenererMatchs(){
     }
 
     // Recharger les joueurs inscrits
-    const{data:jData}=await sbT.from('tournoi_joueurs').select('*').eq('tournoi_id',TOURNOI.id).not('nom','is',null);
-    const inscrits=jData||[];
+    const{data:jData,error:errJ2}=await sbT.from('tournoi_joueurs').select('*').eq('tournoi_id',TOURNOI.id);
+    console.log('[REGEN] joueurs raw:', jData, 'erreur:', errJ2, 'tournoi_id:', TOURNOI.id);
+    if(errJ2){showErr('Erreur lecture joueurs : '+errJ2.message);return;}
+    const inscrits=(jData||[]).filter(j=>!!j.nom);
+    console.log('[REGEN] inscrits avec nom:', inscrits.length, inscrits.map(j=>j.nom));
 
     if(inscrits.length<2){showErr('Aucun joueur trouvé (tournoi id: '+TOURNOI.id+'). Vérifiez les doublons dans tournois.');return;}
     if(alertEl)alertEl.textContent='Tirage des poules… ('+inscrits.length+' joueurs)';
