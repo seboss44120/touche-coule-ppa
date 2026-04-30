@@ -158,165 +158,6 @@ main{padding:12px}
 .tac-screen.compact .tac-reticle svg{width:50px;height:50px}
 /* Tooltip coordonnées */
 .coord-tooltip{position:fixed;background:#0a1628;border:1px solid var(--gold);color:var(--gold);font-family:'Orbitron',monospace;font-size:.6rem;letter-spacing:2px;padding:3px 8px;border-radius:4px;pointer-events:none;z-index:300;display:none}
-
-/* ══ OPÉRATIONS SPÉCIALES ══ */
-.gc.radar-center{background:rgba(0,212,255,.28)!important;border-color:var(--cyan)!important;box-shadow:0 0 8px rgba(0,212,255,.4)}
-.gc.radar-zone{background:rgba(0,212,255,.08)!important;border-color:rgba(0,212,255,.35)!important}
-.gc.torpille-sel{background:rgba(255,100,50,.28)!important;border-color:#ff6432!important;box-shadow:0 0 6px rgba(255,100,50,.4)}
-.gc.fog-cell{background:rgba(120,100,200,.3)!important;border-color:#8866cc!important}
-@keyframes fogPulse{0%,100%{opacity:.7}50%{opacity:1}}
-.gc.fog-cell{animation:fogPulse 1.6s ease-in-out infinite}
-.ops-panel{background:linear-gradient(135deg,#090f1e,#0c1424);border-color:#1a2a50!important}
-.pouvoir-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:5px;font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:1px;font-weight:700;border:1px solid}
-.pb-radar{background:rgba(0,212,255,.1);border-color:var(--cyan);color:var(--cyan)}
-.pb-torpille{background:rgba(255,100,50,.1);border-color:#ff6432;color:#ff6432}
-.pb-brouillard{background:rgba(136,102,221,.1);border-color:#8866dd;color:#8866dd}
-.pb-used{background:rgba(80,80,80,.08);border-color:#333;color:#555;text-decoration:line-through}
-.ops-btn{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.78rem;padding:7px 14px;border-radius:6px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:all .18s;display:inline-flex;align-items:center;justify-content:center;gap:5px;width:100%;border:1px solid}
-.ops-btn-radar{background:rgba(0,212,255,.12);border-color:var(--cyan);color:var(--cyan)}
-.ops-btn-radar:hover{background:rgba(0,212,255,.22)}
-.ops-btn-torpille{background:rgba(255,100,50,.12);border-color:#ff6432;color:#ff6432}
-.ops-btn-brouillard{background:rgba(136,102,221,.12);border-color:#8866dd;color:#8866dd}
-.ops-btn-brouillard.active{background:rgba(136,102,221,.28);box-shadow:0 0 10px rgba(136,102,221,.35)}
-.ops-btn:disabled{opacity:.3;cursor:default}
-.ops-btn:not(:last-child){margin-bottom:6px}
-.radar-result{background:#060d16;border:1px solid rgba(0,212,255,.3);border-radius:5px;padding:8px 10px;margin-top:6px;font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:1px}
-.torpille-hint{font-family:'Orbitron',monospace;font-size:.5rem;color:#ff6432;letter-spacing:1px;margin-bottom:6px;padding:4px 8px;border:1px solid rgba(255,100,50,.25);border-radius:4px;background:rgba(255,100,50,.06)}
-.step-ops{border-color:rgba(160,136,255,.45)!important;color:#a78bfa!important;background:rgba(160,136,255,.04)!important}
-.step-ops.active{background:rgba(160,136,255,.1)!important}
-.step-ops.done{border-color:#a78bfa!important}
-.pouvoir-option{padding:12px;border-radius:8px;cursor:pointer;border:2px solid var(--border);background:var(--bg3);transition:all .15s;user-select:none;margin-bottom:8px}
-.pouvoir-option:hover{border-color:var(--text2)}
-.pouvoir-option.sel-radar{border-color:var(--cyan);background:rgba(0,212,255,.07)}
-.pouvoir-option.sel-torpille{border-color:#ff6432;background:rgba(255,100,50,.07)}
-.pouvoir-option.sel-brouillard{border-color:#8866dd;background:rgba(136,102,221,.07)}
-
-
-.vote-section{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.25);border-radius:8px;padding:12px;margin-bottom:14px}
-.vote-title{font-family:'Orbitron',monospace;font-size:.62rem;color:var(--cyan);letter-spacing:2px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
-.vote-timer{font-family:'Orbitron',monospace;font-size:.72rem;font-weight:900;color:var(--gold)}
-.vote-timer.urgent{color:var(--red);animation:goldblink .5s ease-in-out infinite}
-.mode-vote-grid{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-.mode-vote-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;cursor:pointer;transition:all .15s;text-align:left;width:100%}
-.mode-vote-btn:hover{border-color:var(--cyan);background:rgba(0,212,255,.06)}
-.mode-vote-btn.selected{border-color:var(--gold);background:rgba(245,200,66,.08)}
-.mode-vote-btn.winner{border-color:var(--green);background:rgba(0,232,120,.07)}
-.mode-vote-icon{font-size:1.4rem;flex-shrink:0}
-.mode-vote-name{font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;letter-spacing:1px;color:var(--text)}
-.mode-vote-desc{font-size:.75rem;color:var(--text2);margin-top:2px;line-height:1.4}
-.vote-status{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1.5px;margin-top:8px;text-align:center}
-.vote-adv-voted{color:var(--green)}
-
-/* ══ MODE BANNER ══ */
-.mode-banner{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:10px;border:1px solid;position:relative;cursor:pointer}
-.mode-banner-icon{font-size:1.3rem}
-.mode-banner-label{font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;letter-spacing:1.5px}
-.mode-banner-desc{font-size:.75rem;color:var(--text2);margin-top:1px}
-.mode-banner-info{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text2);border:1px solid var(--border);border-radius:4px;padding:2px 6px}
-
-/* ══ CLASSIQUE TOUR ══ */
-.classique-waiting{text-align:center;padding:20px;background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.15);border-radius:8px;margin:10px 0}
-.classique-your-turn{background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.3)}
-
-/* ══ REVANCHE ══ */
-.revanche-panel{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:12px;text-align:center}
-.revanche-title{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--cyan);margin-bottom:8px}
-.serie-score{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:14px}
-.serie-pts{font-family:'Orbitron',monospace;font-size:2rem;font-weight:900}
-.serie-label{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1px;margin-top:2px}
-.revanche-status{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:1.5px;margin:8px 0;min-height:20px}
-.revanche-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
-.revanche-refused{color:var(--red);font-family:'Orbitron',monospace;font-size:.6rem;letter-spacing:1px;padding:10px}
-
-/* ══ MODAL RÈGLES ══ */
-.rules-mode-item{padding:14px;border:1px solid var(--border);border-radius:7px;margin-bottom:8px}
-.rules-mode-header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
-.rules-mode-title{font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;letter-spacing:1px}
-
-/* ══ BATTLE HUD ══ */
-.battle-hud{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px}
-.hud-stat{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center}
-.hud-stat-val{font-family:'Orbitron',monospace;font-weight:900;font-size:1.05rem;line-height:1}
-.hud-stat-lbl{font-family:'Orbitron',monospace;font-size:.4rem;color:var(--text2);letter-spacing:1px;margin-top:3px;text-transform:uppercase}
-.hud-ship-icons{display:flex;gap:2px;justify-content:center;margin-top:4px;flex-wrap:wrap}
-.hud-ship-dot{width:7px;height:7px;border-radius:1px;background:var(--green)}
-.hud-ship-dot.sunk{background:var(--border);opacity:.5}
-.tour-log{margin-top:8px;padding-top:8px;border-top:1px solid var(--border2)}
-.tlog-title{font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text3);letter-spacing:2px;margin-bottom:5px}
-.tlog-row{display:flex;align-items:flex-start;gap:8px;padding:4px 0;border-bottom:1px solid rgba(26,47,74,.3)}
-.tlog-row:last-child{border-bottom:none}
-.tlog-turn{font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text3);letter-spacing:1px;min-width:26px;padding-top:2px}
-.tlog-shots{display:flex;gap:4px;flex-wrap:wrap}
-.tlog-shot{font-family:'Orbitron',monospace;font-size:.5rem;padding:2px 5px;border-radius:3px;letter-spacing:.3px;display:inline-flex;align-items:center;gap:2px}
-.tlog-miss{background:rgba(0,80,160,.15);color:var(--text3);border:1px solid rgba(26,47,74,.5)}
-.tlog-hit{background:rgba(255,136,68,.18);color:var(--orange);border:1px solid rgba(255,136,68,.3)}
-.tlog-sunk{background:rgba(255,68,85,.2);color:var(--red);border:1px solid rgba(255,68,85,.35);font-weight:700}
-.tlog-bonus{background:rgba(204,136,255,.18);color:var(--purple);border:1px solid rgba(204,136,255,.3)}
-.tlog-malus{background:rgba(255,136,68,.12);color:var(--orange);border:1px solid rgba(255,136,68,.25)}
-/* ══ SHIP TRACKER ══ */
-.ship-tracker{display:flex;flex-direction:column;gap:5px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border2)}
-.st-label{font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text3);letter-spacing:2px;margin-bottom:4px}
-.st-ship{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:5px;border:1px solid transparent}
-.st-ship.st-sunk{background:rgba(255,68,85,.06);border-color:rgba(255,68,85,.25)}
-.st-ship.st-hit{background:rgba(255,136,68,.06);border-color:rgba(255,136,68,.25)}
-.st-ship.st-ok{background:rgba(0,50,100,.15);border-color:var(--border2)}
-.st-icon{font-size:.95rem;width:22px;text-align:center;flex-shrink:0}
-.st-cells{display:flex;gap:3px;flex:1}
-.st-cell{width:10px;height:10px;border-radius:2px;border:1px solid rgba(26,47,74,.6);background:rgba(0,40,80,.3);flex-shrink:0}
-.st-cell.c-hit{background:rgba(255,136,68,.55);border-color:var(--orange)}
-.st-cell.c-sunk{background:rgba(255,68,85,.6);border-color:var(--red)}
-.st-status{font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:1px;white-space:nowrap;flex-shrink:0}
-.st-status.ss-ok{color:var(--text3)}.st-status.ss-hit{color:var(--orange)}.st-status.ss-sunk{color:var(--red);font-weight:700}
-/* ══ BRACKET VISUEL ══ */
-.bk-phase-label{display:flex;align-items:center;gap:10px;font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:3px;text-transform:uppercase;margin:14px 0 10px}
-.bk-phase-label::before,.bk-phase-label::after{content:'';flex:1;height:1px;background:var(--border)}
-.bk-semis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0}
-.bk-connector{text-align:center;padding:8px 0;font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text3);letter-spacing:2px;display:flex;align-items:center;justify-content:center;gap:8px}
-.bk-connector::before,.bk-connector::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
-.bk-match{background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:0}
-.bk-match.is-me{border-color:rgba(0,212,255,.35);box-shadow:0 0 10px rgba(0,212,255,.06)}
-.bk-match-hdr{padding:6px 10px;background:rgba(0,0,0,.15);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:6px}
-.bk-match-lbl{font-family:'Orbitron',monospace;font-size:.44rem;color:var(--text3);letter-spacing:2px;white-space:nowrap}
-.bk-match-status{font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:1px;font-weight:700;white-space:nowrap}
-.bk-player{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-bottom:1px solid rgba(26,47,74,.4);gap:8px}
-.bk-player:last-child{border-bottom:none}
-.bk-player.bk-winner{background:rgba(245,200,66,.06)}
-.bk-player.bk-draw{background:rgba(0,212,255,.04)}
-.bk-player-left{display:flex;align-items:center;gap:6px;min-width:0;flex:1}
-.bk-player-name{font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bk-player-score{font-family:'Orbitron',monospace;font-weight:900;font-size:.88rem;white-space:nowrap;flex-shrink:0}
-.bk-star{color:var(--gold);font-size:.7rem;flex-shrink:0}
-.bk-me-tag{font-family:'Orbitron',monospace;font-size:.4rem;color:var(--cyan);letter-spacing:1px;flex-shrink:0;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.25);padding:1px 4px;border-radius:3px}
-.bk-champion{text-align:center;padding:18px 16px;background:linear-gradient(135deg,rgba(245,200,66,.06),rgba(245,200,66,.03));border:1px solid rgba(245,200,66,.3);border-radius:8px;margin-top:10px}
-@media(max-width:360px){.bk-semis{grid-template-columns:1fr}}
-/* ══ ANIMATIONS FIN DE MATCH ══ */
-@keyframes goldFlash{0%{opacity:.55}15%{opacity:.8}100%{opacity:0}}
-@keyframes defeatDark{0%{opacity:0}30%{opacity:.55}100%{opacity:.72}}
-@keyframes titleSlam{0%{transform:translateY(-120px) scaleY(1.4) scaleX(.8);opacity:0}60%{transform:translateY(8px) scaleY(.88) scaleX(1.06);opacity:1}75%{transform:translateY(-4px) scaleY(1.04) scaleX(.98)}88%{transform:translateY(2px) scaleY(.98) scaleX(1.01)}100%{transform:translateY(0) scaleY(1) scaleX(1);opacity:1}}
-@keyframes subFadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-@keyframes cardRise{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
-@keyframes defeatFadeIn{0%{opacity:0;filter:blur(6px) brightness(.4)}40%{opacity:.5;filter:blur(2px) brightness(.7)}100%{opacity:1;filter:blur(0) brightness(1)}}
-@keyframes confettiFall{0%{transform:translateY(-30px) rotate(0deg);opacity:1}80%{opacity:1}100%{transform:translateY(110vh) rotate(var(--rot,720deg));opacity:0}}
-@keyframes goldGlow{0%,100%{text-shadow:0 0 20px rgba(245,200,66,.6),0 0 60px rgba(245,200,66,.3)}50%{text-shadow:0 0 40px rgba(245,200,66,.9),0 0 80px rgba(245,200,66,.5)}}
-@keyframes starPop{0%{opacity:0;transform:scale(0) rotate(0deg)}50%{opacity:1;transform:scale(1.3) rotate(180deg)}100%{opacity:.8;transform:scale(1) rotate(360deg)}}
-#resultFlash{position:fixed;inset:0;z-index:450;pointer-events:none;background:var(--flash-bg,#f5c842);opacity:0}
-#defeatOverlay{position:fixed;inset:0;z-index:449;pointer-events:none;background:rgba(0,0,0,.0)}
-#confettiCanvas{position:fixed;inset:0;z-index:448;pointer-events:none;overflow:hidden}
-.cfti{position:absolute;top:0;width:9px;height:9px;border-radius:2px;animation:confettiFall var(--dur,3s) var(--delay,0s) ease-in forwards}
-.result-hero{text-align:center;padding:28px 16px 20px;position:relative;overflow:hidden}
-.result-hero-bg{position:absolute;inset:0;opacity:.04;background:radial-gradient(ellipse 80% 60% at 50% 30%,currentColor 0%,transparent 70%);pointer-events:none}
-.result-main-icon{font-size:72px;display:block;margin-bottom:6px;line-height:1;position:relative;z-index:1}
-.result-main-title{font-family:'Bebas Neue',sans-serif;letter-spacing:5px;line-height:.95;position:relative;z-index:1;display:block}
-.result-vs{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:2px;margin-top:8px;position:relative;z-index:1;opacity:0;animation:subFadeUp .4s ease forwards}
-.result-stats-card{opacity:0;animation:cardRise .5s ease forwards;animation-delay:.35s;animation-fill-mode:both}
-/* ══ MMR ══ */
-.mmr-badge{display:inline-flex;align-items:center;gap:6px;font-family:'Orbitron',monospace;font-size:.55rem;letter-spacing:2px;padding:5px 12px;border-radius:20px;margin-top:8px;font-weight:700}
-.mmr-iron{background:rgba(120,120,140,.15);border:1px solid rgba(120,120,140,.4);color:#9090a0}
-.mmr-bronze{background:rgba(180,100,40,.12);border:1px solid rgba(180,100,40,.4);color:#c87840}
-.mmr-silver{background:rgba(160,180,200,.12);border:1px solid rgba(160,180,200,.4);color:#b0c8dc}
-.mmr-gold{background:rgba(245,200,66,.14);border:1px solid rgba(245,200,66,.4);color:var(--gold)}
-.mmr-plat{background:rgba(180,120,255,.12);border:1px solid rgba(180,120,255,.4);color:#c890ff}
-.mmr-card{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -371,40 +212,6 @@ main{padding:12px}
   </div>
 </div>
 
-<!-- MODAL RADAR -->
-<div class="modal-overlay" id="modalRadar" style="display:none">
-  <div class="modal-box">
-    <div class="modal-title">🔦 Scanner Radar</div>
-    <div class="modal-sub">CHOISIR LE CENTRE DE LA ZONE 3×3 À ANALYSER</div>
-    <div id="modalRadarGrid" class="grid-wrap" style="margin:10px 0"></div>
-    <div id="modalRadarInfo" style="font-family:'Orbitron',monospace;font-size:.54rem;color:var(--cyan);letter-spacing:1px;min-height:20px;margin-bottom:8px;text-align:center"></div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-outline" style="flex:1" onclick="fermerModalRadar()">← ANNULER</button>
-      <button class="btn" id="btnConfirmRadar" disabled style="flex:1;background:rgba(0,212,255,.12);border:1px solid var(--cyan);color:var(--cyan)" onclick="confirmerRadar()">🔦 SCANNER</button>
-    </div>
-    <div style="margin-top:10px;font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);text-align:center;line-height:1.9">
-      ⚠️ Le radar <strong style="color:var(--cyan)">remplace tes 3 tirs</strong> ce tour — aucun tir normal<br>
-      Résultat : liste des navires présents ou absents dans la zone
-    </div>
-  </div>
-</div>
-
-<!-- MODAL TORPILLE BONUS -->
-<div class="modal-overlay" id="modalBonusTorpille" style="display:none">
-  <div class="modal-box" style="text-align:center">
-    <div style="font-size:44px;margin-bottom:8px">💥</div>
-    <div class="modal-title" style="color:#ff6432">4ᵉ TIR BONUS !</div>
-    <div class="modal-sub">TORPILLE ÉVENTAIL — 2+ TOUCHES CONFIRMÉES</div>
-    <div style="color:var(--text2);font-size:.85rem;margin:10px 0">Sélectionne une case supplémentaire sur la grille adverse.</div>
-    <div id="modalBonusGrid" class="grid-wrap" style="margin:8px auto;display:inline-block"></div>
-    <div id="modalBonusInfo" style="font-family:'Orbitron',monospace;font-size:.6rem;color:#ff6432;letter-spacing:1.5px;margin:8px 0;min-height:18px"></div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-outline" style="flex:1" onclick="ignorerBonusTorpille()">PASSER</button>
-      <button class="btn" id="btnConfirmBonus" disabled style="flex:1;background:rgba(255,100,50,.12);border:1px solid #ff6432;color:#ff6432" onclick="confirmerBonusTorpille()">💥 TIRER</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL CONFIRMATION GRILLE -->
 <div class="modal-overlay" id="modalConfirm" style="display:none">
   <div class="modal-box">
@@ -419,23 +226,6 @@ main{padding:12px}
       <button class="btn btn-gold btn-block" id="btnConfirmOk">✓ VALIDER DÉFINITIVEMENT</button>
       <button class="btn btn-outline" onclick="document.getElementById('modalConfirm').style.display='none'">← RETOUR</button>
     </div>
-  </div>
-</div>
-
-<!-- MODAL RÈGLES DU MODE -->
-<div class="modal-overlay" id="modalRegles" style="display:none">
-  <div class="modal-box">
-    <div class="modal-title">📖 Modes de jeu</div>
-    <div class="modal-sub" style="margin-bottom:14px">RAPPEL DES RÈGLES</div>
-    <div id="modalReglesContent"></div>
-    <button class="btn btn-outline btn-block" style="margin-top:12px" onclick="document.getElementById('modalRegles').style.display='none'">✓ COMPRIS</button>
-  </div>
-</div>
-
-<!-- MODAL REVANCHE -->
-<div class="modal-overlay" id="modalRevanche" style="display:none">
-  <div class="modal-box" style="text-align:center">
-    <div id="modalRevancheContent"></div>
   </div>
 </div>
 
@@ -454,54 +244,13 @@ const SHIPS={
   SM:{name:'Sous-marin',icon:'🤿',size:3,pts:3},
   TP:{name:'Torpilleur',icon:'🚤',size:2,pts:2},
 };
-const MODES={
-  rush:{label:'Rush',icon:'⚡',color:'var(--cyan)',
-    desc:'Les deux joueurs tirent simultanément. Les résultats apparaissent ensemble. Fin quand toute la flotte ennemie est coulée.',
-    winShip:null},
-  classique:{label:'Classique',icon:'⚓',color:'var(--gold)',
-    desc:'Tour alterné : un joueur tire, résultat immédiat, puis l\'adversaire tire. Vous voyez où l\'ennemi a frappé avant de viser.',
-    winShip:null},
-  mort_subite:{label:'Mort Subite',icon:'💀',color:'var(--red)',
-    desc:'Le premier joueur qui coule N\'IMPORTE QUEL navire ennemi remporte la partie. Possibilité de revanche et de belle !',
-    winShip:'any'},
-  petite_victime:{label:'La Petite Victime',icon:'🚤',color:'var(--orange)',
-    desc:'Le premier joueur qui coule le TORPILLEUR ennemi (🚤, 2 cases) remporte la partie. Possibilité de revanche et de belle !',
-    winShip:'TP'},
-  leviathan:{label:'Opération Léviathan',icon:'✈️',color:'var(--purple)',
-    desc:'Le premier joueur qui coule le PORTE-AVIONS ennemi (✈️, 5 cases) remporte la partie. Possibilité de revanche et de belle !',
-    winShip:'PA'},
-  ops:{label:'Opérations Spéciales',icon:'🔦',color:'#a78bfa',
-    desc:'Rush avec pouvoirs secrets ! Chaque joueur choisit un pouvoir au placement (Radar, Torpille Éventail ou Brouillard) — 1 usage par match. Flotte complète = victoire.',
-    winShip:null},
-};
-
-/* ══ OPÉRATIONS SPÉCIALES ══ */
-const POUVOIRS={
-  radar:     {icon:'🔦', label:'Radar',              cls:'radar',
-    desc:'Révèle présence/absence de navires dans une zone 3×3. Remplace tes 3 tirs ce tour — pas de tirs normaux.'},
-  torpille:  {icon:'💥', label:'Torpille Éventail',  cls:'torpille',
-    desc:'Tes 3 tirs doivent être consécutifs sur la même ligne ou colonne. 2+ touches = 4ᵉ tir bonus immédiat ce tour.'},
-  brouillard:{icon:'🛡️', label:'Brouillard',          cls:'brouillard',
-    desc:"Fumée défensive : l'adversaire ne voit pas les résultats de ses tirs pendant 1 tour (résultats révélés au tour suivant)."},
-};
-const isOpsMode=matchId=>{const m=MATCHS.find(x=>x.id===matchId);return m?.mode_jeu==='ops';};
-let _radarCoord={};       // matchId → coord centre zone sélectionnée dans modal radar
-let _brouillardActif={};  // matchId → bool : brouillard activé ce tour
-let _bonusTorpille={};    // matchId → contexte résolution en attente tir bonus torpille
-let _bonusCoord={};       // matchId → coord tir bonus sélectionné
 
 let MOI=null,TOURNOI=null,MATCHS=[],GRILLES={},TOURS={},ADVERSAIRES={};
 let POULE_JOUEURS=[],POULE_MATCHS=[],currentTab=null;
 let MON_PROFIL=null;
-let PROFILS_CACHE={};
-let _pl={};
-let _shots={};
-let _mmrDelta=null;
-// Vote & mode state
-let _voteInitialized={};
-let _voteTimers={};
-// Revanche state
-let _revancheTimers={};
+let PROFILS_CACHE={}; // profilId → {avatar, drapeau, pseudo}
+let _pl={};   // matchId → placement state
+let _shots={}; // matchId → [coords]
 
 const GRADES=[
   {label:'Matelot',min:0},{label:'Matelot 1ère classe',min:5},
@@ -516,11 +265,6 @@ const GRADES=[
   {label:"Vice-amiral d'escadre",min:200},{label:'Amiral',min:215},
 ];
 const REWARDS_META={
-  // 🏆 ELO / MMR
-  mmr_silver:  {icon:'🥈',cat:'ELO',label:'Rang Argent',  desc:'Atteindre 1100 MMR',progress:null},
-  mmr_gold:    {icon:'🥇',cat:'ELO',label:'Rang Or',       desc:'Atteindre 1200 MMR',progress:null},
-  mmr_plat:    {icon:'💎',cat:'ELO',label:'Rang Platine',  desc:'Atteindre 1500 MMR',progress:null},
-  remontada:   {icon:'📈',cat:'ELO',label:'Remontada',     desc:'Gagner avec +150 MMR de moins',progress:null},
   // 🔰 Premières armes
   bapteme:        {icon:'🔰',cat:'Premières armes', label:'Baptême du feu',               desc:'Participer à son 1er match',                               progress:(p)=>({c:Math.min(p.matchs_joues,1),t:1})},
   premiere_salve: {icon:'💨',cat:'Premières armes', label:'Première salve',               desc:'Effectuer son premier tir en combat',                       progress:(p)=>({c:Math.min(p.matchs_joues,1),t:1})},
@@ -575,28 +319,7 @@ const DRAPEAUX=[
 function getGrade(v){let g=GRADES[0];for(const gr of GRADES){if(v>=gr.min)g=gr;else break;}return g.label;}
 function getNextGrade(v){const idx=GRADES.findIndex(g=>g.min>v);return idx>0?GRADES[idx]:null;}
 function getRatio(v,m){return m>0?Math.round((v/m)*100)+'%':'—';}
-
-// Codes ISO reconnus par flagcdn.com
-const FLAG_CDN_CODES=new Set(['fr','gb','de','es','it','pt','be','nl','ch','us','ca','au','jp','br','mx','ma','dz','sn','eu']);
-// Symboles de remplacement pour les drapeaux non-ISO (Windows ne rend pas les emojis drapeaux)
-const FLAG_SYMBOLS={pirate:'☠️',rainbow:'🌈',white:'🏳️',black:'🏴',crossed:'⛩️'};
-
-// Retourne du HTML : <img> CDN pour les vrais pays, symbole/texte pour les spéciaux
-function getFlagHtml(code, heightPx=14){
-  if(FLAG_CDN_CODES.has(code)){
-    return `<img src="https://flagcdn.com/h${heightPx}/${code}.png" height="${heightPx}" `
-      +`style="border-radius:2px;vertical-align:middle;display:inline-block" `
-      +`onerror="this.outerHTML='<span style=\\'font-size:.65rem\\'>${(code||'').toUpperCase()}</span>'" `
-      +`alt="${code}">`;
-  }
-  // Drapeaux spéciaux → symbole emoji (fonctionne sur Windows, ce ne sont pas des Regional Indicators)
-  return `<span>${FLAG_SYMBOLS[code]||DRAPEAUX.find(d=>d.code===code)?.flag||'🏳️'}</span>`;
-}
-// Compatibilité : certaines fonctions utilisaient getFlagEmoji comme string — on garde un alias texte
-function getFlagEmoji(code){
-  if(FLAG_CDN_CODES.has(code))return (code||'').toUpperCase(); // fallback texte (ne devrait plus être utilisé)
-  return FLAG_SYMBOLS[code]||DRAPEAUX.find(d=>d.code===code)?.flag||'🏳️';
-}
+function getFlagEmoji(code){return DRAPEAUX.find(d=>d.code===code)?.flag||'🏳️';}
 
 // Suivi animations par match
 let _seenSunkOff={};   // matchId → Set
@@ -748,30 +471,11 @@ const getMyRole=m=>m.joueur1_id===MOI.id?1:2;
 const getAdvId=m=>m.joueur1_id===MOI.id?m.joueur2_id:m.joueur1_id;
 const getAdvNom=m=>ADVERSAIRES[getAdvId(m)]?.nom||'?';
 const calcScore=t=>(t||[]).reduce((s,x)=>s+(x.pts||0),0);
-const getMatchMode=matchId=>{const m=MATCHS.find(x=>x.id===matchId);return m?.mode_jeu||null;};
-const isSpecialMode=mode=>['mort_subite','petite_victime','leviathan'].includes(mode);
-const needsRevanche=mode=>isSpecialMode(mode);
 
 function allSunk(pl,tirs){
   if(!pl?.ship_cells)return false;
   const hit=new Set((tirs||[]).map(t=>t.coord));
   return SHIP_KEYS.every(k=>{const c=pl.ship_cells[k];return!c?.length||c.every(x=>hit.has(x));});
-}
-
-// Vérifie si la condition de victoire du mode est atteinte
-function checkWinCondition(mode, tirsRecus, placement){
-  switch(mode){
-    case 'mort_subite':
-      return tirsRecus.some(t=>t.result==='sunk');
-    case 'petite_victime':
-      return tirsRecus.some(t=>t.result==='sunk'&&t.shipKey==='TP');
-    case 'leviathan':
-      return tirsRecus.some(t=>t.result==='sunk'&&t.shipKey==='PA');
-    case 'classique':
-    case 'rush':
-    default:
-      return allSunk(placement, tirsRecus);
-  }
 }
 
 function getShipCoords(start,size,orient){
@@ -783,23 +487,9 @@ function getShipCoords(start,size,orient){
   return coords;
 }
 
-// En mode classique, la phase du tour détermine qui peut jouer
-// Tours impairs → J1 commence ; tours pairs → J2 commence
-function getClassiqueFirstRole(tourNum){return(tourNum%2===1)?1:2;}
-
 function isItMyTurn(m){
   if(m.statut!=='en_cours')return false;
-  const t=TOURS[m.id];
-  const mode=m.mode_jeu||'rush';
-  if(mode==='classique'){
-    if(!t)return getMyRole(m)===1; // pas encore de tour → J1 commence
-    const phase=t.classique_phase||'j1_turn';
-    if(phase==='j1_turn')return getMyRole(m)===1;
-    if(phase==='j2_turn')return getMyRole(m)===2;
-    return false; // 'done' = tour en cours de transition
-  }
-  // Rush et modes spéciaux : simultané
-  if(!t)return true;
+  const t=TOURS[m.id];if(!t)return true;
   return getMyRole(m)===1?!t.soumis_j1:!t.soumis_j2;
 }
 
@@ -930,12 +620,12 @@ function getProfilMoi(){return MOI.profil_id?PROFILS_CACHE[MOI.profil_id]:MON_PR
 function playerTag(joueurId,nom,opts={}){
   const profil=joueurId===MOI.id?(getProfilMoi()||MON_PROFIL):getProfilById(joueurId);
   const avatar=profil?.avatar||'⚓';
-  const flagHtml=getFlagHtml(profil?.drapeau||'fr',12);
+  const drapeau=getFlagEmoji(profil?.drapeau||'fr');
   const size=opts.size||'normal';
   const small=size==='small';
   return `<span style="display:inline-flex;align-items:center;gap:${small?4:6}px">
     <span style="font-size:${small?'.85rem':'1rem'}">${avatar}</span>
-    <span style="line-height:1;vertical-align:middle">${flagHtml}</span>
+    <span style="font-size:${small?'.65rem':'.8rem'}">${drapeau}</span>
     <span style="font-weight:700;font-size:${small?'.82rem':'.95rem'}">${esc(nom||'?')}</span>
   </span>`
 }
@@ -967,11 +657,9 @@ function initPL(matchId){
     const p=g.grille_placement;
     _pl[matchId]={step:'done',selectedShip:null,orient:'H',
       gridData:p.grid_data||{},shipCells:p.ship_cells||{},
-      bonusCells:p.bonus_cells||[],malusCells:p.malus_cells||[],preview:{},
-      pouvoir:p.pouvoir||null,pouvoir_utilise:p.pouvoir_utilise||false};
+      bonusCells:p.bonus_cells||[],malusCells:p.malus_cells||[],preview:{}};
   }else{
-    _pl[matchId]={step:'ships',selectedShip:null,orient:'H',gridData:{},shipCells:{},bonusCells:[],malusCells:[],preview:{},
-      pouvoir:null,pouvoir_utilise:false};
+    _pl[matchId]={step:'ships',selectedShip:null,orient:'H',gridData:{},shipCells:{},bonusCells:[],malusCells:[],preview:{}};
   }
   _shots[matchId]=[];
 }
@@ -1040,33 +728,20 @@ function renderMatch(m){
    Étapes : ships → bonus → malus → done → popup confirmation → valider
 ══ */
 function renderPlacement(match,el){
-  // Initialiser le vote si besoin (première partie seulement)
-  if(!match.parent_match_id && !match.mode_jeu) initVoteIfNeeded(match.id);
-
   const g=GRILLES[match.id]?.mine;
   if(g?.placement_valide){
     el.innerHTML=`<div class="card" style="text-align:center;padding:28px">
       <div style="font-size:40px;margin-bottom:10px">⏳</div><div class="card-title">FLOTTE DÉPLOYÉE</div>
       <div style="color:var(--text2)">En attente que <strong style="color:var(--cyan)">${esc(getAdvNom(match))}</strong> place sa flotte…</div>
-      ${!match.mode_jeu?`<div style="margin-top:12px">${renderVoteUI(match)}</div>`:''}
-    </div>`;
-    if(!match.mode_jeu)startVoteTimer(match.id);
-    return;
+    </div>`;return;
   }
   const pl=_pl[match.id];
   const allShips=SHIP_KEYS.every(k=>pl.shipCells[k]);
   const allBonus=pl.bonusCells.length>=2;
   const allMalus=pl.malusCells.length>=2;
-  const ops=isOpsMode(match.id);
-  const hasPouvoir=!ops||!!pl.pouvoir;
-  const ready=allShips&&allBonus&&allMalus&&hasPouvoir;
+  const ready=allShips&&allBonus&&allMalus;
 
-  const stepBar=ops?`<div class="step-bar">
-    <div class="step ${pl.step==='ships'?'active':allShips?'done':''}">① NAVIRES</div>
-    <div class="step ${pl.step==='bonus'?'active':allBonus&&pl.step!=='ships'?'done':''}">② BONUS</div>
-    <div class="step ${pl.step==='malus'?'active':allMalus&&['done','pouvoir'].includes(pl.step)?'done':''}">③ MALUS</div>
-    <div class="step step-ops ${pl.step==='pouvoir'?'active':pl.pouvoir?'done':''}">④ POUVOIR</div>
-  </div>`:`<div class="step-bar">
+  const stepBar=`<div class="step-bar">
     <div class="step ${pl.step==='ships'?'active':allShips?'done':''}">① NAVIRES</div>
     <div class="step ${pl.step==='bonus'?'active':allBonus&&pl.step!=='ships'?'done':''}">② BONUS</div>
     <div class="step ${pl.step==='malus'?'active':allMalus&&pl.step==='done'?'done':''}">③ MALUS</div>
@@ -1076,7 +751,6 @@ function renderPlacement(match,el){
     ships:'Sélectionne un navire puis clique sur la grille. Retape sur un navire placé pour le retirer.',
     bonus:`Place tes <strong style="color:var(--purple)">2 cases Bonus ⭐</strong> sur ta grille — l'adversaire gagnera +2 pts s'il les touche (piège ou sacrifice).`,
     malus:`Place tes <strong style="color:var(--orange)">2 cases Malus 💣</strong> — l'adversaire perd 2 pts s'il les touche.`,
-    pouvoir:'Choisis ton <strong style="color:#a78bfa">Pouvoir Spécial</strong> — une seule utilisation par match.',
     done:'Tout est placé. Clique sur "Vérifier et valider".',
   };
 
@@ -1113,56 +787,24 @@ function renderPlacement(match,el){
   }
   if(pl.step==='malus'){
     specialHtml=`<div style="margin-bottom:10px;font-family:'Orbitron',monospace;font-size:.6rem;color:var(--orange)">💣 MALUS RESTANTS : ${2-pl.malusCells.length}</div>`;
-    if(allMalus) specialHtml+=`<button class="btn btn-gold btn-block" style="margin-bottom:10px" onclick="goStep('${match.id}','${ops?'pouvoir':'done'}')">✓ ${ops?'SUIVANT — CHOISIR MON POUVOIR':'TOUT EST PLACÉ'}</button>`;
-  }
-  if(pl.step==='pouvoir'&&ops){
-    const pInfo=pl.pouvoir?POUVOIRS[pl.pouvoir]:null;
-    specialHtml=`<div style="font-family:'Orbitron',monospace;font-size:.54rem;color:#a78bfa;margin-bottom:10px;letter-spacing:1px">⚡ CHOISIS TON POUVOIR SECRET (1 usage par match)</div>`;
-    Object.entries(POUVOIRS).forEach(([key,p])=>{
-      const sel=pl.pouvoir===key;
-      specialHtml+=`<div class="pouvoir-option ${sel?'sel-'+p.cls:''}" onclick="choisirPouvoir('${match.id}','${key}')">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
-          <span style="font-size:1.3rem">${p.icon}</span>
-          <span style="font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;color:${sel?'var(--text)':'var(--text2)'};letter-spacing:1px">${p.label.toUpperCase()}</span>
-          ${sel?'<span style="font-family:\'Orbitron\',monospace;font-size:.46rem;color:var(--green);margin-left:auto">✓ CHOISI</span>':''}
-        </div>
-        <div style="font-size:.8rem;color:var(--text2);line-height:1.4">${p.desc}</div>
-      </div>`;
-    });
-    if(pl.pouvoir) specialHtml+=`<button class="btn btn-gold btn-block" style="margin-top:4px" onclick="goStep('${match.id}','done')">✓ CONFIRMER MON POUVOIR</button>`;
+    if(allMalus) specialHtml+=`<button class="btn btn-gold btn-block" style="margin-bottom:10px" onclick="goStep('${match.id}','done')">✓ TOUT EST PLACÉ</button>`;
   }
 
   el.innerHTML=`<div class="card">
     <div class="card-title">⚓ Déploiement — vs ${esc(getAdvNom(match))}</div>
-    ${!match.mode_jeu?renderVoteUI(match):''}
     ${stepBar}
     <div style="color:var(--text2);font-size:.88rem;margin-bottom:12px">${instrMap[pl.step]||''}</div>
     ${shipsHtml}
     ${specialHtml}
     <div class="grid-wrap">${buildGrid(match.id,'placement')}</div>
     <div id="alertP-${match.id}" class="alert" style="margin-top:8px"></div>
-
-    <!-- Bouton placement aléatoire -->
-    <button class="btn btn-cyan btn-block" style="margin-top:10px" onclick="randomPlacement('${match.id}')">
-      🎲 PLACEMENT ALÉATOIRE
-    </button>
-
-    <button class="btn btn-gold btn-block" style="margin-top:8px" onclick="ouvrirConfirmation('${match.id}')" ${ready?'':'disabled'}>
+    <button class="btn btn-gold btn-block" style="margin-top:10px" onclick="ouvrirConfirmation('${match.id}')" ${ready?'':'disabled'}>
       ✓ VÉRIFIER ET VALIDER MA GRILLE
     </button>
-
-    ${(()=>{
-      const dupTargets=MATCHS.filter(m=>m.id!==match.id&&m.statut==='placement'&&!GRILLES[m.id]?.mine?.placement_valide);
-      return ready&&dupTargets.length?`<button class="btn btn-purple btn-block" style="margin-top:6px" onclick="dupliquerGrille('${match.id}')">
-        📋 UTILISER CETTE GRILLE SUR MES AUTRES COMBATS (${dupTargets.length})
-      </button>`:'';
-    })()}
-
     ${pl.step!=='ships'?`<button class="btn btn-outline btn-sm" style="margin-top:6px;width:100%"
-      onclick="goStep('${match.id}','${pl.step==='bonus'?'ships':pl.step==='malus'?'bonus':pl.step==='pouvoir'?'malus':'malus'}')">← Retour</button>`:''}
+      onclick="goStep('${match.id}','${pl.step==='bonus'?'ships':pl.step==='malus'?'bonus':'malus'}')">← Retour</button>`:''}
   </div>`;
 
-  if(!match.mode_jeu)startVoteTimer(match.id);
   attachPlacementEvents(match.id);
 }
 
@@ -1173,178 +815,6 @@ function removePlacedShip(matchId,k){
   const pl=_pl[matchId];
   (pl.shipCells[k]||[]).forEach(c=>delete pl.gridData[c]);
   delete pl.shipCells[k];pl.step='ships';renderTab(currentTab);
-}
-
-/* ══ VOTE DU MODE DE JEU ══ */
-function renderVoteUI(match){
-  const moi=getMyRole(match)===1;
-  const myVote=moi?match.vote_mode_j1:match.vote_mode_j2;
-  const advVote=moi?match.vote_mode_j2:match.vote_mode_j1;
-  const expire=match.vote_expire_at?new Date(match.vote_expire_at).getTime():null;
-  const secondsLeft=expire?Math.max(0,Math.ceil((expire-Date.now())/1000)):60;
-
-  let modesHtml='';
-  Object.entries(MODES).forEach(([key,m])=>{
-    const isSel=myVote===key;
-    modesHtml+=`<button class="mode-vote-btn ${isSel?'selected':''}" onclick="soumettreVote('${match.id}','${key}')">
-      <span class="mode-vote-icon" style="color:${m.color}">${m.icon}</span>
-      <div style="flex:1;min-width:0">
-        <div class="mode-vote-name" style="color:${isSel?'var(--gold)':m.color}">${m.label}</div>
-        <div class="mode-vote-desc">${m.desc}</div>
-      </div>
-      ${isSel?'<span style="color:var(--gold);font-size:1rem">✓</span>':''}
-    </button>`;
-  });
-
-  return `<div class="vote-section">
-    <div class="vote-title">
-      <span>⚡ VOTE — MODE DE JEU</span>
-      <span class="vote-timer ${secondsLeft<=15?'urgent':''}" id="vote-countdown-${match.id}">${secondsLeft}s</span>
-    </div>
-    <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1px;margin-bottom:6px">
-      Votes identiques → mode choisi · Votes différents ou timeout → Rush par défaut
-    </div>
-    <div class="mode-vote-grid">${modesHtml}</div>
-    <div class="vote-status">
-      ${myVote?`<span style="color:var(--green)">✓ TON VOTE : ${MODES[myVote]?.label}</span>  ·  `:''}
-      ${advVote?`<span class="vote-adv-voted">✓ L'adversaire a voté</span>`:`<span>⏳ L'adversaire n'a pas encore voté</span>`}
-    </div>
-  </div>`;
-}
-
-async function initVoteIfNeeded(matchId){
-  if(_voteInitialized[matchId])return;
-  _voteInitialized[matchId]=true;
-  const match=MATCHS.find(m=>m.id===matchId);
-  if(!match||match.vote_expire_at||match.mode_jeu)return;
-  const expire=new Date(Date.now()+180000).toISOString(); // 3 minutes
-  const{data}=await sb.from('tournoi_matchs')
-    .update({vote_expire_at:expire})
-    .eq('id',matchId).is('vote_expire_at',null).select().maybeSingle();
-  if(data){
-    const idx=MATCHS.findIndex(m=>m.id===matchId);
-    if(idx>=0)MATCHS[idx]={...MATCHS[idx],vote_expire_at:expire};
-  }else{
-    // Someone else set it first — reload match
-    const{data:fresh}=await sb.from('tournoi_matchs').select('*').eq('id',matchId).maybeSingle();
-    if(fresh){const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)MATCHS[idx]=fresh;}
-  }
-}
-
-function startVoteTimer(matchId){
-  if(_voteTimers[matchId])return;
-  const match=MATCHS.find(m=>m.id===matchId);
-  if(!match?.vote_expire_at)return;
-  const expireTime=new Date(match.vote_expire_at).getTime();
-  // Protection : si l'expiry est déjà dépassée au démarrage (ex : refresh de page)
-  // → ne pas résoudre immédiatement, attendre que les votes soient bien chargés
-  const initialRemaining=expireTime-Date.now();
-  if(initialRemaining<0){
-    // Expiry passée → résoudre avec un délai de 1,5s pour laisser le temps aux données de se charger
-    _voteTimers[matchId]=setTimeout(async()=>{
-      delete _voteTimers[matchId];
-      await resolveVote(matchId,true);
-    },1500);
-    return;
-  }
-  _voteTimers[matchId]=setInterval(async()=>{
-    const remaining=Math.max(0,Math.ceil((expireTime-Date.now())/1000));
-    const el=document.getElementById(`vote-countdown-${matchId}`);
-    if(el){el.textContent=remaining+'s';el.className=`vote-timer${remaining<=15?' urgent':''}`;}
-    if(Date.now()>=expireTime){
-      clearInterval(_voteTimers[matchId]);delete _voteTimers[matchId];
-      await resolveVote(matchId,true); // fromTimer=true
-    }
-  },1000);
-}
-
-async function soumettreVote(matchId,mode){
-  const match=MATCHS.find(m=>m.id===matchId);if(!match)return;
-  const role=getMyRole(match);
-  const field=role===1?'vote_mode_j1':'vote_mode_j2';
-  // 1. Écrire le vote en DB
-  await sb.from('tournoi_matchs').update({[field]:mode}).eq('id',matchId);
-  // 2. Re-lire l'état COMPLET depuis la DB (les deux votes, évite les états périmés locaux)
-  const{data:fresh}=await sb.from('tournoi_matchs').select('*').eq('id',matchId).maybeSingle();
-  if(!fresh)return;
-  const idx=MATCHS.findIndex(m=>m.id===matchId);
-  if(idx>=0)MATCHS[idx]={...MATCHS[idx],...fresh};
-  // 3. Si les deux ont voté → résoudre immédiatement (fromTimer=false)
-  if(fresh.vote_mode_j1&&fresh.vote_mode_j2){
-    await resolveVote(matchId,false);
-  }else{
-    // Un seul vote pour l'instant → juste re-rendre pour afficher l'état
-    if(currentTab===`match-${matchId}`)renderTab(currentTab);
-  }
-}
-
-// fromTimer=true  → timeout dépassé, résoudre même avec un seul vote (→ Rush par défaut)
-// fromTimer=false → appelé après un vote, résoudre seulement si les DEUX ont voté
-async function resolveVote(matchId, fromTimer=false){
-  const match=MATCHS.find(m=>m.id===matchId);if(!match||match.mode_jeu)return;
-  // Vérifier en DB si déjà résolu par l'autre client
-  const{data:fresh}=await sb.from('tournoi_matchs').select('*').eq('id',matchId).maybeSingle();
-  if(!fresh)return;
-  if(fresh.mode_jeu){
-    // Déjà résolu → mettre à jour le cache local et re-rendre
-    const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)MATCHS[idx]=fresh;
-    if(currentTab===`match-${matchId}`)renderTab(currentTab);return;
-  }
-  const v1=fresh.vote_mode_j1, v2=fresh.vote_mode_j2;
-  // Si pas depuis le timer : attendre que les deux aient voté (évite le défaut Rush prématuré)
-  if(!fromTimer&&(!v1||!v2))return;
-  // Résolution : mêmes votes → mode choisi, sinon Rush
-  const resolvedMode=(v1&&v2&&v1===v2)?v1:'rush';
-  await sb.from('tournoi_matchs').update({mode_jeu:resolvedMode}).eq('id',matchId);
-  const idx=MATCHS.findIndex(m=>m.id===matchId);
-  if(idx>=0)MATCHS[idx]={...MATCHS[idx],...fresh,mode_jeu:resolvedMode};
-  showToastPhase(`⚡ Mode : ${MODES[resolvedMode]?.label||resolvedMode}`,MODES[resolvedMode]?.color||'var(--cyan)');
-  if(currentTab===`match-${matchId}`)renderTab(currentTab);
-}
-
-function openRegles(matchId){
-  const match=MATCHS.find(m=>m.id===matchId);
-  const mode=match?.mode_jeu||'rush';
-  const m=MODES[mode];
-  document.getElementById('modalReglesContent').innerHTML=`
-    <div class="rules-mode-item" style="border-color:${m.color};background:rgba(0,0,0,.2)">
-      <div class="rules-mode-header">
-        <span style="font-size:1.6rem">${m.icon}</span>
-        <div>
-          <div class="rules-mode-title" style="color:${m.color}">${m.label}</div>
-          <div style="font-family:'Orbitron',monospace;font-size:.45rem;color:var(--text2);letter-spacing:1px">MODE ACTIF</div>
-        </div>
-      </div>
-      <div style="font-size:.88rem;color:var(--text);line-height:1.6">${m.desc}</div>
-    </div>
-    ${isSpecialMode(mode)?`<div style="background:rgba(255,68,85,.06);border:1px solid rgba(255,68,85,.2);border-radius:6px;padding:10px;font-size:.82rem;color:var(--text2)">
-      ⚠️ Les cases Bonus et Malus sont présentes sur la grille mais sans effet dans ce mode.
-    </div>`:''}`;
-  document.getElementById('modalRegles').style.display='flex';
-}
-
-/* ══ BANNIÈRE MODE ══ */
-function renderModeBanner(matchId){
-  const match=MATCHS.find(m=>m.id===matchId);
-  const mode=match?.mode_jeu;
-  if(!mode)return '';
-  const m=MODES[mode];
-  return `<div class="mode-banner" onclick="openRegles('${matchId}')"
-    style="border-color:${m.color};background:rgba(0,0,0,.25)">
-    <span class="mode-banner-icon">${m.icon}</span>
-    <div>
-      <div class="mode-banner-label" style="color:${m.color}">${m.label.toUpperCase()}</div>
-      <div class="mode-banner-desc">${
-        mode==='classique'?'Tour alterné · Résultats immédiats':
-        mode==='mort_subite'?'1er navire coulé = victoire':
-        mode==='petite_victime'?'Coule le Torpilleur 🚤':
-        mode==='leviathan'?'Coule le Porte-avions ✈️':
-        mode==='ops'?'Pouvoirs secrets actifs 🔦💥🛡️':
-        'Flotte complète coulée = victoire'
-      }</div>
-    </div>
-    <span class="mode-banner-info">ℹ️ Règles</span>
-  </div>`;
 }
 
 /* ── Grille universelle ── */
@@ -1363,30 +833,9 @@ function buildGrid(matchId,mode){
     }
     if(mode==='attack'){
       const tirs=gr?.theirs?.tirs_recus||[];
-      const tourActuel=TOURS[matchId];
-      const myPl=gr?.mine?.grille_placement;
-      const radarResultats=myPl?.radar_resultats||[];
-      const lastRadar=radarResultats.length?radarResultats[radarResultats.length-1]:null;
-      const radarZone=lastRadar?getZone3x3(lastRadar.zone):[];
-
       const t=tirs.find(t=>t.coord===coord);
-      if(t){
-        // Brouillard : masquer si marqué et tour suivant pas encore passé
-        if(t.brouillard&&tourActuel&&tourActuel.numero_tour===t.turn+1){
-          cls.push('fog-cell');sym='🌫️';
-        }else{
-          cls.push({miss:'miss',hit:'hit',sunk:'sunk',bonus:'hit',malus:'miss',radar:'miss'}[t.result]||'miss');
-          sym={miss:'🌊',hit:'💥',sunk:'💀',bonus:'⭐',malus:'💣',radar:''}[t.result]||'';
-        }
-      }else if(lastRadar&&coord===lastRadar.zone){cls.push('radar-center');sym='📡';}
-      else if(radarZone.includes(coord)){cls.push('radar-zone');}
-
-      const selShots=_shots[matchId]||[];
-      if(selShots.includes(coord)){
-        const myPouvoir=myPl?.pouvoir;
-        cls.push(isOpsMode(matchId)&&myPouvoir==='torpille'&&!myPl?.pouvoir_utilise?'torpille-sel':'sel');
-        sym='🎯';
-      }
+      if(t){cls.push({miss:'miss',hit:'hit',sunk:'sunk',bonus:'hit',malus:'miss'}[t.result]||'miss');sym={miss:'🌊',hit:'💥',sunk:'💀',bonus:'⭐',malus:'💣'}[t.result]||'';}
+      if((_shots[matchId]||[]).includes(coord)){cls.push('sel');sym='🎯';}
     }
     if(mode==='defense'){
       const myPl=gr?.mine?.grille_placement,myTirs=gr?.mine?.tirs_recus||[];
@@ -1477,24 +926,13 @@ async function validerPlacement(matchId){
   document.getElementById('modalConfirm').style.display='none';
   const pl=_pl[matchId];
   const placement={grid_data:pl.gridData,ship_cells:pl.shipCells,bonus_cells:pl.bonusCells,malus_cells:pl.malusCells};
-  if(isOpsMode(matchId)&&pl.pouvoir){
-    placement.pouvoir=pl.pouvoir;
-    placement.pouvoir_utilise=false;
-    placement.radar_resultats=[];
-  }
   const{error}=await sb.from('tournoi_grilles').update({grille_placement:placement,placement_valide:true}).eq('match_id',matchId).eq('joueur_id',MOI.id);
   if(error){showAlert(`alertP-${matchId}`,'err','Erreur : '+error.message);return;}
   await loadGrilles(matchId);
   const g=GRILLES[matchId];
   if(g?.mine?.placement_valide&&g?.theirs?.placement_valide){
-    const match=MATCHS.find(m=>m.id===matchId);
-    const mode=match?.mode_jeu||'rush';
-    const firstPhase=mode==='classique'?(getClassiqueFirstRole(1)===1?'j1_turn':'j2_turn'):null;
     await sb.from('tournoi_matchs').update({statut:'en_cours'}).eq('id',matchId);
-    await sb.from('tournoi_tours').insert({
-      match_id:matchId,numero_tour:1,soumis_j1:false,soumis_j2:false,statut:'en_cours',
-      ...(firstPhase?{classique_phase:firstPhase}:{})
-    });
+    await sb.from('tournoi_tours').insert({match_id:matchId,numero_tour:1,soumis_j1:false,soumis_j2:false,statut:'en_cours'});
     const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)MATCHS[idx].statut='en_cours';
     await loadTourEnCours(matchId);
   }
@@ -1503,145 +941,34 @@ async function validerPlacement(matchId){
 
 /* ══ BATAILLE ══ */
 function renderBataille(match,el){
-  const mode=match.mode_jeu||'rush';
   const myTurn=isItMyTurn(match),shots=_shots[match.id]||[];
   const mesTirs=GRILLES[match.id]?.theirs?.tirs_recus||[];
   const sesTirs=GRILLES[match.id]?.mine?.tirs_recus||[];
   const tourNum=TOURS[match.id]?.numero_tour||1;
-  const classiquePh=TOURS[match.id]?.classique_phase||'j1_turn';
-  const isClassique=mode==='classique';
-
-  // ── Ops : infos pouvoirs ──
-  const ops=isOpsMode(match.id);
-  const myPl=GRILLES[match.id]?.mine?.grille_placement;
-  const theirPl=GRILLES[match.id]?.theirs?.grille_placement;
-  const myPouvoir=myPl?.pouvoir||null;
-  const myPouvoirUsed=myPl?.pouvoir_utilise||false;
-  const theirPouvoir=theirPl?.pouvoir||null;
-  const theirPouvoirUsed=theirPl?.pouvoir_utilise||false;
-  const isTorpille=ops&&myPouvoir==='torpille'&&!myPouvoirUsed;
-  const isRadar=ops&&myPouvoir==='radar'&&!myPouvoirUsed;
-  const isBrouillard=ops&&myPouvoir==='brouillard'&&!myPouvoirUsed;
-  const brouillardOn=!!_brouillardActif[match.id];
-
-  // Panneau ops
-  let opsPanel='';
-  if(ops){
-    const myP=myPouvoir?POUVOIRS[myPouvoir]:null;
-    const theirP=theirPouvoir?POUVOIRS[theirPouvoir]:null;
-    const radarResultats=myPl?.radar_resultats||[];
-    const lastRadar=radarResultats.length?radarResultats[radarResultats.length-1]:null;
-    opsPanel=`<div class="card ops-panel">
-      <div class="card-title" style="color:#a78bfa;margin-bottom:8px">⚡ Opérations Spéciales</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div>
-          <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-bottom:4px">TON POUVOIR</div>
-          ${myP?`<span class="pouvoir-badge pb-${myP.cls} ${myPouvoirUsed?'pb-used':''}">${myP.icon} ${myP.label.toUpperCase()}${myPouvoirUsed?' — UTILISÉ':''}</span>`:'<span style="color:var(--text3);font-size:.72rem">—</span>'}
-        </div>
-        <div>
-          <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-bottom:4px">POUVOIR ADV.</div>
-          ${theirP?`<span class="pouvoir-badge pb-${theirP.cls} ${theirPouvoirUsed?'pb-used':''}">${theirP.icon} ?${theirPouvoirUsed?' — UTILISÉ':''}</span>`:'<span style="color:var(--text3);font-size:.72rem">—</span>'}
-        </div>
-      </div>
-      ${myTurn&&isRadar?`<button class="ops-btn ops-btn-radar" onclick="ouvrirModalRadar('${match.id}')">🔦 UTILISER LE RADAR (remplace les 3 tirs)</button>`:''}
-      ${myTurn&&isBrouillard?`<button class="ops-btn ops-btn-brouillard ${brouillardOn?'active':''}" onclick="toggleBrouillard('${match.id}')">${brouillardOn?'🛡️ BROUILLARD ACTIVÉ — cliquer pour désactiver':'🛡️ ACTIVER LE BROUILLARD (ce tour)'}</button>`:''}
-      ${lastRadar?`<div class="radar-result"><div style="color:var(--cyan);margin-bottom:5px">🔦 RADAR — Zone ${lastRadar.zone} (Tour ${lastRadar.tour})</div><div style="display:flex;flex-wrap:wrap;gap:6px">${SHIP_KEYS.map(k=>{const found=lastRadar.ships.includes(k);return`<span style="color:${found?'var(--green)':'var(--text3)'}">${SHIPS[k].icon}${found?'✓':'✗'}</span>`;}).join('')}</div></div>`:''}
-    </div>`;
-  }
-
-  // Contexte attente en classique
-  let classiqueInfo='';
-  if(isClassique&&!myTurn){
-    const myRole=getMyRole(match);
-    const advFired=myRole===1?(classiquePh==='j2_turn'):(classiquePh==='j1_turn');
-    classiqueInfo=`<div class="classique-waiting">
-      <div style="font-size:28px;margin-bottom:8px">${advFired?'🔭':'⏳'}</div>
-      <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--cyan);letter-spacing:2px">
-        ${advFired?`${esc(getAdvNom(match))} a tiré — à toi de viser`:`En attente des tirs de ${esc(getAdvNom(match))}`}
-      </div>
-    </div>`;
-  }
-
-  let statusPill;
-  if(isClassique){
-    if(myTurn)statusPill=`<span class="status-pill sp-your-turn">🎯 À TOI DE VISER</span>`;
-    else if(classiquePh==='j2_turn'&&getMyRole(match)===1)statusPill=`<span class="status-pill sp-wait">⏳ ${esc(getAdvNom(match))} vise…</span>`;
-    else if(classiquePh==='j1_turn'&&getMyRole(match)===2)statusPill=`<span class="status-pill sp-wait">⏳ ${esc(getAdvNom(match))} tire…</span>`;
-    else statusPill=`<span class="status-pill sp-your-turn">⚡ À TON TOUR</span>`;
-  }else{
-    statusPill=myTurn?`<span class="status-pill sp-your-turn">⚡ À TON TOUR</span>`:`<span class="status-pill sp-wait">⏳ ${esc(getAdvNom(match))}…</span>`;
-  }
-
-  const showScore=['rush','classique','ops'].includes(mode);
-  const shotsLabel=isTorpille
-    ?`Sélectionne 3 cases <strong style="color:#ff6432">consécutives</strong> (ligne ou colonne) — <strong style="color:var(--gold)">${shots.length}/3</strong>`
-    :`Sélectionne 3 cases — <strong style="color:var(--gold)">${shots.length}/3</strong>`;
 
   el.innerHTML=`
     <div class="card">
-      ${renderModeBanner(match.id)}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
         <div class="card-title" style="margin:0">⚔️ vs ${playerTag(getAdvId(match),getAdvNom(match))}</div>
-        ${statusPill}
+        ${myTurn?`<span class="status-pill sp-your-turn">⚡ À TON TOUR</span>`:`<span class="status-pill sp-wait">⏳ ${esc(getAdvNom(match))}…</span>`}
       </div>
-      <div style="display:flex;gap:10px;align-items:center;margin-bottom:${showScore?10:4}px">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
         <div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text2);letter-spacing:2px">TOUR</div>
         <div style="font-family:'Orbitron',monospace;font-weight:900;font-size:1.4rem;color:var(--cyan)">${tourNum}</div>
-        ${match.partie_numero>1?`<div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--gold);letter-spacing:1px;margin-left:8px">PARTIE ${match.partie_numero}</div>`:''}
       </div>
-      ${showScore?`
-      ${(()=>{
-        const signif=mesTirs.filter(t=>!['bonus','malus'].includes(t.result));
-        const precT=signif.filter(t=>['hit','sunk'].includes(t.result)).length;
-        const precD=signif.length;
-        const precPct=precD>=3?Math.round(precT/precD*100):null;
-        const shipsSunk=mesTirs.filter(t=>t.result==='sunk').length;
-        const shipsLost=sesTirs.filter(t=>t.result==='sunk').length;
-        const theirSunkKeys=new Set(mesTirs.filter(t=>t.result==='sunk').map(t=>t.shipKey));
-        const mySunkKeys=new Set(sesTirs.filter(t=>t.result==='sunk').map(t=>t.shipKey));
-        const theirDots=SHIP_KEYS.map(k=>`<div class="hud-ship-dot${theirSunkKeys.has(k)?' sunk':''}" title="${SHIPS[k].name}"></div>`).join('');
-        const myDots=SHIP_KEYS.map(k=>`<div class="hud-ship-dot${mySunkKeys.has(k)?' sunk':''}" title="${SHIPS[k].name}"></div>`).join('');
-        const precColor=precPct===null?'var(--text3)':precPct>=70?'var(--green)':precPct>=45?'var(--orange)':'var(--red)';
-        const byTurn={};mesTirs.forEach(t=>{const n=t.turn||0;if(!byTurn[n])byTurn[n]=[];byTurn[n].push(t);});
-        const recentTurns=Object.keys(byTurn).map(Number).sort((a,b)=>b-a).slice(0,4);
-        const ICONS={PA:'✈️',CU:'⚔️',CR:'🚢',SM:'🤿',TP:'🚤'};
-        const tourLogRows=recentTurns.map(n=>{
-          const rs=byTurn[n];
-          const sh=rs.map(t=>{
-            const cls={miss:'tlog-miss',hit:'tlog-hit',sunk:'tlog-sunk',bonus:'tlog-bonus',malus:'tlog-malus'}[t.result]||'tlog-miss';
-            const ic={miss:'🌊',hit:'💥',sunk:ICONS[t.shipKey]||'💀',bonus:'⭐',malus:'💣'}[t.result]||'🌊';
-            const ex={miss:'',hit:'',sunk:' COULÉ',bonus:'+2',malus:'-2'}[t.result]||'';
-            return`<span class="tlog-shot ${cls}">${t.coord} ${ic}${ex}</span>`;
-          }).join('');
-          const tp=rs.reduce((s,t)=>s+(t.pts||0),0);
-          const ptag=tp>0?`<span style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--green);margin-left:4px">+${tp}</span>`:tp<0?`<span style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--red);margin-left:4px">${tp}</span>`:'';
-          return`<div class="tlog-row"><span class="tlog-turn">T${n}${ptag}</span><div class="tlog-shots">${sh}</div></div>`;
-        }).join('');
-        return`<div class="battle-hud">
-          <div class="hud-stat"><div class="hud-stat-val" style="color:var(--cyan)">${tourNum}</div><div class="hud-stat-lbl">Tour</div></div>
-          <div class="hud-stat"><div class="hud-stat-val" style="color:${precColor}">${precPct===null?'—':precPct+'%'}</div><div class="hud-stat-lbl">Précision</div></div>
-          <div class="hud-stat"><div class="hud-stat-val" style="color:${shipsSunk>0?'var(--orange)':'var(--text2)'}">${shipsSunk}<span style="font-size:.58rem;color:var(--text3)">/5</span></div><div class="hud-stat-lbl">Coulés</div><div class="hud-ship-icons">${theirDots}</div></div>
-          <div class="hud-stat"><div class="hud-stat-val" style="color:${shipsLost>0?'var(--red)':'var(--text2)'}">${shipsLost}<span style="font-size:.58rem;color:var(--text3)">/5</span></div><div class="hud-stat-lbl">Perdus</div><div class="hud-ship-icons">${myDots}</div></div>
-        </div>
-        <div class="score-row" style="margin-bottom:5px">${playerTag(MOI.id,MOI.nom)}<div class="score-pts">${calcScore(mesTirs)}</div></div>
-        <div class="score-row">${playerTag(getAdvId(match),getAdvNom(match))}<div class="score-pts" style="color:var(--text2)">${calcScore(sesTirs)}</div></div>
-        ${recentTurns.length>0?`<div class="tour-log"><div class="tlog-title">↺ HISTORIQUE MES TIRS</div>${tourLogRows}</div>`:''}`;
-      })()}`:''}
+      <div class="score-row">${playerTag(MOI.id,MOI.nom)}<div class="score-pts">${calcScore(mesTirs)}</div></div>
+      <div class="score-row">${playerTag(getAdvId(match),getAdvNom(match))}<div class="score-pts">${calcScore(sesTirs)}</div></div>
     </div>
-    ${opsPanel}
     <div class="card">
       <div class="card-title">🎯 Grille adverse</div>
-      ${classiqueInfo}
-      ${myTurn&&isTorpille&&shots.length>0?`<div class="torpille-hint">💥 Torpille : continue sur la même ${getTorpilleAxis(shots)}</div>`:''}
       <div style="font-size:.85rem;color:var(--text2);margin-bottom:8px">
-        ${myTurn?shotsLabel:(isClassique&&!myTurn?'':(myTurn?'':'Tirs soumis — en attente…'))}
+        ${myTurn?`Sélectionne 3 cases — <strong style="color:var(--gold)">${shots.length}/3</strong>`:'Tirs soumis — en attente…'}
       </div>
       <div class="grid-wrap">${buildGrid(match.id,'attack')}</div>
-      ${buildShipTracker(match.id)}
       <div id="alertB-${match.id}" class="alert" style="margin-top:8px"></div>
       ${myTurn?`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
         <button class="btn btn-gold" onclick="demanderConfirmTirs('${match.id}')" ${shots.length===3?'':'disabled'}>🎯 ENVOYER LES TIRS</button>
-        <button class="btn btn-outline btn-sm" onclick="_shots['${match.id}']=[];_brouillardActif['${match.id}']=false;renderTab(currentTab)">✗ Effacer</button>
+        <button class="btn btn-outline btn-sm" onclick="_shots['${match.id}']=[];renderTab(currentTab)">✗ Effacer</button>
       </div>`:''}
     </div>
     <div class="card">
@@ -1659,196 +986,12 @@ function renderBataille(match,el){
   checkNewAnimEvents(match.id);
 }
 
-  // Contexte attente en classique
-  let classiqueInfo='';
-  if(isClassique&&!myTurn){
-    const myRole=getMyRole(match);
-    const advFired=myRole===1?(classiquePh==='j2_turn'):(classiquePh==='j1_turn');
-    classiqueInfo=`<div class="classique-waiting">
-      <div style="font-size:28px;margin-bottom:8px">${advFired?'🔭':'⏳'}</div>
-      <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--cyan);letter-spacing:2px">
-        ${advFired?`${esc(getAdvNom(match))} a tiré — à toi de viser`:`En attente des tirs de ${esc(getAdvNom(match))}`}
-      </div>
-    </div>`;
-  }
-
-
-/* ══ SHIP TRACKER — flotte adverse ══ */
-function buildShipTracker(matchId){
-  const mesTirs=GRILLES[matchId]?.theirs?.tirs_recus||[];
-  const rows=SHIP_KEYS.map(k=>{
-    const ship=SHIPS[k];
-    const isSunk=mesTirs.some(t=>t.shipKey===k&&t.result==='sunk');
-    const hitsOnShip=mesTirs.filter(t=>t.shipKey===k&&['hit','sunk'].includes(t.result)).length;
-    const isHit=!isSunk&&hitsOnShip>0;
-    const stateClass=isSunk?'st-sunk':isHit?'st-hit':'st-ok';
-    const statusClass=isSunk?'ss-sunk':isHit?'ss-hit':'ss-ok';
-    const statusText=isSunk?'☠ COULÉ':isHit?`TOUCHÉ ${hitsOnShip}/?`:'—';
-    const cells=Array.from({length:ship.size},(_,i)=>{
-      let cls='st-cell';
-      if(isSunk)cls+=' c-sunk';
-      else if(i<hitsOnShip)cls+=' c-hit';
-      return`<div class="${cls}"></div>`;
-    }).join('');
-    return`<div class="st-ship ${stateClass}"><span class="st-icon">${ship.icon}</span><div class="st-cells">${cells}</div><span class="st-status ${statusClass}">${statusText}</span></div>`;
-  });
-  return`<div class="ship-tracker"><div class="st-label">FLOTTE ADVERSE</div>${rows.join('')}</div>`;
-}
-
 function onAttackClick(matchId,coord){
   const shots=_shots[matchId]||[],tirs=GRILLES[matchId]?.theirs?.tirs_recus||[];
   if(tirs.find(t=>t.coord===coord))return;
-  // Torpille éventail : contrainte consécutif
-  const myPl=GRILLES[matchId]?.mine?.grille_placement;
-  if(isOpsMode(matchId)&&myPl?.pouvoir==='torpille'&&!myPl?.pouvoir_utilise){
-    if(!shots.includes(coord)&&shots.length>0){
-      if(!isTirConsecutif(coord,shots)){
-        showAlert(`alertB-${matchId}`,'err','💥 Torpille : les 3 tirs doivent être consécutifs sur la même ligne ou colonne !');
-        return;
-      }
-    }
-  }
   if(shots.includes(coord)){_shots[matchId]=shots.filter(c=>c!==coord);}
   else if(shots.length<3){_shots[matchId]=[...shots,coord];}
   renderTab(currentTab);
-}
-
-/* ── Helpers Ops ── */
-function getZone3x3(center){
-  const col=COLS.indexOf(center[0]),row=parseInt(center.slice(1)),cells=[];
-  for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
-    const c=col+dc,r=row+dr;
-    if(c>=0&&c<10&&r>=1&&r<=10)cells.push(COLS[c]+r);
-  }
-  return cells;
-}
-function computeRadarResult(center,placement){
-  const zone=getZone3x3(center),found=new Set();
-  zone.forEach(coord=>{const k=placement?.grid_data?.[coord];if(k&&SHIP_KEYS.includes(k))found.add(k);});
-  return[...found];
-}
-function isTirConsecutif(newCoord,existing){
-  const all=[...existing,newCoord];
-  const cols=all.map(c=>COLS.indexOf(c[0]));
-  const rows=all.map(c=>parseInt(c.slice(1)));
-  const sameCol=new Set(cols).size===1;
-  const sameRow=new Set(rows).size===1;
-  if(sameCol){const s=[...rows].sort((a,b)=>a-b);return s.every((r,i)=>i===0||r===s[i-1]+1);}
-  if(sameRow){const s=[...cols].sort((a,b)=>a-b);return s.every((c,i)=>i===0||c===s[i-1]+1);}
-  return false;
-}
-function getTorpilleAxis(shots){
-  if(shots.length<2)return 'ligne ou colonne';
-  const cols=shots.map(c=>COLS.indexOf(c[0]));
-  return new Set(cols).size===1?'colonne':'ligne';
-}
-function choisirPouvoir(matchId,key){_pl[matchId].pouvoir=key;renderTab(currentTab);}
-function toggleBrouillard(matchId){_brouillardActif[matchId]=!_brouillardActif[matchId];renderTab(currentTab);}
-
-/* ── Modal Radar ── */
-function ouvrirModalRadar(matchId){
-  _radarCoord[matchId]=null;
-  const btn=document.getElementById('btnConfirmRadar');
-  const info=document.getElementById('modalRadarInfo');
-  btn.disabled=true;
-  info.textContent='Clique sur une case pour centrer la zone 3×3';
-  // Construire grille dans la modal
-  const gridEl=document.getElementById('modalRadarGrid');
-  const gr=GRILLES[matchId],tirs=gr?.theirs?.tirs_recus||[];
-  let h=`<div class="game-grid" id="radarPickGrid"><div class="gc-hdr"></div>`;
-  COLS.forEach(c=>h+=`<div class="gc-hdr">${c}</div>`);
-  ROWS.forEach(r=>{
-    h+=`<div class="gc-hdr">${r}</div>`;
-    COLS.forEach(c=>{
-      const coord=c+r,t=tirs.find(t=>t.coord===coord);
-      const cls=['gc'];let sym='';
-      if(t){cls.push({miss:'miss',hit:'hit',sunk:'sunk',bonus:'hit',malus:'miss'}[t.result]||'miss');sym={miss:'🌊',hit:'💥',sunk:'💀',bonus:'⭐',malus:'💣'}[t.result]||'';}
-      h+=`<div class="${cls.join(' ')}" data-coord="${coord}">${sym}</div>`;
-    });
-  });
-  h+='</div>';
-  gridEl.innerHTML=h;
-  document.getElementById('radarPickGrid').querySelectorAll('.gc').forEach(cell=>{
-    cell.addEventListener('click',()=>{
-      const coord=cell.dataset.coord;
-      _radarCoord[matchId]=coord;
-      const zone=getZone3x3(coord);
-      document.getElementById('radarPickGrid').querySelectorAll('.gc').forEach(c=>{
-        c.classList.remove('radar-center','radar-zone');
-        if(c.dataset.coord===coord)c.classList.add('radar-center');
-        else if(zone.includes(c.dataset.coord))c.classList.add('radar-zone');
-      });
-      info.textContent=`Zone : ${coord} — ${zone.length} cases analysées`;
-      btn.disabled=false;
-    });
-  });
-  document.getElementById('modalRadar').style.display='flex';
-}
-function fermerModalRadar(){document.getElementById('modalRadar').style.display='none';}
-async function confirmerRadar(){
-  const matchId=Object.keys(_radarCoord).find(k=>_radarCoord[k]);
-  if(!matchId)return;
-  document.getElementById('modalRadar').style.display='none';
-  const coord=_radarCoord[matchId];
-  delete _radarCoord[matchId];
-  await soumettreRadar(matchId,coord);
-}
-
-/* ── Modal Torpille Bonus ── */
-function ouvrirModalBonusTorpille(matchId){
-  _bonusCoord[matchId]=null;
-  const btn=document.getElementById('btnConfirmBonus');
-  const info=document.getElementById('modalBonusInfo');
-  btn.disabled=true;
-  info.textContent='';
-  const gr=GRILLES[matchId];
-  const tirs=gr?.theirs?.tirs_recus||[];
-  const ctx=_bonusTorpille[matchId];
-  const dejaVus=new Set([...tirs.map(t=>t.coord),...(ctx?.hist_j1||[]).map(t=>t.coord)]);
-  let h=`<div class="game-grid" id="bonusPickGrid"><div class="gc-hdr"></div>`;
-  COLS.forEach(c=>h+=`<div class="gc-hdr">${c}</div>`);
-  ROWS.forEach(r=>{
-    h+=`<div class="gc-hdr">${r}</div>`;
-    COLS.forEach(c=>{
-      const coord=c+r;
-      const t=tirs.find(t=>t.coord===coord)||ctx?.hist_j1?.find(t=>t.coord===coord);
-      const cls=['gc'];let sym='';
-      if(t){cls.push({miss:'miss',hit:'hit',sunk:'sunk',bonus:'hit',malus:'miss'}[t.result]||'miss');sym={miss:'🌊',hit:'💥',sunk:'💀',bonus:'⭐',malus:'💣'}[t.result]||'';}
-      h+=`<div class="${cls.join(' ')}" data-coord="${coord}">${sym}</div>`;
-    });
-  });
-  h+='</div>';
-  document.getElementById('modalBonusGrid').innerHTML=h;
-  document.getElementById('bonusPickGrid').querySelectorAll('.gc').forEach(cell=>{
-    cell.addEventListener('click',()=>{
-      const coord=cell.dataset.coord;
-      if(dejaVus.has(coord))return;
-      _bonusCoord[matchId]=coord;
-      document.getElementById('bonusPickGrid').querySelectorAll('.gc').forEach(c=>c.classList.toggle('sel',c.dataset.coord===coord));
-      info.textContent='Tir bonus : '+coord;
-      btn.disabled=false;
-    });
-  });
-  document.getElementById('modalBonusTorpille').style.display='flex';
-}
-async function confirmerBonusTorpille(){
-  const matchId=Object.keys(_bonusTorpille)[0];
-  if(!matchId)return;
-  document.getElementById('modalBonusTorpille').style.display='none';
-  const coord=_bonusCoord[matchId];
-  const ctx=_bonusTorpille[matchId];
-  delete _bonusTorpille[matchId];delete _bonusCoord[matchId];
-  if(!coord){await finaliserOps(matchId,ctx,null);return;}
-  const bonusRes=processShots([coord],ctx.pl_j2,ctx.tr_j2_av,ctx.pl_j2?.bonus_cells||[],ctx.pl_j2?.malus_cells||[],ctx.tourNum);
-  await finaliserOps(matchId,ctx,bonusRes);
-}
-async function ignorerBonusTorpille(){
-  const matchId=Object.keys(_bonusTorpille)[0];
-  if(!matchId)return;
-  document.getElementById('modalBonusTorpille').style.display='none';
-  const ctx=_bonusTorpille[matchId];
-  delete _bonusTorpille[matchId];delete _bonusCoord[matchId];
-  await finaliserOps(matchId,ctx,null);
 }
 
 function demanderConfirmTirs(matchId){
@@ -1865,292 +1008,45 @@ function demanderConfirmTirs(matchId){
 async function soumettreCoups(matchId){
   const match=MATCHS.find(m=>m.id===matchId),shots=_shots[matchId]||[];
   if(shots.length!==3)return;
-  const mode=match?.mode_jeu||'rush';
-
-  // Mode classique → résolution immédiate côté serveur
-  if(mode==='classique'){await soumettreCoups_Classique(matchId);return;}
-
-  // Ops : brouillard — ajouter marqueur aux tirs
-  let finalShots=[...shots];
-  const myPl=GRILLES[matchId]?.mine?.grille_placement;
-  if(isOpsMode(matchId)&&_brouillardActif[matchId]&&myPl?.pouvoir==='brouillard'&&!myPl?.pouvoir_utilise){
-    finalShots=[...shots,'__BROUILLARD__'];
-    _brouillardActif[matchId]=false;
-  }
-
-  // Modes rush / spéciaux / ops → logique simultanée
   const role=getMyRole(match);
   const tf=role===1?'tirs_j1':'tirs_j2',sf=role===1?'soumis_j1':'soumis_j2';
-  await loadTourEnCours(matchId);let tour=TOURS[matchId];
-  let updTour;
-  if(!tour){
-    const{data:nt,error}=await sb.from('tournoi_tours').insert({
-      match_id:matchId,numero_tour:1,[tf]:finalShots,[sf]:true,statut:'en_cours'
-    }).select().single();
-    if(error){
-      await loadTourEnCours(matchId);tour=TOURS[matchId];
-      if(tour){const{data:ut,error:e2}=await sb.from('tournoi_tours').update({[tf]:finalShots,[sf]:true}).eq('id',tour.id).select().single();if(e2){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}updTour=ut;}
-      else{showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
-    }else{updTour=nt;}
-  }else{
-    const{data:ut,error}=await sb.from('tournoi_tours').update({[tf]:finalShots,[sf]:true}).eq('id',tour.id).select().single();
-    if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}updTour=ut;
-  }
-  TOURS[matchId]=updTour;_shots[matchId]=[];
-  const advSub=role===1?updTour.soumis_j2:updTour.soumis_j1;
-  if(advSub)await resoudreTour(matchId,updTour);
-  else{await loadGrilles(matchId);renderTab(currentTab);}
-}
 
-/* Soumission Radar (remplace les 3 tirs normaux) */
-async function soumettreRadar(matchId,centre){
-  const match=MATCHS.find(m=>m.id===matchId);
-  const role=getMyRole(match);
-  const tf=role===1?'tirs_j1':'tirs_j2',sf=role===1?'soumis_j1':'soumis_j2';
-  const radarPayload=['__RADAR__:'+centre];
-  await loadTourEnCours(matchId);let tour=TOURS[matchId];
+  // Toujours recharger le tour en cours depuis la base avant d'agir
+  await loadTourEnCours(matchId);
+  let tour=TOURS[matchId];
+
   let updTour;
   if(!tour){
-    const{data:nt,error}=await sb.from('tournoi_tours').insert({
-      match_id:matchId,numero_tour:1,[tf]:radarPayload,[sf]:true,statut:'en_cours'
-    }).select().single();
-    if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
-    updTour=nt;
-  }else{
-    const{data:ut,error}=await sb.from('tournoi_tours').update({[tf]:radarPayload,[sf]:true}).eq('id',tour.id).select().single();
-    if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
-    updTour=ut;
-  }
-  _shots[matchId]=[];TOURS[matchId]=updTour;
-  const advSub=role===1?updTour.soumis_j2:updTour.soumis_j1;
-  if(advSub)await resoudreTour(matchId,updTour);
-  else{await loadGrilles(matchId);renderTab(currentTab);}
-}
-  const tf=role===1?'tirs_j1':'tirs_j2',sf=role===1?'soumis_j1':'soumis_j2';
-  await loadTourEnCours(matchId);let tour=TOURS[matchId];
-  let updTour;
-  if(!tour){
+    // Pas de tour en cours → créer
     const{data:nt,error}=await sb.from('tournoi_tours').insert({
       match_id:matchId,numero_tour:1,[tf]:shots,[sf]:true,statut:'en_cours'
     }).select().single();
     if(error){
-      await loadTourEnCours(matchId);tour=TOURS[matchId];
-      if(tour){const{data:ut,error:e2}=await sb.from('tournoi_tours').update({[tf]:shots,[sf]:true}).eq('id',tour.id).select().single();if(e2){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}updTour=ut;}
-      else{showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+      // Peut-être créé entre-temps par l'adversaire — recharger et mettre à jour
+      await loadTourEnCours(matchId);
+      tour=TOURS[matchId];
+      if(tour){
+        const{data:ut,error:e2}=await sb.from('tournoi_tours').update({[tf]:shots,[sf]:true}).eq('id',tour.id).select().single();
+        if(e2){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+        updTour=ut;
+      }else{showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
     }else{updTour=nt;}
   }else{
     const{data:ut,error}=await sb.from('tournoi_tours').update({[tf]:shots,[sf]:true}).eq('id',tour.id).select().single();
-    if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}updTour=ut;
+    if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+    updTour=ut;
   }
+
   TOURS[matchId]=updTour;_shots[matchId]=[];
   const advSub=role===1?updTour.soumis_j2:updTour.soumis_j1;
   if(advSub)await resoudreTour(matchId,updTour);
   else{await loadGrilles(matchId);renderTab(currentTab);}
-}
-
-/* Mode classique : chaque joueur voit le résultat de son tir immédiatement avant que l'adversaire tire */
-async function soumettreCoups_Classique(matchId){
-  const match=MATCHS.find(m=>m.id===matchId),shots=_shots[matchId]||[];
-  if(shots.length!==3)return;
-  const role=getMyRole(match);
-  const g=GRILLES[matchId];
-  if(!g?.mine||!g?.theirs)return;
-
-  await loadTourEnCours(matchId);
-  let tour=TOURS[matchId];
-  const tourNum=tour?.numero_tour||1;
-  // Déterminer la phase actuelle
-  const phase=tour?.classique_phase||(getClassiqueFirstRole(tourNum)===1?'j1_turn':'j2_turn');
-
-  // Vérifier que c'est bien mon tour
-  if(role===1&&phase!=='j1_turn'){showAlert(`alertB-${matchId}`,'err','Ce n\'est pas ton tour !');return;}
-  if(role===2&&phase!=='j2_turn'){showAlert(`alertB-${matchId}`,'err','Ce n\'est pas ton tour !');return;}
-
-  // Identifier la grille cible (adversaire)
-  const targetGrille=role===1?g.theirs:g.mine;
-  const targetPlacement=targetGrille.grille_placement;
-  const targetGrilleId=targetGrille.id;
-  const tirsAv=targetGrille.tirs_recus||[];
-
-  // Résoudre les tirs immédiatement
-  const res=processShots(shots,targetPlacement,tirsAv,
-    targetPlacement?.bonus_cells||[],targetPlacement?.malus_cells||[],tourNum);
-  const newTirs=[...tirsAv,...res.history];
-
-  // Mettre à jour la grille cible
-  await sb.from('tournoi_grilles').update({tirs_recus:newTirs}).eq('id',targetGrilleId);
-
-  // Vérifier victoire
-  const won=checkWinCondition('classique',newTirs,targetPlacement);
-  const tf=role===1?'tirs_j1':'tirs_j2';
-
-  if(won){
-    // Victoire
-    if(tour){await sb.from('tournoi_tours').update({[tf]:shots,statut:'validé'}).eq('id',tour.id);}
-    const vainqueur_id=role===1?match.joueur1_id:match.joueur2_id;
-    const pts_j1=role===1?3:0,pts_j2=role===2?3:0;
-    await terminerMatch(matchId,match,vainqueur_id,pts_j1,pts_j2,res,{bonusPts:0,malusPts:0});
-  } else if(phase==='j2_turn'||(phase==='j1_turn'&&getClassiqueFirstRole(tourNum)===2)){
-    // Le second joueur vient de tirer → fin du tour
-    const nextFirstRole=getClassiqueFirstRole(tourNum+1);
-    const nextPhase=nextFirstRole===1?'j1_turn':'j2_turn';
-    if(tour){await sb.from('tournoi_tours').update({[tf]:shots,statut:'validé'}).eq('id',tour.id);}
-    await sb.from('tournoi_tours').insert({
-      match_id:matchId,numero_tour:tourNum+1,statut:'en_cours',
-      classique_phase:nextPhase,soumis_j1:false,soumis_j2:false
-    });
-  } else {
-    // Premier joueur du tour vient de tirer → passer la main
-    const nextPhase=role===1?'j2_turn':'j1_turn';
-    if(tour){
-      await sb.from('tournoi_tours').update({[tf]:shots,classique_phase:nextPhase}).eq('id',tour.id);
-    }else{
-      const{data:nt}=await sb.from('tournoi_tours').insert({
-        match_id:matchId,numero_tour:tourNum,[tf]:shots,classique_phase:nextPhase,statut:'en_cours',soumis_j1:false,soumis_j2:false
-      }).select().single();
-      if(nt)TOURS[matchId]=nt;
-    }
-  }
-
-  _shots[matchId]=[];
-  await loadGrilles(matchId);await loadTourEnCours(matchId);
-  buildNav();renderNav();renderTab(currentTab);
 }
 
 async function resoudreTour(matchId,tour){
   const match=MATCHS.find(m=>m.id===matchId),g=GRILLES[matchId];
   if(!g?.mine||!g?.theirs){await loadGrilles(matchId);return;}
   const role=getMyRole(match);
-  const mode=match?.mode_jeu||'rush';
-  const pl_j1=role===1?g.mine.grille_placement:g.theirs.grille_placement;
-  const pl_j2=role===2?g.mine.grille_placement:g.theirs.grille_placement;
-  const id_j1=role===1?g.mine.id:g.theirs.id;
-  const id_j2=role===2?g.mine.id:g.theirs.id;
-  const tr_j2_av=role===2?(g.mine.tirs_recus||[]):(g.theirs.tirs_recus||[]);
-  const tr_j1_av=role===1?(g.mine.tirs_recus||[]):(g.theirs.tirs_recus||[]);
-
-  // ── Mode ops : détection marqueurs spéciaux ──
-  if(isOpsMode(matchId)){
-    const raw_j1=(tour.tirs_j1||[]).filter(t=>!t.startsWith?.('__BROUILLARD__'));
-    const raw_j2=(tour.tirs_j2||[]).filter(t=>!t.startsWith?.('__BROUILLARD__'));
-    const j1_brouillard=(tour.tirs_j1||[]).some(t=>t==='__BROUILLARD__');
-    const j2_brouillard=(tour.tirs_j2||[]).some(t=>t==='__BROUILLARD__');
-    const j1_radar=raw_j1[0]?.startsWith?.('__RADAR__:');
-    const j2_radar=raw_j2[0]?.startsWith?.('__RADAR__:');
-
-    // Radar : résolution dédiée
-    const plUpdates=[];
-    if(j1_radar&&role===1){
-      const centre=raw_j1[0].replace('__RADAR__:','');
-      const ships=computeRadarResult(centre,pl_j2);
-      const newRes=[...(pl_j1?.radar_resultats||[]),{zone:centre,tour:tour.numero_tour,ships}];
-      const newPl1={...pl_j1,radar_resultats:newRes,pouvoir_utilise:true};
-      plUpdates.push(sb.from('tournoi_grilles').update({grille_placement:newPl1}).eq('id',id_j1));
-    }
-    if(j2_radar&&role===2){
-      const centre=raw_j2[0].replace('__RADAR__:','');
-      const ships=computeRadarResult(centre,pl_j1);
-      const newRes=[...(pl_j2?.radar_resultats||[]),{zone:centre,tour:tour.numero_tour,ships}];
-      const newPl2={...pl_j2,radar_resultats:newRes,pouvoir_utilise:true};
-      plUpdates.push(sb.from('tournoi_grilles').update({grille_placement:newPl2}).eq('id',id_j2));
-    }
-
-    const tirs_j1_eff=j1_radar?[]:raw_j1;
-    const tirs_j2_eff=j2_radar?[]:raw_j2;
-
-    const res_j1=processShots(tirs_j1_eff,pl_j2,tr_j2_av,pl_j2?.bonus_cells||[],pl_j2?.malus_cells||[],tour.numero_tour);
-    const res_j2=processShots(tirs_j2_eff,pl_j1,tr_j1_av,pl_j1?.bonus_cells||[],pl_j1?.malus_cells||[],tour.numero_tour);
-
-    // Brouillard : marquer les résultats comme cachés
-    if(j2_brouillard)res_j1.history=res_j1.history.map(e=>({...e,brouillard:true}));
-    if(j1_brouillard)res_j2.history=res_j2.history.map(e=>({...e,brouillard:true}));
-
-    // Marquer pouvoirs utilisés (brouillard, torpille)
-    if(j1_brouillard&&role===1){const p={...pl_j1,pouvoir_utilise:true};plUpdates.push(sb.from('tournoi_grilles').update({grille_placement:p}).eq('id',id_j1));}
-    if(j2_brouillard&&role===2){const p={...pl_j2,pouvoir_utilise:true};plUpdates.push(sb.from('tournoi_grilles').update({grille_placement:p}).eq('id',id_j2));}
-
-    // Torpille : détecter bonus (2+ touches → modal)
-    const j1Torpille=pl_j1?.pouvoir==='torpille'&&!pl_j1?.pouvoir_utilise&&tirs_j1_eff.length>0;
-    const j2Torpille=pl_j2?.pouvoir==='torpille'&&!pl_j2?.pouvoir_utilise&&tirs_j2_eff.length>0;
-    const j1Hits=res_j1.history.filter(t=>['hit','sunk'].includes(t.result)).length;
-    const j2Hits=res_j2.history.filter(t=>['hit','sunk'].includes(t.result)).length;
-    const myBonus=(role===1&&j1Torpille&&j1Hits>=2)||(role===2&&j2Torpille&&j2Hits>=2);
-
-    // Marquer torpille utilisée si elle a tiré
-    if(j1Torpille&&role===1){const p={...pl_j1,pouvoir_utilise:true};plUpdates.push(sb.from('tournoi_grilles').update({grille_placement:p}).eq('id',id_j1));}
-    if(j2Torpille&&role===2){const p={...pl_j2,pouvoir_utilise:true};plUpdates.push(sb.from('tournoi_grilles').update({grille_placement:p}).eq('id',id_j2));}
-
-    if(plUpdates.length)await Promise.all(plUpdates);
-
-    if(myBonus){
-      // Sauvegarder le contexte et ouvrir modal avant de finaliser
-      _bonusTorpille[matchId]={tour,res_j1,res_j2,tr_j2_av,tr_j1_av,pl_j1,pl_j2,id_j1,id_j2,match,mode,
-        hist_j1:res_j1.history,tourNum:tour.numero_tour};
-      await sb.from('tournoi_tours').update({statut:'validé'}).eq('id',tour.id);
-      await Promise.all([
-        sb.from('tournoi_grilles').update({tirs_recus:[...tr_j2_av,...res_j1.history]}).eq('id',id_j2),
-        sb.from('tournoi_grilles').update({tirs_recus:[...tr_j1_av,...res_j2.history]}).eq('id',id_j1),
-      ]);
-      await loadGrilles(matchId);
-      ouvrirModalBonusTorpille(matchId);
-      return;
-    }
-
-    await finaliserOps(matchId,{tour,res_j1,res_j2,tr_j2_av,tr_j1_av,pl_j1,pl_j2,id_j1,id_j2,match,mode,tourNum:tour.numero_tour},null);
-    return;
-  }
-
-  // ── Modes classiques (rush, mort_subite, petite_victime, leviathan) ──
-  const res_j1=processShots(tour.tirs_j1||[],pl_j2,tr_j2_av,pl_j2?.bonus_cells||[],pl_j2?.malus_cells||[],tour.numero_tour);
-  const res_j2=processShots(tour.tirs_j2||[],pl_j1,tr_j1_av,pl_j1?.bonus_cells||[],pl_j1?.malus_cells||[],tour.numero_tour);
-  const new_tr_j2=[...tr_j2_av,...res_j1.history];
-  const new_tr_j1=[...tr_j1_av,...res_j2.history];
-  const j1Won=checkWinCondition(mode,new_tr_j2,pl_j2);
-  const j2Won=checkWinCondition(mode,new_tr_j1,pl_j1);
-  await Promise.all([
-    sb.from('tournoi_grilles').update({tirs_recus:new_tr_j2}).eq('id',id_j2),
-    sb.from('tournoi_grilles').update({tirs_recus:new_tr_j1}).eq('id',id_j1),
-    sb.from('tournoi_tours').update({statut:'validé'}).eq('id',tour.id),
-  ]);
-  if(j1Won||j2Won){
-    let vainqueur_id=null,pts_j1=0,pts_j2=0;
-    if(j1Won&&j2Won){pts_j1=isSpecialMode(mode)?0:1;pts_j2=isSpecialMode(mode)?0:1;}
-    else if(j1Won){vainqueur_id=match.joueur1_id;pts_j1=3;}
-    else{vainqueur_id=match.joueur2_id;pts_j2=3;}
-    await terminerMatch(matchId,match,vainqueur_id,pts_j1,pts_j2,res_j1,res_j2);
-  }else{
-    await sb.from('tournoi_tours').insert({match_id:matchId,numero_tour:(tour.numero_tour||1)+1,soumis_j1:false,soumis_j2:false,statut:'en_cours'});
-  }
-  await loadGrilles(matchId);await loadTourEnCours(matchId);
-  buildNav();renderNav();renderTab(currentTab);
-}
-
-/* Finalisation après ops (avec ou sans tir bonus torpille) */
-async function finaliserOps(matchId,ctx,bonusRes){
-  const{tour,res_j1,res_j2,tr_j2_av,tr_j1_av,pl_j1,pl_j2,id_j1,id_j2,match,mode,tourNum}=ctx;
-  const bonusHist=bonusRes?.history||[];
-  const new_tr_j2=[...tr_j2_av,...res_j1.history,...bonusHist];
-  const new_tr_j1=[...tr_j1_av,...res_j2.history];
-  const j1Won=checkWinCondition('rush',new_tr_j2,pl_j2);
-  const j2Won=checkWinCondition('rush',new_tr_j1,pl_j1);
-  await Promise.all([
-    sb.from('tournoi_grilles').update({tirs_recus:new_tr_j2}).eq('id',id_j2),
-    sb.from('tournoi_grilles').update({tirs_recus:new_tr_j1}).eq('id',id_j1),
-    sb.from('tournoi_tours').update({statut:'validé'}).eq('id',tour.id),
-  ]);
-  if(j1Won||j2Won){
-    let vainqueur_id=null,pts_j1=0,pts_j2=0;
-    if(j1Won&&j2Won){pts_j1=1;pts_j2=1;}
-    else if(j1Won){vainqueur_id=match.joueur1_id;pts_j1=3;}
-    else{vainqueur_id=match.joueur2_id;pts_j2=3;}
-    await terminerMatch(matchId,match,vainqueur_id,pts_j1,pts_j2,
-      {bonusPts:res_j1.bonusPts+(bonusRes?.bonusPts||0),malusPts:res_j1.malusPts+(bonusRes?.malusPts||0)},res_j2);
-  }else{
-    await sb.from('tournoi_tours').insert({match_id:matchId,numero_tour:(tourNum||1)+1,soumis_j1:false,soumis_j2:false,statut:'en_cours'});
-  }
-  await loadGrilles(matchId);await loadTourEnCours(matchId);
-  buildNav();renderNav();renderTab(currentTab);
-}
   const pl_j1=role===1?g.mine.grille_placement:g.theirs.grille_placement;
   const pl_j2=role===2?g.mine.grille_placement:g.theirs.grille_placement;
   const id_j1=role===1?g.mine.id:g.theirs.id;
@@ -2164,10 +1060,7 @@ async function finaliserOps(matchId,ctx,bonusRes){
 
   const new_tr_j2=[...tr_j2_av,...res_j1.history];
   const new_tr_j1=[...tr_j1_av,...res_j2.history];
-
-  // Condition de victoire selon le mode
-  const j1Won=checkWinCondition(mode,new_tr_j2,pl_j2); // J1 a gagné si j2 est vaincu
-  const j2Won=checkWinCondition(mode,new_tr_j1,pl_j1); // J2 a gagné si j1 est vaincu
+  const j1Sunk=allSunk(pl_j2,new_tr_j2),j2Sunk=allSunk(pl_j1,new_tr_j1);
 
   await Promise.all([
     sb.from('tournoi_grilles').update({tirs_recus:new_tr_j2}).eq('id',id_j2),
@@ -2175,41 +1068,30 @@ async function finaliserOps(matchId,ctx,bonusRes){
     sb.from('tournoi_tours').update({statut:'validé'}).eq('id',tour.id),
   ]);
 
-  if(j1Won||j2Won){
+  if(j1Sunk||j2Sunk){
     let vainqueur_id=null,pts_j1=0,pts_j2=0;
-    if(j1Won&&j2Won){
-      // Égalité simultanée — si mode spécial : aucun gagnant (draw), revanche proposée
-      pts_j1=isSpecialMode(mode)?0:1;pts_j2=isSpecialMode(mode)?0:1;
-    }else if(j1Won){vainqueur_id=match.joueur1_id;pts_j1=3;}
+    if(j1Sunk&&j2Sunk){pts_j1=1;pts_j2=1;}
+    else if(j1Sunk){vainqueur_id=match.joueur1_id;pts_j1=3;}
     else{vainqueur_id=match.joueur2_id;pts_j2=3;}
-    await terminerMatch(matchId,match,vainqueur_id,pts_j1,pts_j2,res_j1,res_j2);
+    await sb.from('tournoi_matchs').update({statut:'terminé',vainqueur_id,pts_j1,pts_j2,bonus_j1:res_j1.bonusPts,malus_j1:res_j1.malusPts,bonus_j2:res_j2.bonusPts,malus_j2:res_j2.malusPts}).eq('id',matchId);
+    const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)Object.assign(MATCHS[idx],{statut:'terminé',vainqueur_id,pts_j1,pts_j2});
+
+    // Mise à jour des profils persistants
+    await updateProfils({
+      match, vainqueur_id,
+      draw: !!(j1Sunk&&j2Sunk),
+      tirs_j1: [...tr_j2_av,...res_j1.history],
+      tirs_j2: [...tr_j1_av,...res_j2.history],
+      nb_tours: tour.numero_tour||1,
+    });
+
+    // Vérifier progression du tournoi (génération phases suivantes)
+    await checkProgressTournoi();
   }else{
     await sb.from('tournoi_tours').insert({match_id:matchId,numero_tour:(tour.numero_tour||1)+1,soumis_j1:false,soumis_j2:false,statut:'en_cours'});
   }
   await loadGrilles(matchId);await loadTourEnCours(matchId);
   buildNav();renderNav();renderTab(currentTab);
-}
-
-async function terminerMatch(matchId,match,vainqueur_id,pts_j1,pts_j2,res_j1,res_j2){
-  const bonus_j1=res_j1?.bonusPts||0,malus_j1=res_j1?.malusPts||0;
-  const bonus_j2=res_j2?.bonusPts||0,malus_j2=res_j2?.malusPts||0;
-  const mode=match?.mode_jeu||'rush';
-  const needRev=needsRevanche(mode);
-
-  await sb.from('tournoi_matchs').update({
-    statut:'terminé',vainqueur_id,pts_j1,pts_j2,bonus_j1,malus_j1,bonus_j2,malus_j2
-  }).eq('id',matchId);
-  const idx=MATCHS.findIndex(m=>m.id===matchId);
-  if(idx>=0)Object.assign(MATCHS[idx],{statut:'terminé',vainqueur_id,pts_j1,pts_j2});
-
-  const g=GRILLES[matchId];
-  const role=getMyRole(match);
-  const tr_j2=role===2?(g?.mine?.tirs_recus||[]):(g?.theirs?.tirs_recus||[]);
-  const tr_j1=role===1?(g?.mine?.tirs_recus||[]):(g?.theirs?.tirs_recus||[]);
-  const tourNum=TOURS[matchId]?.numero_tour||1;
-  await updateProfils({match,vainqueur_id,draw:!vainqueur_id,tirs_j1:tr_j1,tirs_j2:tr_j2,nb_tours:tourNum});
-
-  if(!needRev)await checkProgressTournoi();
 }
 
 function processShots(shots,placement,tirsAv,bonus,malus,turn){
@@ -2234,45 +1116,28 @@ function processShots(shots,placement,tirsAv,bonus,malus,turn){
 
 /* ══ MISE À JOUR PROFILS APRÈS MATCH ══ */
 async function updateProfils({match,vainqueur_id,draw,tirs_j1,tirs_j2,nb_tours}){
+  // Charger les tournoi_joueurs pour récupérer les profil_id
   const{data:joueurs}=await sb.from('tournoi_joueurs')
     .select('id,profil_id').in('id',[match.joueur1_id,match.joueur2_id]);
   if(!joueurs)return;
+
   const tj1=joueurs.find(j=>j.id===match.joueur1_id);
   const tj2=joueurs.find(j=>j.id===match.joueur2_id);
 
-  // ── Calcul MMR Elo ──
-  let mmrDelta1=0,mmrDelta2=0;
-  try{
-    const pids=[tj1?.profil_id,tj2?.profil_id].filter(Boolean);
-    if(pids.length===2){
-      const{data:profils}=await sb.from('joueur_profils').select('id,mmr,matchs_joues').in('id',pids);
-      const p1=profils?.find(p=>p.id===tj1.profil_id);
-      const p2=profils?.find(p=>p.id===tj2.profil_id);
-      if(p1&&p2){
-        const mmr1=p1.mmr??1000,mmr2=p2.mmr??1000;
-        const K1=((p1.matchs_joues||0)<10)?50:32,K2=((p2.matchs_joues||0)<10)?50:32;
-        const E1=1/(1+Math.pow(10,(mmr2-mmr1)/400)),E2=1-E1;
-        const S1=draw?.5:vainqueur_id===match.joueur1_id?1:0;
-        const S2=draw?.5:vainqueur_id===match.joueur2_id?1:0;
-        const d1=Math.round(K1*(S1-E1)),d2=Math.round(K2*(S2-E2));
-        mmrDelta1=S1===1&&mmr1<=mmr2-150?{delta:d1,remontada:match.joueur1_id}:d1;
-        mmrDelta2=S2===1&&mmr2<=mmr1-150?{delta:d2,remontada:match.joueur2_id}:d2;
-      }
-    }
-  }catch(e){console.warn('MMR calc error',e);}
-
+  // Traiter chaque joueur
   const jobs=[];
-  if(tj1?.profil_id) jobs.push(updateUnProfil(tj1.profil_id,'j1',{vainqueur_id,draw,match,tirs:tirs_j1,tirs_adv:tirs_j2,nb_tours,mmrDelta:mmrDelta1}));
-  if(tj2?.profil_id) jobs.push(updateUnProfil(tj2.profil_id,'j2',{vainqueur_id,draw,match,tirs:tirs_j2,tirs_adv:tirs_j1,nb_tours,mmrDelta:mmrDelta2}));
+  if(tj1?.profil_id) jobs.push(updateUnProfil(tj1.profil_id,'j1',{vainqueur_id,draw,match,tirs:tirs_j1,tirs_adv:tirs_j2,nb_tours}));
+  if(tj2?.profil_id) jobs.push(updateUnProfil(tj2.profil_id,'j2',{vainqueur_id,draw,match,tirs:tirs_j2,tirs_adv:tirs_j1,nb_tours}));
   await Promise.all(jobs);
 
+  // Rafraîchir le profil du joueur courant si concerné
   if(MOI.profil_id&&(tj1?.profil_id===MOI.profil_id||tj2?.profil_id===MOI.profil_id)){
     const{data:p}=await sb.from('joueur_profils').select('*').eq('id',MOI.profil_id).maybeSingle();
     if(p)MON_PROFIL=p;
   }
 }
 
-async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_adv,nb_tours,mmrDelta=0}){
+async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_adv,nb_tours}){
   // Charger le profil actuel
   const{data:p}=await sb.from('joueur_profils').select('*').eq('id',profilId).maybeSingle();
   if(!p)return;
@@ -2407,16 +1272,6 @@ async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_a
     }
   }catch(e){}
 
-  // ── MMR ──
-  const deltaVal=typeof mmrDelta==='object'?mmrDelta.delta:mmrDelta;
-  const hasRemontada=typeof mmrDelta==='object'&&mmrDelta.remontada===joueurId;
-  const oldMmr=p.mmr??1000;
-  const newMmr=Math.max(100,oldMmr+deltaVal);
-  if(hasRemontada) rewExisting.add('remontada');
-  if(newMmr>=1100) rewExisting.add('mmr_silver');
-  if(newMmr>=1200) rewExisting.add('mmr_gold');
-  if(newMmr>=1500) rewExisting.add('mmr_plat');
-
   // Sauvegarder
   await sb.from('joueur_profils').update({
     matchs_joues, victoires, defaites, egalites,
@@ -2425,7 +1280,6 @@ async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_a
     premier_tir_touches, coule_premier_tour,
     recompenses:[...rewExisting],
     grade_cache:getGrade(victoires),
-    mmr:newMmr,
     updated_at:new Date().toISOString(),
   }).eq('id',profilId);
 
@@ -2435,11 +1289,6 @@ async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_a
     const nouveauGrade=getGrade(victoires);
     if(nouveauGrade!==ancienGrade){
       setTimeout(()=>showUnlockToast(`⚓ NOUVEAU GRADE : ${nouveauGrade}`,'var(--gold)'),3000);
-    }
-    if(deltaVal!==0){
-      _mmrDelta=deltaVal;
-      const mmrSign=deltaVal>0?'+':'';const mmrColor=deltaVal>0?'var(--green)':'var(--red)';
-      setTimeout(()=>showUnlockToast(`⚡ MMR : ${mmrSign}${deltaVal}  (${newMmr} pts)`,mmrColor),2200);
     }
     const nouvelles=[...rewExisting].filter(k=>!(p.recompenses||[]).includes(k));
     nouvelles.forEach((k,i)=>{
@@ -2465,348 +1314,56 @@ function showUnlockToast(msg,color){
   setTimeout(()=>t.remove(),5000);
 }
 
-/* ══ PLACEMENT ALÉATOIRE ══ */
-function randomPlacement(matchId){
-  const pl=_pl[matchId];
-  const gridData={},shipCells={};
-
-  for(const k of SHIP_KEYS){
-    let placed=false,attempts=0;
-    while(!placed&&attempts<300){
-      attempts++;
-      const orient=Math.random()<0.5?'H':'V';
-      const col=Math.floor(Math.random()*10);
-      const row=Math.floor(Math.random()*10)+1;
-      const coords=getShipCoords(COLS[col]+row,SHIPS[k].size,orient);
-      if(!coords)continue;
-      if(coords.every(c=>!gridData[c])){
-        coords.forEach(c=>gridData[c]=k);
-        shipCells[k]=coords;
-        placed=true;
-      }
-    }
-  }
-
-  const allCoords=[];
-  COLS.forEach(c=>ROWS.forEach(r=>allCoords.push(c+r)));
-  const free=allCoords.filter(c=>!gridData[c]).sort(()=>Math.random()-.5);
-  const bonusCells=free.slice(0,2);
-  const malusCells=free.slice(2,4);
-
-  pl.gridData=gridData;pl.shipCells=shipCells;
-  pl.bonusCells=bonusCells;pl.malusCells=malusCells;
-  pl.step='done';pl.selectedShip=null;pl.preview={};
-  renderTab(currentTab);
-}
-
-/* ══ DUPLIQUER GRILLE ══ */
-function dupliquerGrille(sourceMatchId){
-  const src=_pl[sourceMatchId];
-  if(!src)return;
-  const targets=MATCHS.filter(m=>
-    m.id!==sourceMatchId&&
-    m.statut==='placement'&&
-    !GRILLES[m.id]?.mine?.placement_valide
-  );
-  if(!targets.length){showAlert(`alertP-${sourceMatchId}`,'info','Aucun autre combat en phase de placement.');return;}
-  targets.forEach(m=>{
-    _pl[m.id]={
-      step:'done',selectedShip:null,orient:'H',preview:{},
-      gridData:{...src.gridData},
-      shipCells:Object.fromEntries(Object.entries(src.shipCells).map(([k,v])=>[k,[...v]])),
-      bonusCells:[...src.bonusCells],
-      malusCells:[...src.malusCells],
-    };
-  });
-  showToastPhase(`✓ Grille copiée sur ${targets.length} combat(s)`,'var(--green)');
-}
-
 /* ══ RÉSULTAT ══ */
 function renderResultat(match,el){
   const role=getMyRole(match),won=match.vainqueur_id===MOI.id,draw=!match.vainqueur_id;
-  const mode=match.mode_jeu||'rush';
   const myPts=role===1?match.pts_j1:match.pts_j2,advPts=role===1?match.pts_j2:match.pts_j1;
   const myBonus=role===1?(match.bonus_j1||0):(match.bonus_j2||0);
   const myMalus=role===1?(match.malus_j1||0):(match.malus_j2||0);
   const mesTirs=GRILLES[match.id]?.theirs?.tirs_recus||[];
   const sesTirs=GRILLES[match.id]?.mine?.tirs_recus||[];
   const mesBateauxCoules=mesTirs.filter(t=>t.result==='sunk').length;
+  const sesBateauxCoules=sesTirs.filter(t=>t.result==='sunk').length;
   const nbTours=(TOURS[match.id]?.numero_tour||(mesTirs.length>0?Math.max(...mesTirs.map(t=>t.turn||0)):0));
-  const needRev=needsRevanche(mode);
-  const partieNum=match.partie_numero||1;
 
-  // Score de la série
-  const serieJ1=(match.serie_j1_avant||0)+(match.vainqueur_id===match.joueur1_id?1:0);
-  const serieJ2=(match.serie_j2_avant||0)+(match.vainqueur_id===match.joueur2_id?1:0);
-  const mySerieWins=role===1?serieJ1:serieJ2;
-  const advSerieWins=role===1?serieJ2:serieJ1;
+  // Prochain match non terminé
+  const nextMatch=MATCHS.find(m=>m.id!==match.id&&m.statut!=='terminé');
 
-  // Peut-on proposer une revanche ?
-  const myRevanche=role===1?match.revanche_j1:match.revanche_j2;
-  const advRevanche=role===1?match.revanche_j2:match.revanche_j1;
-  const canRevanche=needRev&&partieNum<3&&(partieNum===1||(partieNum===2&&mySerieWins===advSerieWins));
-  const refuseDetected=(myRevanche===false||advRevanche===false);
+  el.innerHTML=`<div class="card result-screen">
+    <span class="result-icon">${draw?'🤝':won?'🏆':'💀'}</span>
+    <div class="result-title" style="color:${draw?'var(--cyan)':won?'var(--gold)':'var(--red)'}">${draw?'ÉGALITÉ':won?'VICTOIRE !':'DÉFAITE'}</div>
+    <div style="color:var(--text2);margin-bottom:16px;font-size:.9rem">vs <strong style="color:var(--text)">${esc(getAdvNom(match))}</strong></div>
 
-  // Prochain match non terminé (autre match dans MATCHS, hors revanche)
-  const nextMatch=MATCHS.find(m=>m.id!==match.id&&!m.parent_match_id&&m.statut!=='terminé');
-
-  // Panneau revanche
-  let revancheHtml='';
-  if(needRev){
-    if(refuseDetected){
-      revancheHtml=`<div class="revanche-panel">
-        <div class="revanche-refused">✗ ${advRevanche===false?`${esc(getAdvNom(match))} a refusé la revanche`:'Tu as refusé la revanche'} — Série terminée</div>
-      </div>`;
-    }else if(canRevanche&&partieNum===1){
-      // Après partie 1 : toujours proposer revanche
-      revancheHtml=renderRevanchePanel(match,myRevanche,advRevanche,mySerieWins,advSerieWins,'Revanche',role);
-    }else if(canRevanche&&partieNum===2&&mySerieWins===advSerieWins){
-      // Après partie 2 avec 1-1 : belle
-      revancheHtml=renderRevanchePanel(match,myRevanche,advRevanche,mySerieWins,advSerieWins,'Belle — Départage !',role);
-    }else if(needRev&&partieNum>=2&&mySerieWins!==advSerieWins){
-      // Série terminée, un gagnant
-      const serieWinner=mySerieWins>advSerieWins?MOI.nom:getAdvNom(match);
-      revancheHtml=`<div class="revanche-panel">
-        <div class="revanche-title">🏆 Série terminée</div>
-        <div class="serie-score">
-          <div style="text-align:center"><div class="serie-pts" style="color:${mySerieWins>advSerieWins?'var(--gold)':'var(--text2)'}">${mySerieWins}</div><div class="serie-label">TOI</div></div>
-          <div style="font-family:'Orbitron',monospace;color:var(--text2);font-size:1.2rem">—</div>
-          <div style="text-align:center"><div class="serie-pts" style="color:${advSerieWins>mySerieWins?'var(--gold)':'var(--text2)'}">${advSerieWins}</div><div class="serie-label">ADV.</div></div>
-        </div>
-        <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--gold)">★ ${esc(serieWinner)} remporte la série</div>
-      </div>`;
-    }
-  }
-
-  // Précision finale
-  const sigTirs=mesTirs.filter(t=>!['bonus','malus'].includes(t.result));
-  const precFin=sigTirs.length>=3?Math.round(sigTirs.filter(t=>['hit','sunk'].includes(t.result)).length/sigTirs.length*100):null;
-  const titleColor=won?'var(--gold)':draw?'var(--cyan)':'var(--red)';
-  const titleText=won?'VICTOIRE !':draw?'ÉGALITÉ':'DÉFAITE';
-  const titleIcon=won?'🏆':draw?'🤝':'☠️';
-  const titleAnim=won?'animation:titleSlam .55s cubic-bezier(.17,.67,.3,1.35) forwards':draw?'animation:subFadeUp .6s ease forwards':'animation:defeatFadeIn 1.2s ease forwards';
-  const titleSize=won?'3rem':draw?'2.2rem':'2.5rem';
-  const titleGlow=won?'animation:goldGlow 2s ease-in-out 0.6s infinite':'';
-
-  el.innerHTML=`
-  ${renderModeBanner(match.id)}
-  <div class="card result-hero" style="color:${titleColor}">
-    <div class="result-hero-bg"></div>
-    <span class="result-main-icon">${titleIcon}</span>
-    <span class="result-main-title" style="font-size:${titleSize};color:${titleColor};${titleAnim};${titleGlow}">${titleText}</span>
-    <div class="result-vs" style="animation-delay:.25s">
-      VS &nbsp;<strong style="color:var(--text);font-size:.68rem">${esc(getAdvNom(match))}</strong>
-      ${partieNum>1?`<span style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--gold);margin-left:8px">PARTIE ${partieNum}</span>`:''}
-    </div>
-  </div>
-
-  <div class="card result-stats-card">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px">
-      ${['rush','classique'].includes(mode)?`
-      <div style="background:var(--bg3);border:1px solid ${won?'rgba(245,200,66,.25)':'var(--border)'};border-radius:7px;padding:11px 8px;text-align:center">
-        <div style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:${won?'var(--gold)':'var(--red)'}">
-          ${myPts}<span style="font-size:.6rem;color:var(--text3)"> pts</span>
-        </div>
-        <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-top:3px;letter-spacing:1px">MON SCORE</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:${won?'var(--gold)':'var(--red)'}">${myPts} pts</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);margin-top:2px">MON SCORE</div>
       </div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:11px 8px;text-align:center">
-        <div style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:var(--text3)">
-          ${advPts}<span style="font-size:.6rem;color:var(--text3)"> pts</span>
-        </div>
-        <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-top:3px;letter-spacing:1px">ADV. SCORE</div>
-      </div>`:''}
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:11px 8px;text-align:center">
-        <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:900;color:var(--orange)">${mesBateauxCoules}<span style="font-size:.58rem;color:var(--text3)">/5</span></div>
-        <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-top:3px;letter-spacing:1px">COULÉS</div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--text2)">${advPts} pts</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);margin-top:2px">ADV. SCORE</div>
       </div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:11px 8px;text-align:center">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:900;color:var(--orange)">${mesBateauxCoules}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);margin-top:2px">COULÉS</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
         <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:900;color:var(--cyan)">${nbTours}</div>
-        <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-top:3px;letter-spacing:1px">TOURS</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);margin-top:2px">TOURS</div>
       </div>
-      ${_mmrDelta!==null?`<div style="background:var(--bg3);border:1px solid ${_mmrDelta>=0?'rgba(0,232,120,.25)':'rgba(255,68,85,.25)'};border-radius:7px;padding:11px 8px;text-align:center;grid-column:span 2">
-        <div style="font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:${_mmrDelta>=0?'var(--green)':'var(--red)'}">
-          ${_mmrDelta>=0?'+':''}${_mmrDelta}
-        </div>
-        <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-top:3px;letter-spacing:1px">MMR</div>
-      </div>`:''}
     </div>
 
-    ${precFin!==null?`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);letter-spacing:1.5px">PRÉCISION FINALE</span>
-      <span style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:${precFin>=70?'var(--green)':precFin>=45?'var(--orange)':'var(--red)'}">${precFin}%</span>
+    ${(myBonus||myMalus)?`<div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text2);text-align:center;margin-bottom:12px">
+      ${myBonus?`<span style="color:var(--purple)">+${myBonus} bonus</span>`:''}
+      ${myMalus?`<span style="color:var(--orange);margin-left:8px">−${myMalus} malus</span>`:''}
     </div>`:''}
 
-    ${(myBonus||myMalus)?`<div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);text-align:center;margin-bottom:10px;display:flex;justify-content:center;gap:12px">
-      ${myBonus?`<span style="color:var(--purple)">⭐ +${myBonus} bonus</span>`:''}
-      ${myMalus?`<span style="color:var(--orange)">💣 −${myMalus} malus</span>`:''}
-    </div>`:''}
-
-    ${revancheHtml}
-
-    <div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:10px">
-      <button class="btn btn-outline btn-sm" onclick="goTab('poule')">🏅 POULE</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+      <button class="btn btn-outline btn-sm" onclick="goTab('poule')">🏅 VOIR LA POULE</button>
       <button class="btn btn-outline btn-sm" onclick="goTab('tournoi')">🏆 BRACKET</button>
-      ${nextMatch?`<button class="btn btn-gold btn-sm" onclick="goTab('match-${nextMatch.id}')">⚔️ PROCHAIN MATCH →</button>`:''}
+      ${nextMatch?`<button class="btn btn-gold btn-sm" onclick="goTab('match-${nextMatch.id}')">⚔️ MON PROCHAIN MATCH →</button>`:''}
     </div>
   </div>`;
-
-  if(won)       triggerVictoire();
-  else if(draw) triggerEgalite();
-  else          triggerDefaite();
-}
-
-/* ── VICTOIRE : flash + confetti ── */
-function triggerVictoire(){
-  const flash=document.getElementById('resultFlash');
-  if(flash){flash.style.setProperty('--flash-bg','rgba(245,200,66,.95)');flash.style.animation='none';flash.offsetWidth;flash.style.animation='goldFlash .7s ease-out forwards';}
-  const COLORS=['#f5c842','#00d4ff','#00e878','#cc88ff','#ff8844','#ffffff','#ff4455'];
-  const canvas=document.getElementById('confettiCanvas');
-  if(!canvas)return;
-  canvas.innerHTML='';
-  for(let i=0;i<60;i++){
-    const p=document.createElement('div');p.className='cfti';
-    const color=COLORS[Math.floor(Math.random()*COLORS.length)];
-    const left=Math.random()*100,delay=(Math.random()*1.2).toFixed(2),dur=(2.5+Math.random()*1.8).toFixed(2);
-    const rot=Math.round(360+Math.random()*720)*(Math.random()>.5?1:-1);
-    const w=6+Math.round(Math.random()*7),h=6+Math.round(Math.random()*10),br=Math.random()>.5?'50%':'2px';
-    p.style.cssText=`left:${left}%;background:${color};width:${w}px;height:${h}px;border-radius:${br};--dur:${dur}s;--delay:${delay}s;--rot:${rot}deg;animation-delay:${delay}s`;
-    canvas.appendChild(p);
-  }
-  setTimeout(()=>{if(canvas)canvas.innerHTML='';},5500);
-  playSoundVictoire();
-}
-function triggerEgalite(){
-  const flash=document.getElementById('resultFlash');
-  if(flash){flash.style.setProperty('--flash-bg','rgba(0,212,255,.5)');flash.style.animation='none';flash.offsetWidth;flash.style.animation='goldFlash .5s ease-out forwards';}
-}
-function triggerDefaite(){
-  const ov=document.getElementById('defeatOverlay');
-  if(ov){ov.style.background='rgba(0,0,0,0)';ov.style.animation='none';ov.offsetWidth;ov.style.animation='defeatDark 2.5s ease forwards';
-    setTimeout(()=>{if(ov)ov.style.animation='defeatDark 1.5s ease reverse forwards';},3500);
-    setTimeout(()=>{if(ov){ov.style.animation='none';ov.style.background='rgba(0,0,0,0)';}},5200);}
-  const flash=document.getElementById('resultFlash');
-  if(flash){flash.style.setProperty('--flash-bg','rgba(255,30,30,.7)');flash.style.animation='none';flash.offsetWidth;flash.style.animation='goldFlash .4s ease-out forwards';}
-  playSoundNaufrage();
-}
-function getAudioCtx(){try{return new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}}
-function playSoundVictoire(){
-  const ctx=getAudioCtx();if(!ctx)return;const t=ctx.currentTime;
-  [[523.25,0],[659.25,.12],[783.99,.24],[1046.5,.38]].forEach(([freq,delay])=>{
-    const osc=ctx.createOscillator(),g=ctx.createGain();osc.connect(g);g.connect(ctx.destination);
-    osc.frequency.value=freq;osc.type='sine';
-    g.gain.setValueAtTime(0,t+delay);g.gain.linearRampToValueAtTime(.18,t+delay+.04);g.gain.exponentialRampToValueAtTime(.001,t+delay+.5);
-    osc.start(t+delay);osc.stop(t+delay+.55);
-  });
-  const shi=ctx.createOscillator(),shig=ctx.createGain();shi.connect(shig);shig.connect(ctx.destination);
-  shi.frequency.value=2093;shi.type='sine';
-  shig.gain.setValueAtTime(0,t+.5);shig.gain.linearRampToValueAtTime(.08,t+.55);shig.gain.exponentialRampToValueAtTime(.001,t+1.1);
-  shi.start(t+.5);shi.stop(t+1.15);
-}
-function playSoundNaufrage(){
-  const ctx=getAudioCtx();if(!ctx)return;const t=ctx.currentTime;
-  const osc1=ctx.createOscillator(),g1=ctx.createGain();osc1.connect(g1);g1.connect(ctx.destination);
-  osc1.type='sawtooth';osc1.frequency.setValueAtTime(180,t);osc1.frequency.exponentialRampToValueAtTime(35,t+2.5);
-  g1.gain.setValueAtTime(.22,t);g1.gain.linearRampToValueAtTime(.28,t+.3);g1.gain.exponentialRampToValueAtTime(.001,t+2.8);
-  osc1.start(t);osc1.stop(t+3);
-  const osc2=ctx.createOscillator(),g2=ctx.createGain();osc2.connect(g2);g2.connect(ctx.destination);
-  osc2.type='sine';osc2.frequency.setValueAtTime(80,t);osc2.frequency.exponentialRampToValueAtTime(28,t+1.5);
-  g2.gain.setValueAtTime(.35,t);g2.gain.exponentialRampToValueAtTime(.001,t+2.2);osc2.start(t);osc2.stop(t+2.5);
-  for(let i=0;i<6;i++){const delay=.4+i*.28+Math.random()*.2;
-    const osc3=ctx.createOscillator(),g3=ctx.createGain();osc3.connect(g3);g3.connect(ctx.destination);
-    osc3.type='sine';osc3.frequency.value=600+Math.random()*400;
-    g3.gain.setValueAtTime(0,t+delay);g3.gain.linearRampToValueAtTime(.07,t+delay+.025);g3.gain.exponentialRampToValueAtTime(.001,t+delay+.18);
-    osc3.start(t+delay);osc3.stop(t+delay+.2);}
-}
-
-function renderRevanchePanel(match,myRevanche,advRevanche,mySerieWins,advSerieWins,title,role){
-  const waiting=myRevanche===true&&advRevanche===null;
-  return `<div class="revanche-panel">
-    <div class="revanche-title">🔄 ${esc(title)}</div>
-    <div class="serie-score">
-      <div style="text-align:center">
-        <div class="serie-pts" style="color:${mySerieWins>advSerieWins?'var(--gold)':mySerieWins<advSerieWins?'var(--red)':'var(--text)'}">${mySerieWins}</div>
-        <div class="serie-label">TOI</div>
-      </div>
-      <div style="font-family:'Orbitron',monospace;color:var(--text2);font-size:1.2rem;align-self:center">—</div>
-      <div style="text-align:center">
-        <div class="serie-pts" style="color:${advSerieWins>mySerieWins?'var(--gold)':advSerieWins<mySerieWins?'var(--red)':'var(--text)'}">${advSerieWins}</div>
-        <div class="serie-label">ADV.</div>
-      </div>
-    </div>
-    <div class="revanche-status">
-      ${myRevanche===true?`<span style="color:var(--green)">✓ Tu as accepté</span>`:''}
-      ${advRevanche===true?`<span style="color:var(--green);margin-left:8px">✓ Adversaire OK</span>`:advRevanche===null?`<span style="margin-left:8px">⏳ En attente de ${esc(getAdvNom(match))}</span>`:''}
-    </div>
-    ${waiting?'<div style="font-family:\'Orbitron\',monospace;font-size:.5rem;color:var(--text2);text-align:center">En attente de la réponse…</div>':''}
-    ${myRevanche===null?`<div class="revanche-actions">
-      <button class="btn btn-gold" onclick="accepterRevanche('${match.id}')">🔄 REVANCHE</button>
-      <button class="btn btn-danger" onclick="refuserRevanche('${match.id}')">✗ Terminer</button>
-    </div>`:
-    myRevanche===true&&!advRevanche?`<div class="revanche-actions">
-      <button class="btn btn-danger btn-sm" onclick="refuserRevanche('${match.id}')">✗ Annuler</button>
-    </div>`:''}
-  </div>`;
-}
-
-/* ══ REVANCHE ══ */
-async function accepterRevanche(matchId){
-  const match=MATCHS.find(m=>m.id===matchId);if(!match)return;
-  const role=getMyRole(match);
-  const field=role===1?'revanche_j1':'revanche_j2';
-  const{data}=await sb.from('tournoi_matchs').update({[field]:true}).eq('id',matchId).select().maybeSingle();
-  if(data){const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)MATCHS[idx]={...MATCHS[idx],...data};}
-  // Vérifier si les deux ont accepté
-  const updated=MATCHS.find(m=>m.id===matchId);
-  if(updated?.revanche_j1===true&&updated?.revanche_j2===true){
-    await checkAndCreateRevanche(matchId);
-  }else{renderTab(currentTab);}
-}
-
-async function refuserRevanche(matchId){
-  const match=MATCHS.find(m=>m.id===matchId);if(!match)return;
-  const role=getMyRole(match);
-  const field=role===1?'revanche_j1':'revanche_j2';
-  await sb.from('tournoi_matchs').update({[field]:false}).eq('id',matchId);
-  const idx=MATCHS.findIndex(m=>m.id===matchId);
-  if(idx>=0)MATCHS[idx]={...MATCHS[idx],[field]:false};
-  renderTab(currentTab);
-}
-
-async function checkAndCreateRevanche(matchId){
-  const match=MATCHS.find(m=>m.id===matchId);if(!match)return;
-  if(match.revanche_j1!==true||match.revanche_j2!==true)return;
-
-  // Vérifier qu'un match de revanche n'existe pas déjà
-  const{data:existing}=await sb.from('tournoi_matchs')
-    .select('id').eq('parent_match_id',matchId).maybeSingle();
-  if(existing)return; // Déjà créé par l'autre client
-
-  const partieNum=(match.partie_numero||1)+1;
-  if(partieNum>3)return;
-
-  // Calculer score de la série avant cette nouvelle partie
-  const serieJ1Av=(match.serie_j1_avant||0)+(match.vainqueur_id===match.joueur1_id?1:0);
-  const serieJ2Av=(match.serie_j2_avant||0)+(match.vainqueur_id===match.joueur2_id?1:0);
-
-  // Créer le nouveau match avec le même mode
-  const{data:newMatch}=await sb.from('tournoi_matchs').insert({
-    tournoi_id:match.tournoi_id,
-    joueur1_id:match.joueur1_id,joueur2_id:match.joueur2_id,
-    phase:match.phase,poule_id:match.poule_id,
-    mode_jeu:match.mode_jeu,  // même mode, pas de re-vote
-    statut:'placement',
-    partie_numero:partieNum,
-    parent_match_id:matchId,
-    serie_j1_avant:serieJ1Av,serie_j2_avant:serieJ2Av,
-  }).select().single();
-
-  if(newMatch){
-    await sb.from('tournoi_grilles').insert([
-      {match_id:newMatch.id,joueur_id:match.joueur1_id},
-      {match_id:newMatch.id,joueur_id:match.joueur2_id},
-    ]);
-    showToastPhase(`🔄 ${partieNum===3?'Belle !':'Revanche !'}`,MODES[match.mode_jeu||'rush']?.color||'var(--cyan)');
-  }
 }
 
 /* ══ POULE ══ */
@@ -2879,7 +1436,7 @@ async function renderProfil(profilId){
   const nextGr=getNextGrade(p.victoires);
   const ratio=getRatio(p.victoires,p.matchs_joues);
   const pct=p.matchs_joues>0?Math.round((p.victoires/p.matchs_joues)*100):0;
-  const flagHtml=getFlagHtml(p.drapeau||'fr', 36); // grand drapeau sur la carte profil
+  const flagEmoji=getFlagEmoji(p.drapeau);
 
   // Barre progression grade
   const gradeIdx=GRADES.findIndex(g=>g.label===grade);
@@ -2899,7 +1456,7 @@ async function renderProfil(profilId){
   <!-- ══ CARTE IDENTITÉ ══ -->
   <div class="card" style="text-align:center;padding:16px 12px">
     <div style="font-size:56px;margin-bottom:6px;line-height:1.1">${p.avatar||'⚓'}</div>
-    <div style="line-height:1;margin-bottom:8px">${flagHtml}</div>
+    <div style="font-size:40px;line-height:1;margin-bottom:8px">${flagEmoji}</div>
     <div style="font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:2px;color:var(--text)">${esc(p.pseudo)}</div>
     <div style="font-family:'Orbitron',monospace;font-size:.8rem;color:var(--gold);letter-spacing:2px;margin-top:4px;font-weight:700">${grade}</div>
     ${badgesHtml?`<div style="margin-top:8px">${badgesHtml}</div>`:''}
@@ -2972,7 +1529,7 @@ async function renderProfil(profilId){
   }
 
   // Grouper par catégorie
-  const cats=['ELO','Premières armes','Précision','Puissance','Régularité','Exploits'];
+  const cats=['Premières armes','Précision','Puissance','Régularité','Exploits'];
   cats.forEach(cat=>{
     const entries=Object.entries(REWARDS_META).filter(([,m])=>m.cat===cat);
     h+=`<div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text2);letter-spacing:2px;margin:10px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">${cat.toUpperCase()}</div>`;
@@ -3048,13 +1605,7 @@ async function renderProfil(profilId){
       </div>
       <div class="stitle">Drapeau</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
-        ${DRAPEAUX.map(d=>`<button onclick="setDrapeau('${d.code}')" title="${d.label||d.code}"
-          style="min-width:44px;min-height:36px;display:flex;align-items:center;justify-content:center;
-          padding:5px 8px;border-radius:6px;
-          border:1px solid ${p.drapeau===d.code?'var(--gold)':'var(--border)'};
-          background:${p.drapeau===d.code?'rgba(245,158,11,.12)':'var(--bg3)'};cursor:pointer">
-          ${getFlagHtml(d.code,18)}
-        </button>`).join('')}
+        ${DRAPEAUX.map(d=>`<button onclick="setDrapeau('${d.code}')" title="${d.label||d.code}" style="font-size:24px;padding:6px 8px;border-radius:6px;border:1px solid ${p.drapeau===d.code?'var(--gold)':'var(--border)'};background:${p.drapeau===d.code?'rgba(245,158,11,.12)':'var(--bg3)'};cursor:pointer">${d.flag}</button>`).join('')}
       </div>
       <div id="alertProfil" class="alert" style="margin-top:10px"></div>
     </div>
@@ -3274,32 +1825,32 @@ async function renderTournoi(){
 
   // ── PHASES FINALES ──
   if(demiMatchs.length>0||finaleMatch){
-    h+=`<div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;flex-wrap:wrap;gap:6px">
-        <div class="card-title" style="margin:0">⚔️ Phases finales</div>
-        <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:${statutColor};letter-spacing:2px;font-weight:700">${statutLabel}</span>
-      </div>`;
+    h+=`<div class="card"><div class="card-title">⚔️ Phases finales</div>`;
+
+    // Demi-finales
     if(demiMatchs.length>0){
-      h+=`<div class="bk-phase-label"><span style="color:var(--text2)">DEMI-FINALES</span></div><div class="bk-semis">`;
-      demiMatchs.forEach((m,i)=>{h+=bracketMatchCard(m,nomById,i+1,'Demi-finale');});
-      h+=`</div>`;
+      h+=`<div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:2px;margin-bottom:10px">DEMI-FINALES</div>`;
+      demiMatchs.forEach((m,i)=>{
+        h+=bracketMatchCard(m,nomById,i+1,'Demi-finale');
+      });
     }
-    if(demiMatchs.length>0&&finaleMatch){
-      h+=`<div class="bk-connector">▼ QUALIFIÉS POUR LA FINALE ▼</div>`;
-    }
+
+    // Finale
     if(finaleMatch){
-      h+=`<div class="bk-phase-label"><span style="color:var(--gold)">★ FINALE ★</span></div>`;
+      h+=`<div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--gold);letter-spacing:2px;margin:14px 0 10px">FINALE</div>`;
       h+=bracketMatchCard(finaleMatch,nomById,null,'Finale');
     }
+
+    // Champion
     if(tData?.statut==='terminé'&&finaleMatch?.vainqueur_id){
       const champNom=nomById[finaleMatch.vainqueur_id]||'?';
-      h+=`<div class="bk-champion">
-        <div style="font-size:44px;margin-bottom:8px;filter:drop-shadow(0 0 16px rgba(245,200,66,.5))">🏆</div>
-        <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:4px;margin-bottom:6px">CHAMPION DU TOURNOI</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:4px;color:var(--gold);text-shadow:0 0 20px rgba(245,200,66,.4)">${esc(champNom)}</div>
-        <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:4px;margin-top:6px;opacity:.7">⭐ ⭐ ⭐</div>
+      h+=`<div style="text-align:center;padding:16px;background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.3);border-radius:8px;margin-top:12px">
+        <div style="font-size:36px;margin-bottom:8px">🏆</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--gold)">CHAMPION</div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--text);margin-top:4px">${esc(champNom)}</div>
       </div>`;
     }
+
     h+=`</div>`;
   }
 
@@ -3311,59 +1862,37 @@ function bracketMatchCard(m,nomById,num,label){
   const j2Nom=nomById[m.joueur2_id]||'?';
   const isDone=m.statut==='terminé';
   const isMe=m.joueur1_id===MOI.id||m.joueur2_id===MOI.id;
+  const stCol={en_attente:'var(--text2)',placement:'var(--text2)',en_cours:'var(--cyan)',terminé:'var(--gold)'}[m.statut];
+  const stLbl={en_attente:'EN ATTENTE',placement:'PLACEMENT',en_cours:'EN COURS',terminé:'TERMINÉ'}[m.statut];
   const w=m.vainqueur_id;
-  const isDraw=isDone&&!w;
-  const stCol={en_attente:'var(--text3)',placement:'var(--text3)',en_cours:'var(--cyan)',terminé:'var(--green)'}[m.statut]||'var(--text3)';
-  const stLbl={en_attente:'EN ATTENTE',placement:'⚓ PLACEMENT',en_cours:'⚡ EN COURS',terminé:'✓ TERMINÉ'}[m.statut]||'—';
-  function playerRow(joueurId,nom,pts,won,draw){
-    const isMe2=joueurId===MOI.id;
-    const nameColor=won?'var(--gold)':draw?'var(--cyan)':isDone?'var(--text2)':'var(--text)';
-    const scoreColor=won?'var(--green)':draw?'var(--cyan)':'var(--text3)';
-    return`<div class="bk-player${won?' bk-winner':draw?' bk-draw':''}">
-      <div class="bk-player-left">
-        ${won?`<span class="bk-star">★</span>`:`<span style="width:12px;display:inline-block;flex-shrink:0"></span>`}
-        <span class="bk-player-name" style="color:${nameColor}">${esc(nom)}</span>
-        ${isMe2?`<span class="bk-me-tag">MOI</span>`:''}
-        ${isMe2&&!isDone?`<span style="font-family:'Orbitron',monospace;font-size:.42rem;color:var(--cyan)">◀</span>`:''}
+
+  return `<div style="background:${isMe?'rgba(14,165,233,.04)':'var(--bg3)'};border:1px solid ${isMe?'rgba(14,165,233,.3)':'var(--border)'};border-radius:8px;padding:12px;margin-bottom:8px">
+    ${num?`<div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1.5px;margin-bottom:8px">${label.toUpperCase()} ${num}</div>`:''}
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-weight:700;font-size:.95rem;color:${w===m.joueur1_id?'var(--gold)':w&&w!==m.joueur1_id?'var(--text2)':'var(--text)'}">${esc(j1Nom)}${m.joueur1_id===MOI.id?' <span style="font-size:.6rem;color:var(--cyan)">◀</span>':''}</span>
+        ${isDone?`<span style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;color:${w===m.joueur1_id?'var(--green)':'var(--red)'}">${m.pts_j1||0}pts</span>`:''}
       </div>
-      ${isDone?`<span class="bk-player-score" style="color:${scoreColor}">${pts||0}<span style="font-size:.55rem;color:var(--text3)"> pts</span></span>`:''}
-    </div>`;
-  }
-  return`<div class="bk-match${isMe?' is-me':''}">
-    <div class="bk-match-hdr">
-      <span class="bk-match-lbl">${num?label.toUpperCase()+' '+num:label.toUpperCase()}</span>
-      <span class="bk-match-status" style="color:${stCol}">${stLbl}${isMe&&!isDone?' · TON MATCH':''}</span>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-weight:700;font-size:.95rem;color:${w===m.joueur2_id?'var(--gold)':w&&w!==m.joueur2_id?'var(--text2)':'var(--text)'}">${esc(j2Nom)}${m.joueur2_id===MOI.id?' <span style="font-size:.6rem;color:var(--cyan)">◀</span>':''}</span>
+        ${isDone?`<span style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;color:${w===m.joueur2_id?'var(--green)':'var(--red)'}">${m.pts_j2||0}pts</span>`:''}
+      </div>
     </div>
-    ${playerRow(m.joueur1_id,j1Nom,m.pts_j1,w===m.joueur1_id,isDraw)}
-    ${playerRow(m.joueur2_id,j2Nom,m.pts_j2,w===m.joueur2_id,isDraw)}
+    <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:${stCol};letter-spacing:1.5px;font-weight:700">${stLbl}</span>
+      ${isMe&&!isDone?`<span style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--cyan)">TON MATCH !</span>`:''}
+    </div>
   </div>`;
 }
 
 /* ══ REALTIME ══ */
 function abonnerRealtime(){
-  sb.channel('jeu-matchs').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_matchs',filter:`tournoi_id=eq.${MOI.tournoi_id}`},async({new:n,eventType})=>{
+  sb.channel('jeu-matchs').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_matchs',filter:`tournoi_id=eq.${MOI.tournoi_id}`},async(payload)=>{
+    const n=payload.new,eventType=payload.eventType;
     if(!n)return;
     const idx=MATCHS.findIndex(m=>m.id===n.id);
-    if(idx>=0){
-      const prev=MATCHS[idx];
-      MATCHS[idx]=n;
-      // Vote résolu par l'autre joueur
-      if(!prev.mode_jeu&&n.mode_jeu&&currentTab===`match-${n.id}`){
-        showToastPhase(`⚡ Mode : ${MODES[n.mode_jeu]?.label||n.mode_jeu}`,MODES[n.mode_jeu]?.color||'var(--cyan)');
-      }
-      // Filet de sécurité : si les deux votes viennent d'arriver via realtime → résoudre
-      if(!prev.mode_jeu&&!n.mode_jeu&&n.vote_mode_j1&&n.vote_mode_j2){
-        await resolveVote(n.id,false);
-      }
-      // Revanche acceptée par les deux → créer match
-      if(n.revanche_j1===true&&n.revanche_j2===true){
-        await checkAndCreateRevanche(n.id);
-      }
-      // Refus de revanche
-      if(n.revanche_j1===false||n.revanche_j2===false){
-        if(currentTab===`match-${n.id}`)renderTab(currentTab);
-      }
-    }else{
+    if(idx>=0)MATCHS[idx]=n;
+    else{
       const concerne=n.joueur1_id===MOI.id||n.joueur2_id===MOI.id;
       if(concerne){
         MATCHS.push(n);
@@ -3374,16 +1903,12 @@ function abonnerRealtime(){
         if(!_seenSunkDef[n.id])_seenSunkDef[n.id]=new Set();
         if(!_seenHitOff[n.id])_seenHitOff[n.id]=new Set();
         if(!_seenHitDef[n.id])_seenHitDef[n.id]=new Set();
+        // Sortir de l'écran d'attente si on y était
         if(currentTab==='attente'){
           const adId=n.joueur1_id===MOI.id?n.joueur2_id:n.joueur1_id;
-          const{data:adv}=await sb.from('tournoi_joueurs').select('id,nom,profil_id').eq('id',adId).maybeSingle();
+          const{data:adv}=await sb.from('tournoi_joueurs').select('id,nom').eq('id',adId).maybeSingle();
           if(adv)ADVERSAIRES[adv.id]=adv;
           showToastPhase(`⚔️ Ton match est prêt !`,'var(--gold)');
-          setTimeout(()=>goTab('match-'+n.id),800);
-        } else if(n.parent_match_id){
-          // C'est un match de revanche/belle
-          const partLabel={2:'Revanche',3:'Belle'}[n.partie_numero]||'Match';
-          showToastPhase(`🔄 ${partLabel} — C'est parti !`,MODES[n.mode_jeu||'rush']?.color||'var(--cyan)');
           setTimeout(()=>goTab('match-'+n.id),800);
         } else {
           const phaseLabel={demi:'demi-finale',finale:'finale'}[n.phase]||n.phase;
@@ -3400,17 +1925,17 @@ function abonnerRealtime(){
     if(currentTab==='match-'+n.id||currentTab==='poule'||currentTab==='tournoi')renderTab(currentTab);
   }).subscribe();
 
-  sb.channel('jeu-grilles').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_grilles'},async({new:n})=>{
+  sb.channel('jeu-grilles').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_grilles'},async(payload)=>{
+    const n=payload.new;
     if(!MATCHS.find(m=>m.id===n.match_id))return;
     await loadGrilles(n.match_id);
     if(currentTab==='match-'+n.match_id)renderTab(currentTab);
   }).subscribe();
 
-  sb.channel('jeu-tours').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_tours'},async({new:n,old:o,eventType})=>{
+  sb.channel('jeu-tours').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_tours'},async(payload)=>{
+    const n=payload.new,o=payload.old,eventType=payload.eventType;
     if(!MATCHS.find(m=>m.id===n?.match_id||m.id===o?.match_id))return;
     const matchId=n?.match_id||o?.match_id;
-    const match=MATCHS.find(m=>m.id===matchId);
-    const mode=match?.mode_jeu||'rush';
 
     if(eventType==='DELETE'&&o?.statut==='en_cours'){
       _shots[matchId]=[];
@@ -3423,23 +1948,17 @@ function abonnerRealtime(){
     if(n?.statut==='en_cours')TOURS[matchId]=n;
     else{await loadTourEnCours(matchId);}
 
-    // Mode classique : les tours sont gérés côté client individuellement
-    if(mode==='classique'){
-      await loadGrilles(matchId);
-      buildNav();renderNav();if(currentTab==='match-'+matchId)renderTab(currentTab);
-      return;
-    }
-
-    // Modes rush/spéciaux : guard anti-doublon pour résolution simultanée
+    // Guard anti-doublon : re-vérifier depuis DB avant de résoudre
     if(n?.soumis_j1&&n?.soumis_j2){
       const{data:fresh}=await sb.from('tournoi_tours').select('*').eq('id',n.id).maybeSingle();
       if(fresh&&fresh.statut==='en_cours'){
         await resoudreTour(matchId,fresh);
-      }else{
+      } else {
+        // Tour déjà résolu par l'autre joueur — juste rafraîchir
         await loadGrilles(matchId);
         buildNav();renderNav();if(currentTab==='match-'+matchId)renderTab(currentTab);
       }
-    }else{
+    } else {
       buildNav();renderNav();if(currentTab==='match-'+matchId)renderTab(currentTab);
     }
   }).subscribe();
@@ -3463,9 +1982,5 @@ document.addEventListener('DOMContentLoaded', ()=>{
         .catch(e=>{ clearTimeout(loadTimeout); showError('Erreur : '+e.message); });
 });
 </script>
-
-<div id="resultFlash"></div>
-<div id="defeatOverlay"></div>
-<div id="confettiCanvas"></div>
 </body>
 </html>
