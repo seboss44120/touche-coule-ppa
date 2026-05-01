@@ -6,6 +6,7 @@
 <title>Touché Coulé — Tournoi</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
 <style>
 :root{
   --bg:#080e1a;--bg2:#0d1624;--bg3:#111e30;
@@ -158,19 +159,6 @@ main{padding:12px}
 .tac-screen.compact .tac-reticle svg{width:50px;height:50px}
 /* Tooltip coordonnées */
 .coord-tooltip{position:fixed;background:#0a1628;border:1px solid var(--gold);color:var(--gold);font-family:'Orbitron',monospace;font-size:.6rem;letter-spacing:2px;padding:3px 8px;border-radius:4px;pointer-events:none;z-index:300;display:none}
-/* ══ MINI-GRID HISTORIQUE ══ */
-.mini-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:1px;width:100%;aspect-ratio:1}
-.mg{border-radius:1px;background:rgba(0,50,100,.3);border:1px solid rgba(26,47,74,.6)}
-.mg.mg-PA{background:rgba(240,192,64,.35);border-color:#f0c040}
-.mg.mg-CU{background:rgba(0,212,255,.3);border-color:#00d4ff}
-.mg.mg-CR{background:rgba(0,255,140,.25);border-color:#00ff8c}
-.mg.mg-SM{background:rgba(100,255,100,.22);border-color:#64ff64}
-.mg.mg-TP{background:rgba(255,136,68,.28);border-color:#ff8844}
-.mg.mg-bonus{background:rgba(204,136,255,.4);border-color:var(--purple)}
-.mg.mg-malus{background:rgba(255,136,68,.35);border-color:var(--orange)}
-.grille-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;transition:border-color .15s}
-.grille-card:hover{border-color:var(--cyan)}
-.grille-card.selected{border-color:var(--gold);background:rgba(245,200,66,.05)}
 </style>
 </head>
 <body>
@@ -314,7 +302,7 @@ const REWARDS_META={
   massacre:       {icon:'🏹',cat:'Exploits',        label:'Massacre',                     desc:'Gagner un match sans perdre un seul bateau',               progress:null},
   fantome:        {icon:'👻',cat:'Exploits',        label:'Fantôme des mers',             desc:'Perdre uniquement son dernier navire — tous les autres intacts', progress:null},
 };
-const AVATARS=['⚓','🚢','🛳️','⛵','🚤','🛥️','⛴️','🦈','🐙','🦑','🐋','🐬','🦅','🦁','🐯','🦊','🐺','🦝','🦖','👑','💀','🔥','⚡','🌊','🏴‍☠️'];
+const AVATARS=['⚓','🚢','🛳️','⛵','🚤','🛥️','⛴️','🦈','🐙','🦑','🐋','🐬','🦅','🦁','🐯','🦊','🐺','🦝','🦖','👑','💀','🔥','⚡','🌊','🏴‍☠️','🦄'];
 const DRAPEAUX=[
   {code:'fr',flag:'🇫🇷',label:'France'},{code:'gb',flag:'🇬🇧',label:'Royaume-Uni'},
   {code:'de',flag:'🇩🇪',label:'Allemagne'},{code:'es',flag:'🇪🇸',label:'Espagne'},
@@ -332,7 +320,13 @@ const DRAPEAUX=[
 function getGrade(v){let g=GRADES[0];for(const gr of GRADES){if(v>=gr.min)g=gr;else break;}return g.label;}
 function getNextGrade(v){const idx=GRADES.findIndex(g=>g.min>v);return idx>0?GRADES[idx]:null;}
 function getRatio(v,m){return m>0?Math.round((v/m)*100)+'%':'—';}
-function getFlagEmoji(code){return DRAPEAUX.find(d=>d.code===code)?.flag||'🏳️';}
+const FLAG_SPECIAL={pirate:'🏴‍☠️',rainbow:'🏳️‍🌈',white:'🏳️',black:'🏴',crossed:'🎌'};
+function renderFlag(code,size){
+  const sz=size?` style="font-size:${size}"`:' style="font-size:1em"';
+  if(FLAG_SPECIAL[code])return `<span${sz}>${FLAG_SPECIAL[code]}</span>`;
+  return `<span class="fi fi-${code||'fr'}"${sz}></span>`;
+}
+function getFlagEmoji(code){return renderFlag(code);}
 
 // Suivi animations par match
 let _seenSunkOff={};   // matchId → Set
@@ -633,12 +627,12 @@ function getProfilMoi(){return MOI.profil_id?PROFILS_CACHE[MOI.profil_id]:MON_PR
 function playerTag(joueurId,nom,opts={}){
   const profil=joueurId===MOI.id?(getProfilMoi()||MON_PROFIL):getProfilById(joueurId);
   const avatar=profil?.avatar||'⚓';
-  const drapeau=getFlagEmoji(profil?.drapeau||'fr');
+  const drapeau=renderFlag(profil?.drapeau||'fr', small?'.65rem':'.8rem');
   const size=opts.size||'normal';
   const small=size==='small';
   return `<span style="display:inline-flex;align-items:center;gap:${small?4:6}px">
     <span style="font-size:${small?'.85rem':'1rem'}">${avatar}</span>
-    <span style="font-size:${small?'.65rem':'.8rem'}">${drapeau}</span>
+    ${drapeau}
     <span style="font-weight:700;font-size:${small?'.82rem':'.95rem'}">${esc(nom||'?')}</span>
   </span>`
 }
@@ -743,20 +737,9 @@ function renderMatch(m){
 function renderPlacement(match,el){
   const g=GRILLES[match.id]?.mine;
   if(g?.placement_valide){
-    // Grille déjà validée — écran d'attente + option duplication vers autres matchs
-    const cibles=MATCHS.filter(m=>m.id!==match.id&&m.statut==='placement'&&!GRILLES[m.id]?.mine?.placement_valide);
-    const dupHtml=cibles.length?`<div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
-      <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan);letter-spacing:2px;margin-bottom:8px">📋 DUPLIQUER VERS UN AUTRE MATCH</div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        ${cibles.map(m=>`<button class="btn btn-cyan btn-block" onclick="dupliquerGrille('${match.id}','${m.id}')">
-          📋 Copier vers → vs ${esc(getAdvNom(m))}
-        </button>`).join('')}
-      </div>
-    </div>`:'';
     el.innerHTML=`<div class="card" style="text-align:center;padding:28px">
       <div style="font-size:40px;margin-bottom:10px">⏳</div><div class="card-title">FLOTTE DÉPLOYÉE</div>
       <div style="color:var(--text2)">En attente que <strong style="color:var(--cyan)">${esc(getAdvNom(match))}</strong> place sa flotte…</div>
-      ${dupHtml}
     </div>`;return;
   }
   const pl=_pl[match.id];
@@ -816,7 +799,6 @@ function renderPlacement(match,el){
 
   el.innerHTML=`<div class="card">
     <div class="card-title">⚓ Déploiement — vs ${esc(getAdvNom(match))}</div>
-    <button class="btn btn-purple btn-block" style="margin-bottom:12px" onclick="placerAleatoire('${match.id}')">🎲 PLACEMENT ALÉATOIRE</button>
     ${stepBar}
     <div style="color:var(--text2);font-size:.88rem;margin-bottom:12px">${instrMap[pl.step]||''}</div>
     ${shipsHtml}
@@ -828,17 +810,6 @@ function renderPlacement(match,el){
     </button>
     ${pl.step!=='ships'?`<button class="btn btn-outline btn-sm" style="margin-top:6px;width:100%"
       onclick="goStep('${match.id}','${pl.step==='bonus'?'ships':pl.step==='malus'?'bonus':'malus'}')">← Retour</button>`:''}
-    ${ready?(()=>{
-      const cibles=MATCHS.filter(m=>m.id!==match.id&&m.statut==='placement'&&!GRILLES[m.id]?.mine?.placement_valide);
-      return cibles.length?`<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
-        <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan);letter-spacing:2px;margin-bottom:8px">📋 DUPLIQUER VERS UN AUTRE MATCH</div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          ${cibles.map(m=>`<button class="btn btn-cyan btn-block" onclick="dupliquerGrille('${match.id}','${m.id}')">
-            📋 Copier vers → vs ${esc(getAdvNom(m))}
-          </button>`).join('')}
-        </div>
-      </div>`:'';
-    })():''}
   </div>`;
 
   attachPlacementEvents(match.id);
@@ -851,113 +822,6 @@ function removePlacedShip(matchId,k){
   const pl=_pl[matchId];
   (pl.shipCells[k]||[]).forEach(c=>delete pl.gridData[c]);
   delete pl.shipCells[k];pl.step='ships';renderTab(currentTab);
-}
-
-/* ══ PLACEMENT ALÉATOIRE ══ */
-function placerAleatoire(matchId){
-  const pl=_pl[matchId];
-  // Reset complet
-  pl.gridData={};pl.shipCells={};pl.bonusCells=[];pl.malusCells=[];pl.preview={};pl.selectedShip=null;
-
-  // Placer les navires aléatoirement
-  for(const k of SHIP_KEYS){
-    let placed=false,attempts=0;
-    while(!placed&&attempts<300){
-      attempts++;
-      const orient=Math.random()<.5?'H':'V';
-      const maxCol=orient==='H'?10-SHIPS[k].size+1:10;
-      const maxRow=orient==='V'?10-SHIPS[k].size+1:10;
-      const col=COLS[Math.floor(Math.random()*maxCol)];
-      const row=Math.floor(Math.random()*maxRow)+1;
-      const coords=getShipCoords(col+row,SHIPS[k].size,orient);
-      if(!coords)continue;
-      const occ=new Set(Object.keys(pl.gridData));
-      if(!coords.every(c=>!occ.has(c)))continue;
-      pl.shipCells[k]=coords;coords.forEach(c=>pl.gridData[c]=k);placed=true;
-    }
-  }
-
-  // Construire la liste des cases libres
-  const libres=()=>{
-    const all=[];
-    COLS.forEach(c=>ROWS.forEach(r=>all.push(c+r)));
-    return all.filter(c=>!pl.gridData[c]&&!pl.bonusCells.includes(c)&&!pl.malusCells.includes(c));
-  };
-
-  // Placer 2 bonus
-  let av=libres();
-  for(let i=0;i<2&&av.length;i++){
-    const idx=Math.floor(Math.random()*av.length);
-    pl.bonusCells.push(av[idx]);av=libres();
-  }
-  // Placer 2 malus
-  av=libres();
-  for(let i=0;i<2&&av.length;i++){
-    const idx=Math.floor(Math.random()*av.length);
-    pl.malusCells.push(av[idx]);av=libres();
-  }
-
-  pl.step='done';
-  renderTab(currentTab);
-}
-
-/* ══ DUPLICATION DE GRILLE ══ */
-function dupliquerGrille(sourceMatchId,targetMatchId){
-  const src=_pl[sourceMatchId];
-  const srcPlacement=src&&SHIP_KEYS.every(k=>src.shipCells[k])&&src.bonusCells.length>=2&&src.malusCells.length>=2?src:null;
-  // Fallback : utiliser la grille validée si le state local est incomplet
-  const validated=GRILLES[sourceMatchId]?.mine?.grille_placement;
-  if(!srcPlacement&&!validated)return;
-
-  const tgt=_pl[targetMatchId];if(!tgt)return;
-  if(srcPlacement){
-    tgt.gridData={...src.gridData};
-    SHIP_KEYS.forEach(k=>{if(src.shipCells[k])tgt.shipCells[k]=[...src.shipCells[k]];});
-    tgt.bonusCells=[...src.bonusCells];
-    tgt.malusCells=[...src.malusCells];
-  }else{
-    tgt.gridData={...validated.grid_data};
-    SHIP_KEYS.forEach(k=>{if(validated.ship_cells?.[k])tgt.shipCells[k]=[...validated.ship_cells[k]];});
-    tgt.bonusCells=[...(validated.bonus_cells||[])];
-    tgt.malusCells=[...(validated.malus_cells||[])];
-  }
-  tgt.step='done';tgt.selectedShip=null;tgt.preview={};
-  goTab('match-'+targetMatchId);
-}
-
-/* ══ APPLIQUER UNE GRILLE SAUVEGARDÉE ══ */
-function appliquerGrilleSauvegardee(placement,targetMatchId){
-  const tgt=_pl[targetMatchId];if(!tgt||!placement)return;
-  tgt.gridData={...placement.grid_data};
-  tgt.shipCells={};
-  SHIP_KEYS.forEach(k=>{if(placement.ship_cells?.[k])tgt.shipCells[k]=[...placement.ship_cells[k]];});
-  tgt.bonusCells=[...(placement.bonus_cells||[])];
-  tgt.malusCells=[...(placement.malus_cells||[])];
-  tgt.step='done';tgt.selectedShip=null;tgt.preview={};
-  goTab('match-'+targetMatchId);
-}
-
-function appliquerGrilleIdx(idx,targetMatchId){
-  const grilles=MON_PROFIL?.meilleures_grilles||[];
-  const entry=grilles[idx];
-  if(entry?.placement)appliquerGrilleSauvegardee(entry.placement,targetMatchId);
-}
-
-/* ══ MINI-GRILLE (profil historique) ══ */
-function buildMiniGrid(placement){
-  if(!placement)return'';
-  let h='<div class="mini-grid">';
-  ROWS.forEach(r=>{
-    COLS.forEach(c=>{
-      const coord=c+r;
-      let cls='mg';
-      if(placement.grid_data?.[coord])cls+=' mg-'+placement.grid_data[coord];
-      else if((placement.bonus_cells||[]).includes(coord))cls+=' mg-bonus';
-      else if((placement.malus_cells||[]).includes(coord))cls+=' mg-malus';
-      h+=`<div class="${cls}"></div>`;
-    });
-  });
-  return h+'</div>';
 }
 
 /* ── Grille universelle ── */
@@ -1259,24 +1123,18 @@ function processShots(shots,placement,tirsAv,bonus,malus,turn){
 
 /* ══ MISE À JOUR PROFILS APRÈS MATCH ══ */
 async function updateProfils({match,vainqueur_id,draw,tirs_j1,tirs_j2,nb_tours}){
-  // Charger les tournoi_joueurs pour récupérer les profil_id et noms
+  // Charger les tournoi_joueurs pour récupérer les profil_id
   const{data:joueurs}=await sb.from('tournoi_joueurs')
-    .select('id,profil_id,nom').in('id',[match.joueur1_id,match.joueur2_id]);
+    .select('id,profil_id').in('id',[match.joueur1_id,match.joueur2_id]);
   if(!joueurs)return;
 
   const tj1=joueurs.find(j=>j.id===match.joueur1_id);
   const tj2=joueurs.find(j=>j.id===match.joueur2_id);
 
-  // Récupérer les grilles de placement pour l'historique défensif
-  const{data:grilles}=await sb.from('tournoi_grilles')
-    .select('joueur_id,grille_placement').eq('match_id',match.id);
-  const grille_j1=grilles?.find(g=>g.joueur_id===match.joueur1_id)?.grille_placement||null;
-  const grille_j2=grilles?.find(g=>g.joueur_id===match.joueur2_id)?.grille_placement||null;
-
   // Traiter chaque joueur
   const jobs=[];
-  if(tj1?.profil_id) jobs.push(updateUnProfil(tj1.profil_id,'j1',{vainqueur_id,draw,match,tirs:tirs_j1,tirs_adv:tirs_j2,nb_tours,adv_nom:tj2?.nom||'?',ma_grille:grille_j1}));
-  if(tj2?.profil_id) jobs.push(updateUnProfil(tj2.profil_id,'j2',{vainqueur_id,draw,match,tirs:tirs_j2,tirs_adv:tirs_j1,nb_tours,adv_nom:tj1?.nom||'?',ma_grille:grille_j2}));
+  if(tj1?.profil_id) jobs.push(updateUnProfil(tj1.profil_id,'j1',{vainqueur_id,draw,match,tirs:tirs_j1,tirs_adv:tirs_j2,nb_tours}));
+  if(tj2?.profil_id) jobs.push(updateUnProfil(tj2.profil_id,'j2',{vainqueur_id,draw,match,tirs:tirs_j2,tirs_adv:tirs_j1,nb_tours}));
   await Promise.all(jobs);
 
   // Rafraîchir le profil du joueur courant si concerné
@@ -1286,7 +1144,7 @@ async function updateProfils({match,vainqueur_id,draw,tirs_j1,tirs_j2,nb_tours})
   }
 }
 
-async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_adv,nb_tours,adv_nom,ma_grille}){
+async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_adv,nb_tours}){
   // Charger le profil actuel
   const{data:p}=await sb.from('joueur_profils').select('*').eq('id',profilId).maybeSingle();
   if(!p)return;
@@ -1421,25 +1279,6 @@ async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_a
     }
   }catch(e){}
 
-  // ── Meilleures grilles défensives (top 3 — moins de pts concédés) ──
-  let meilleures_grilles=p.meilleures_grilles||[];
-  if(ma_grille){
-    // Score défensif = pts marqués par l'adversaire sur ma grille (hors malus)
-    const ptsConcedes=(tirs_adv||[]).reduce((s,t)=>s+Math.max(0,t.pts||0),0);
-    const bateauxPerdusCeMatch=(tirs_adv||[]).filter(t=>t.result==='sunk').length;
-    const entree={
-      date:new Date().toISOString(),
-      adversaire:adv_nom||'?',
-      score_def:ptsConcedes,
-      bateaux_perdus:bateauxPerdusCeMatch,
-      nb_tours,
-      placement:ma_grille,
-    };
-    meilleures_grilles=[...meilleures_grilles,entree]
-      .sort((a,b)=>a.score_def-b.score_def||a.bateaux_perdus-b.bateaux_perdus)
-      .slice(0,3);
-  }
-
   // Sauvegarder
   await sb.from('joueur_profils').update({
     matchs_joues, victoires, defaites, egalites,
@@ -1447,7 +1286,6 @@ async function updateUnProfil(profilId,role,{vainqueur_id,draw,match,tirs,tirs_a
     bateaux_detruits, bateaux_perdus,
     premier_tir_touches, coule_premier_tour,
     recompenses:[...rewExisting],
-    meilleures_grilles,
     grade_cache:getGrade(victoires),
     updated_at:new Date().toISOString(),
   }).eq('id',profilId);
@@ -1605,7 +1443,7 @@ async function renderProfil(profilId){
   const nextGr=getNextGrade(p.victoires);
   const ratio=getRatio(p.victoires,p.matchs_joues);
   const pct=p.matchs_joues>0?Math.round((p.victoires/p.matchs_joues)*100):0;
-  const flagEmoji=getFlagEmoji(p.drapeau);
+  const flagHtml=renderFlag(p.drapeau,'40px');
 
   // Barre progression grade
   const gradeIdx=GRADES.findIndex(g=>g.label===grade);
@@ -1625,7 +1463,7 @@ async function renderProfil(profilId){
   <!-- ══ CARTE IDENTITÉ ══ -->
   <div class="card" style="text-align:center;padding:16px 12px">
     <div style="font-size:56px;margin-bottom:6px;line-height:1.1">${p.avatar||'⚓'}</div>
-    <div style="font-size:40px;line-height:1;margin-bottom:8px">${flagEmoji}</div>
+    <div style="font-size:40px;line-height:1;margin-bottom:8px">${flagHtml}</div>
     <div style="font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:2px;color:var(--text)">${esc(p.pseudo)}</div>
     <div style="font-family:'Orbitron',monospace;font-size:.8rem;color:var(--gold);letter-spacing:2px;margin-top:4px;font-weight:700">${grade}</div>
     ${badgesHtml?`<div style="margin-top:8px">${badgesHtml}</div>`:''}
@@ -1759,60 +1597,6 @@ async function renderProfil(profilId){
 
   h+=`</div></div>`;
 
-  // ── HISTORIQUE MEILLEURES DÉFENSES (accordéon, seulement pour soi) ──
-  if(isMe){
-    const grilles=p.meilleures_grilles||[];
-    // Matchs actuellement en placement (cibles disponibles)
-    const matchsPlacement=MATCHS.filter(m=>m.statut==='placement'&&!GRILLES[m.id]?.mine?.placement_valide);
-
-    h+=`
-  <div class="card" style="padding:0;overflow:hidden">
-    <div onclick="toggleSection('grilles')" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;padding:14px 16px;background:var(--bg3);border-bottom:1px solid var(--border)">
-      <span style="font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;letter-spacing:2px;color:var(--text)">🛡️ MEILLEURES DÉFENSES <span style="color:var(--gold)">${grilles.length}/3</span></span>
-      <span id="pchev-grilles" style="color:var(--gold);font-size:.9rem">▼</span>
-    </div>
-    <div id="psec-grilles" style="display:none;padding:14px 12px">`;
-
-    if(!grilles.length){
-      h+=`<div style="text-align:center;padding:20px 0;font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1.5px">
-        Aucune grille enregistrée.<br>
-        <span style="color:var(--text2);margin-top:6px;display:block">Les 3 grilles les plus défensives seront sauvegardées après chaque match.</span>
-      </div>`;
-    }else{
-      h+=`<div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);letter-spacing:1px;margin-bottom:12px;text-align:center">
-        CLASSÉES PAR MEILLEURE RÉSISTANCE — MOINS DE POINTS CONCÉDÉS
-      </div>`;
-      h+=`<div style="display:grid;grid-template-columns:repeat(${Math.min(grilles.length,3)},1fr);gap:10px">`;
-      grilles.forEach((g,i)=>{
-        const date=new Date(g.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
-        const applyBtns=matchsPlacement.length?matchsPlacement.map(m=>`
-          <button class="btn btn-cyan btn-sm" style="width:100%;margin-top:4px;font-size:.55rem"
-            onclick="appliquerGrilleIdx(${i},'${m.id}')">
-            → vs ${esc(getAdvNom(m))}
-          </button>`).join(''):'';
-        h+=`<div class="grille-card" style="text-align:center">
-          <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--gold);letter-spacing:1px;margin-bottom:4px">#${i+1} — ${date}</div>
-          <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text2);margin-bottom:6px">vs ${esc(g.adversaire)}</div>
-          ${buildMiniGrid(g.placement)}
-          <div style="display:flex;gap:4px;justify-content:center;margin-top:8px;flex-wrap:wrap">
-            <span style="font-family:'Orbitron',monospace;font-size:.48rem;padding:2px 6px;border-radius:4px;background:rgba(0,232,120,.1);border:1px solid var(--green);color:var(--green)">${g.score_def}pts concédés</span>
-            <span style="font-family:'Orbitron',monospace;font-size:.48rem;padding:2px 6px;border-radius:4px;background:rgba(122,171,204,.08);border:1px solid var(--border);color:var(--text2)">${g.bateaux_perdus} coulés</span>
-          </div>
-          ${applyBtns?`<div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
-            <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--cyan);margin-bottom:4px">UTILISER POUR :</div>
-            ${applyBtns}
-          </div>`:''}
-        </div>`;
-      });
-      h+=`</div>`;
-    }
-
-    h+=`<div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text3);text-align:center;margin-top:12px;line-height:1.8">
-      ⭐ Bonus · 💣 Malus · ✈️ PA · ⚔️ CU · 🚢 CR · 🤿 SM · 🚤 TP
-    </div>`;
-    h+=`</div></div>`;
-  }
-
   // ── PERSONNALISATION (accordéon, seulement pour soi) ──
   if(isMe){
     h+=`
@@ -1828,7 +1612,7 @@ async function renderProfil(profilId){
       </div>
       <div class="stitle">Drapeau</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
-        ${DRAPEAUX.map(d=>`<button onclick="setDrapeau('${d.code}')" title="${d.label||d.code}" style="font-size:24px;padding:6px 8px;border-radius:6px;border:1px solid ${p.drapeau===d.code?'var(--gold)':'var(--border)'};background:${p.drapeau===d.code?'rgba(245,158,11,.12)':'var(--bg3)'};cursor:pointer">${d.flag}</button>`).join('')}
+        ${DRAPEAUX.map(d=>`<button onclick="setDrapeau('${d.code}')" title="${d.label||d.code}" style="font-size:24px;padding:6px 8px;border-radius:6px;border:1px solid ${p.drapeau===d.code?'var(--gold)':'var(--border)'};background:${p.drapeau===d.code?'rgba(245,158,11,.12)':'var(--bg3)'};cursor:pointer">${renderFlag(d.code,'24px')}</button>`).join('')}
       </div>
       <div id="alertProfil" class="alert" style="margin-top:10px"></div>
     </div>
@@ -2110,8 +1894,7 @@ function bracketMatchCard(m,nomById,num,label){
 
 /* ══ REALTIME ══ */
 function abonnerRealtime(){
-  sb.channel('jeu-matchs').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_matchs',filter:`tournoi_id=eq.${MOI.tournoi_id}`},async(payload)=>{
-    const n=payload.new,eventType=payload.eventType;
+  sb.channel('jeu-matchs').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_matchs',filter:`tournoi_id=eq.${MOI.tournoi_id}`},async({new:n,eventType})=>{
     if(!n)return;
     const idx=MATCHS.findIndex(m=>m.id===n.id);
     if(idx>=0)MATCHS[idx]=n;
@@ -2148,15 +1931,13 @@ function abonnerRealtime(){
     if(currentTab==='match-'+n.id||currentTab==='poule'||currentTab==='tournoi')renderTab(currentTab);
   }).subscribe();
 
-  sb.channel('jeu-grilles').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_grilles'},async(payload)=>{
-    const n=payload.new;
+  sb.channel('jeu-grilles').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_grilles'},async({new:n})=>{
     if(!MATCHS.find(m=>m.id===n.match_id))return;
     await loadGrilles(n.match_id);
     if(currentTab==='match-'+n.match_id)renderTab(currentTab);
   }).subscribe();
 
-  sb.channel('jeu-tours').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_tours'},async(payload)=>{
-    const n=payload.new,o=payload.old,eventType=payload.eventType;
+  sb.channel('jeu-tours').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_tours'},async({new:n,old:o,eventType})=>{
     if(!MATCHS.find(m=>m.id===n?.match_id||m.id===o?.match_id))return;
     const matchId=n?.match_id||o?.match_id;
 
