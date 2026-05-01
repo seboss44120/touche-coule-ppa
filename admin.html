@@ -1525,7 +1525,7 @@ function renderTournoi() {
           <button class="btn btn-sm" style="width:100%;background:rgba(80,0,0,.35);border:1px solid #cc0000;color:#ff3333;font-weight:700" onclick="adminFullReset()">☠️ RESET TOTAL</button>
         </div>
       </div>
-    </div>\`;
+    </div>`;
   } else {
     const statutLabel={'poules':'⚔️ PHASE DE POULES EN COURS','finales':'🏆 PHASES FINALES EN COURS','terminé':'✅ TOURNOI TERMINÉ'}[statut]||statut.toUpperCase();
     h += `<div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:2px;text-align:center;padding:8px">
@@ -1883,6 +1883,20 @@ async function adminSupprimerMatch(matchId){
   await sbT.from('tournoi_grilles').delete().eq('match_id',matchId);
   await sbT.from('tournoi_matchs').delete().eq('id',matchId);
   await adminChargerMatchsUrgence();
+}
+
+async function adminFullReset(){
+  if(!confirm('☠️ RESET TOTAL\n\nSupprime :\n• Tous les tournois et matchs\n• Tous les profils joueurs\n• Toutes les stats, grades, MMR et récompenses\n\nCette action est IRRÉVERSIBLE.\nContinuer ?'))return;
+  if(!confirm('DERNIÈRE CONFIRMATION\n\nTous les profils, MMR et récompenses seront définitivement perdus.\n\nVraiment continuer ?'))return;
+  try{
+    const{error:e1}=await sbT.rpc('purge_tournoi_complet');
+    if(e1)throw e1;
+    const{error:e2}=await sbT.from('joueur_profils').delete().gte('created_at','2000-01-01');
+    if(e2)throw e2;
+    TOURNOI=null;TOURNOI_JOUEURS=[];PARTIE=null;ALL_EQUIPES=[];ALL_GRILLES=[];
+    currentTab='config';buildNav();renderTab('config');
+    alert('✓ Reset total effectué.');
+  }catch(e){alert('Erreur reset total : '+e.message);}
 }
 
 async function adminPurgerBase(){
