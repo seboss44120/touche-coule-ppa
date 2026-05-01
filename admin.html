@@ -1512,10 +1512,20 @@ function renderTournoi() {
       onclick="adminLancerTournoi()">
       ${complet ? '⚓ LANCER LE TOURNOI' : `⚓ LANCER QUAND MÊME (${inscrits.length}/${cible})`}
     </button>
-    <button class="btn btn-danger btn-sm" style="width:100%;margin-top:8px"
-      onclick="adminAnnulerTournoi()">🗑️ ANNULER ET SUPPRIMER CE TOURNOI</button>
-    <button class="btn btn-sm" style="width:100%;margin-top:6px;background:rgba(139,0,0,.2);border:1px solid #8b0000;color:#ff6666"
-      onclick="adminPurgerBase()">⚠️ PURGE COMPLÈTE (TESTS)</button>`;
+    <div style="margin-top:10px;border:1px solid #8b0000;border-radius:6px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 12px;background:rgba(139,0,0,.15);user-select:none"
+        onclick="const b=document.getElementById('machines-body-ins');const ic=document.getElementById('machines-ic-ins');const open=b.style.display==='block';b.style.display=open?'none':'block';ic.textContent=open?'▼':'▲'">
+        <span style="font-family:'Orbitron',monospace;font-size:.58rem;color:#ff6666;letter-spacing:2px">🔧 SALLE DES MACHINES</span>
+        <span id="machines-ic-ins" style="font-family:'Orbitron',monospace;font-size:.65rem;color:#ff6666">▼</span>
+      </div>
+      <div id="machines-body-ins" style="display:none;padding:10px 12px;background:rgba(139,0,0,.07)">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn btn-danger btn-sm" style="width:100%" onclick="adminAnnulerTournoi()">🗑️ SUPPRIMER LE TOURNOI</button>
+          <button class="btn btn-sm" style="width:100%;background:rgba(139,0,0,.2);border:1px solid #8b0000;color:#ff6666" onclick="adminPurgerBase()">⚠️ PURGE (garde profils)</button>
+          <button class="btn btn-sm" style="width:100%;background:rgba(80,0,0,.35);border:1px solid #cc0000;color:#ff3333;font-weight:700" onclick="adminFullReset()">☠️ RESET TOTAL</button>
+        </div>
+      </div>
+    </div>\`;
   } else {
     const statutLabel={'poules':'⚔️ PHASE DE POULES EN COURS','finales':'🏆 PHASES FINALES EN COURS','terminé':'✅ TOURNOI TERMINÉ'}[statut]||statut.toUpperCase();
     h += `<div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:2px;text-align:center;padding:8px">
@@ -1586,14 +1596,20 @@ function renderTournoi() {
   });
   h += `</div></div></div>`;
 
-  // ── Actions d'urgence (si tournoi lancé) ──
+  // ── Poste de Combat (si tournoi lancé) ──
   if (statut !== 'inscription') {
     h += `<div class="card">
-      <div class="card-title">🚨 Actions d'urgence</div>
-      <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1px;margin-bottom:12px">
-        Intervenir sur un match en cours
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:2px 0;user-select:none"
+        onclick="const b=document.getElementById('poste-body');const ic=document.getElementById('poste-ic');const open=b.style.display==='block';b.style.display=open?'none':'block';ic.textContent=open?'▼':'▲'">
+        <div class="card-title" style="margin:0">⚓ Poste de Combat</div>
+        <span id="poste-ic" style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--cyan);padding:4px 8px">▼</span>
       </div>
-      <div id="matchsUrgenceList"></div>
+      <div id="poste-body" style="display:none">
+        <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1px;margin:12px 0 10px">
+          Intervenir sur un match en cours
+        </div>
+        <div id="matchsUrgenceList"></div>
+      </div>
     </div>`;
   }
 
