@@ -172,6 +172,55 @@ select option{background:var(--bg2)}
 .mode-badge-admin{font-family:'Orbitron',monospace;font-size:.5rem;padding:2px 7px;
   border-radius:8px;letter-spacing:1px;font-weight:700;display:inline-block}
 
+/* ── TOURNAMENT STATUS VISUALIZATION ── */
+.ts-tabs{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:12px;width:fit-content}
+.ts-tab{padding:6px 15px;font-family:'Rajdhani',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;background:transparent;color:var(--text3);border:none;border-right:1px solid var(--border);transition:all .15s}
+.ts-tab:last-child{border-right:none}
+.ts-tab.active{background:rgba(0,212,255,.1);color:var(--cyan)}
+.ts-view{display:none}.ts-view.active{display:block}
+.poules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:12px;margin-bottom:4px}
+.poule-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.poule-head{padding:9px 13px;background:rgba(0,212,255,.07);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.poule-name{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--cyan)}
+.poule-nb{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text3);letter-spacing:1px}
+.ts-sec{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text3);letter-spacing:1.5px;padding:7px 12px 4px;border-bottom:1px solid var(--border2)}
+.ts-mrow{display:flex;align-items:center;gap:5px;padding:6px 12px;border-bottom:1px solid var(--border2)}
+.ts-mrow:last-child{border-bottom:none}
+.ts-mp{flex:1;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)}
+.ts-mp.left{text-align:left}.ts-mp.right{text-align:right}
+.ts-mp.win{color:var(--text);font-weight:700}.ts-mp.lose{color:var(--text3)}
+.ts-sc{font-family:'Orbitron',monospace;font-size:.65rem;min-width:54px;text-align:center;padding:3px 7px;border-radius:4px;background:var(--bg2);border:1px solid var(--border2);color:var(--text3)}
+.ts-sc.done{background:rgba(0,212,255,.07);border-color:rgba(0,212,255,.3);color:var(--cyan)}
+.ts-sc.live{background:rgba(255,136,68,.1);border-color:var(--orange);color:var(--orange)}
+.ts-tbl{width:100%;border-collapse:collapse;font-size:.82rem}
+.ts-tbl th{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text3);letter-spacing:1px;text-align:center;padding:5px 8px;border-bottom:1px solid var(--border)}
+.ts-tbl th:first-child{text-align:left}
+.ts-tbl td{padding:6px 8px;text-align:center;border-bottom:1px solid var(--border2)}
+.ts-tbl td:first-child{text-align:left}
+.ts-tbl tr:last-child td{border-bottom:none}
+.ts-rk{display:inline-flex;width:20px;height:20px;border-radius:50%;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.52rem;font-weight:700;margin-right:6px;vertical-align:middle;flex-shrink:0}
+.ts-rk.r1{background:rgba(245,200,66,.2);border:1px solid var(--gold);color:var(--gold)}
+.ts-rk.r2{background:rgba(0,212,255,.12);border:1px solid var(--cyan);color:var(--cyan)}
+.ts-rk.rn{background:var(--bg2);border:1px solid var(--border);color:var(--text3)}
+/* BRACKET */
+.bk-wrap{display:flex;align-items:stretch;overflow-x:auto;padding:4px 0 8px}
+.bk-round{display:flex;flex-direction:column;min-width:148px}
+.bk-rhead{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text3);letter-spacing:2px;text-align:center;padding:7px 10px;border-bottom:1px solid var(--border)}
+.bk-rmatches{display:flex;flex-direction:column;justify-content:space-around;flex:1;padding:8px 0}
+.bk-match{background:var(--bg2);border:1px solid var(--border);border-radius:7px;margin:5px 8px;overflow:hidden}
+.bk-row{display:flex;align-items:center;padding:7px 10px;border-bottom:1px solid var(--border2)}
+.bk-row:last-child{border-bottom:none}
+.bk-row.win{background:rgba(0,232,120,.07)}
+.bk-row.tbd{opacity:.38}
+.bk-nm{flex:1;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)}
+.bk-row.win .bk-nm{color:var(--green);font-weight:700}
+.bk-sc{font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;min-width:20px;text-align:right;color:var(--text3)}
+.bk-row.win .bk-sc{color:var(--green)}
+.bk-conn{width:24px;flex-shrink:0;display:flex;flex-direction:column}
+.bk-cl{flex:1;border-right:1px solid var(--border)}
+.bk-champ{background:linear-gradient(135deg,rgba(245,200,66,.12),rgba(245,200,66,.03));border:1px solid rgba(245,200,66,.4);border-radius:8px;padding:14px;text-align:center;margin:6px 8px}
+.bk-champ-lbl{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--gold);letter-spacing:2px;margin-bottom:6px}
+.bk-champ-nm{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--gold)}
 @media(max-width:500px){main{padding:8px}}
 .spin{display:inline-block;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -1487,74 +1536,77 @@ function renderTournoi() {
   const peutLancer = inscrits.length >= 2;
   const complet    = inscrits.length === cible;
 
-  // ── Compteur ──
-  let h = `<div class="card">
-    <div class="card-title">📡 Statut du tournoi</div>
-    <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-bottom:10px">
-      <div style="font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:var(--cyan);letter-spacing:2px;flex-shrink:0">
-        ${inscrits.length}/${cible}
-      </div>
-      <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1.5px">
-        ${complet ? '<span style="color:var(--green)">✅ TOUS LES JOUEURS INSCRITS</span>' : 'JOUEURS EMBARQUÉS'}
-        <div style="margin-top:3px;color:var(--text2);font-size:.62rem">${FORMATS_TOURNOI[cible]||''}</div>
-      </div>
-    </div>
+  let h = '';
 
-    <!-- Barre de progression -->
-    <div style="background:var(--border);border-radius:4px;height:4px;margin-bottom:14px;overflow:hidden">
-      <div style="height:100%;width:${pct}%;background:var(--cyan);border-radius:4px;transition:width .5s;box-shadow:0 0 8px var(--cyan)"></div>
-    </div>`;
-
-  // ── Bouton lancer ──
   if (statut === 'inscription') {
-    h += `<div id="alertTournoi" class="alert" style="margin-bottom:8px"></div>
-    <button class="btn btn-gold" style="width:100%" ${peutLancer?'':'disabled'}
-      onclick="adminLancerTournoi()">
-      ${complet ? '⚓ LANCER LE TOURNOI' : `⚓ LANCER QUAND MÊME (${inscrits.length}/${cible})`}
-    </button>
-    <div style="margin-top:10px;border:1px solid #8b0000;border-radius:6px;overflow:hidden">
-      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 12px;background:rgba(139,0,0,.15);user-select:none"
-        onclick="const b=document.getElementById('machines-body-ins');const ic=document.getElementById('machines-ic-ins');const open=b.style.display==='block';b.style.display=open?'none':'block';ic.textContent=open?'▼':'▲'">
-        <span style="font-family:'Orbitron',monospace;font-size:.58rem;color:#ff6666;letter-spacing:2px">🔧 SALLE DES MACHINES</span>
-        <span id="machines-ic-ins" style="font-family:'Orbitron',monospace;font-size:.65rem;color:#ff6666">▼</span>
+    // ── Card inscription ──
+    h += `<div class="card">
+      <div class="card-title">📡 Statut du tournoi</div>
+      <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-bottom:10px">
+        <div style="font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:var(--cyan);letter-spacing:2px;flex-shrink:0">
+          ${inscrits.length}/${cible}
+        </div>
+        <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1.5px">
+          ${complet ? '<span style="color:var(--green)">✅ TOUS LES JOUEURS INSCRITS</span>' : 'JOUEURS EMBARQUÉS'}
+          <div style="margin-top:3px;color:var(--text2);font-size:.62rem">${FORMATS_TOURNOI[cible]||''}</div>
+        </div>
       </div>
-      <div id="machines-body-ins" style="display:none;padding:10px 12px;background:rgba(139,0,0,.07)">
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <button class="btn btn-danger btn-sm" style="width:100%" onclick="adminAnnulerTournoi()">🗑️ SUPPRIMER LE TOURNOI</button>
-          <button class="btn btn-sm" style="width:100%;background:rgba(139,0,0,.2);border:1px solid #8b0000;color:#ff6666" onclick="adminPurgerBase()">⚠️ PURGE (garde profils)</button>
-          <button class="btn btn-sm" style="width:100%;background:rgba(80,0,0,.35);border:1px solid #cc0000;color:#ff3333;font-weight:700" onclick="adminFullReset()">☠️ RESET TOTAL</button>
+      <div style="background:var(--border);border-radius:4px;height:4px;margin-bottom:14px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:var(--cyan);border-radius:4px;transition:width .5s;box-shadow:0 0 8px var(--cyan)"></div>
+      </div>
+      <div id="alertTournoi" class="alert" style="margin-bottom:8px"></div>
+      <button class="btn btn-gold" style="width:100%" ${peutLancer?'':'disabled'}
+        onclick="adminLancerTournoi()">
+        ${complet ? '⚓ LANCER LE TOURNOI' : `⚓ LANCER QUAND MÊME (${inscrits.length}/${cible})`}
+      </button>
+      <div style="margin-top:10px;border:1px solid #8b0000;border-radius:6px;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 12px;background:rgba(139,0,0,.15);user-select:none"
+          onclick="const b=document.getElementById('machines-body-ins');const ic=document.getElementById('machines-ic-ins');const open=b.style.display==='block';b.style.display=open?'none':'block';ic.textContent=open?'▼':'▲'">
+          <span style="font-family:'Orbitron',monospace;font-size:.58rem;color:#ff6666;letter-spacing:2px">🔧 SALLE DES MACHINES</span>
+          <span id="machines-ic-ins" style="font-family:'Orbitron',monospace;font-size:.65rem;color:#ff6666">▼</span>
+        </div>
+        <div id="machines-body-ins" style="display:none;padding:10px 12px;background:rgba(139,0,0,.07)">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button class="btn btn-danger btn-sm" style="width:100%" onclick="adminAnnulerTournoi()">🗑️ SUPPRIMER LE TOURNOI</button>
+            <button class="btn btn-sm" style="width:100%;background:rgba(139,0,0,.2);border:1px solid #8b0000;color:#ff6666" onclick="adminPurgerBase()">⚠️ PURGE (garde profils)</button>
+            <button class="btn btn-sm" style="width:100%;background:rgba(80,0,0,.35);border:1px solid #cc0000;color:#ff3333;font-weight:700" onclick="adminFullReset()">☠️ RESET TOTAL</button>
+          </div>
         </div>
       </div>
     </div>`;
   } else {
-    const statutLabel={'poules':'⚔️ PHASE DE POULES EN COURS','finales':'🏆 PHASES FINALES EN COURS','terminé':'✅ TOURNOI TERMINÉ'}[statut]||statut.toUpperCase();
-    h += `<div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:2px;text-align:center;padding:8px">
-      ${statutLabel}
-    </div>
-    <div id="mode-summary-tournoi" style="font-family:'Orbitron',monospace;font-size:.52rem;
-      color:var(--text2);letter-spacing:1px;text-align:center;padding:4px 0 8px;min-height:18px">
-      <span class="spin" style="font-size:.8rem">⚓</span>
-    </div>
-    <div id="alertTournoi" class="alert" style="margin-bottom:8px"></div>
-    <div style="margin-top:10px;border:1px solid #8b0000;border-radius:6px;overflow:hidden">
-      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 12px;background:rgba(139,0,0,.15);user-select:none"
-        onclick="const b=document.getElementById('machines-body-run');const ic=document.getElementById('machines-ic-run');const open=b.style.display==='block';b.style.display=open?'none':'block';ic.textContent=open?'&#x25BC;':'&#x25B2;'">
-        <span style="font-family:'Orbitron',monospace;font-size:.58rem;color:#ff6666;letter-spacing:2px">🔧 SALLE DES MACHINES</span>
-        <span id="machines-ic-run" style="font-family:'Orbitron',monospace;font-size:.65rem;color:#ff6666">&#x25BC;</span>
+    // ── Card tournoi en cours — visualisation riche ──
+    const statutLabel = {'poules':'⚔️ POULES','finales':'🏆 FINALES','terminé':'✅ TERMINÉ'}[statut] || statut.toUpperCase();
+    h += `<div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="card-title" style="margin:0">📡 Statut du tournoi</div>
+        <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--gold);letter-spacing:1.5px;background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.3);padding:3px 9px;border-radius:12px">${statutLabel}</span>
       </div>
-      <div id="machines-body-run" style="display:none;padding:10px 12px;background:rgba(139,0,0,.07)">
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <button class="btn btn-sm" style="width:100%;background:rgba(14,165,233,.15);border:1px solid var(--cyan);color:var(--cyan)" onclick="adminRegenererMatchs()">🔄 REGÉNÉRER LES MATCHS</button>
-          <button class="btn btn-danger btn-sm" style="width:100%" onclick="adminAnnulerTournoi()">🗑️ SUPPRIMER LE TOURNOI</button>
-          <button class="btn btn-sm" style="width:100%;background:rgba(139,0,0,.2);border:1px solid #8b0000;color:#ff6666" onclick="adminPurgerBase()">⚠️ PURGE (garde profils)</button>
-          <button class="btn btn-sm" style="width:100%;background:rgba(80,0,0,.35);border:1px solid #cc0000;color:#ff3333;font-weight:700" onclick="adminFullReset()">☠️ RESET TOTAL</button>
+      <div id="ts-container">
+        <div style="text-align:center;padding:20px;font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);letter-spacing:2px">
+          <span class="spin" style="font-size:.9rem">⚓</span> &nbsp;CHARGEMENT…
+        </div>
+      </div>
+      <div id="alertTournoi" class="alert" style="margin-top:8px"></div>
+      <div style="margin-top:12px;border:1px solid #8b0000;border-radius:6px;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 12px;background:rgba(139,0,0,.15);user-select:none"
+          onclick="const b=document.getElementById('machines-body-run');const ic=document.getElementById('machines-ic-run');const open=b.style.display==='block';b.style.display=open?'none':'block';ic.textContent=open?'&#x25BC;':'&#x25B2;'">
+          <span style="font-family:'Orbitron',monospace;font-size:.58rem;color:#ff6666;letter-spacing:2px">🔧 SALLE DES MACHINES</span>
+          <span id="machines-ic-run" style="font-family:'Orbitron',monospace;font-size:.65rem;color:#ff6666">&#x25BC;</span>
+        </div>
+        <div id="machines-body-run" style="display:none;padding:10px 12px;background:rgba(139,0,0,.07)">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button class="btn btn-sm" style="width:100%;background:rgba(14,165,233,.15);border:1px solid var(--cyan);color:var(--cyan)" onclick="adminRegenererMatchs()">🔄 REGÉNÉRER LES MATCHS</button>
+            <button class="btn btn-danger btn-sm" style="width:100%" onclick="adminAnnulerTournoi()">🗑️ SUPPRIMER LE TOURNOI</button>
+            <button class="btn btn-sm" style="width:100%;background:rgba(139,0,0,.2);border:1px solid #8b0000;color:#ff6666" onclick="adminPurgerBase()">⚠️ PURGE (garde profils)</button>
+            <button class="btn btn-sm" style="width:100%;background:rgba(80,0,0,.35);border:1px solid #cc0000;color:#ff3333;font-weight:700" onclick="adminFullReset()">☠️ RESET TOTAL</button>
+          </div>
         </div>
       </div>
     </div>`;
   }
-  h += `</div>`;
 
-  // ── Liens capitaines (déroulant, fermé par défaut si tournoi lancé) ──
+  // ── Liens capitaines ──
   const liensOpen = statut === 'inscription' ? 'block' : 'none';
   const liensIcon = statut === 'inscription' ? '▲' : '▼';
   h += `<div class="card">
@@ -1596,7 +1648,7 @@ function renderTournoi() {
   });
   h += `</div></div></div>`;
 
-  // ── Poste de Combat (si tournoi lancé) ──
+  // ── Poste de Combat ──
   if (statut !== 'inscription') {
     h += `<div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:2px 0;user-select:none"
@@ -1615,11 +1667,10 @@ function renderTournoi() {
 
   el.innerHTML = h;
 
-  // Charger le résumé des modes de façon asynchrone
-  if (statut !== 'inscription') updateModeSummary(TOURNOI.id);
-
-  // Charger les matchs d'urgence si besoin
-  if (statut !== 'inscription') adminChargerMatchsUrgence();
+  if (statut !== 'inscription') {
+    renderStatutTournoi(TOURNOI.id);
+    adminChargerMatchsUrgence();
+  }
 }
 
 /* ── Tournoi helpers ── */
@@ -1757,22 +1808,204 @@ async function adminCopierTousLiens(){
   if(alertEl){alertEl.className='alert ok show';alertEl.textContent='✓ Tous les liens copiés !';setTimeout(()=>alertEl.style.display='none',3000);}
 }
 
-async function updateModeSummary(tournoiId) {
-  const el = document.getElementById('mode-summary-tournoi');
-  if (!el) return;
+/* ── tsSwitch : bascule entre les onglets poules / finales ── */
+function tsSwitch(view, btn) {
+  const pv = document.getElementById('ts-v-poules');
+  const fv = document.getElementById('ts-v-finales');
+  if (pv) pv.classList.toggle('active', view === 'poules');
+  if (fv) fv.classList.toggle('active', view === 'finales');
+  btn.closest('.ts-tabs').querySelectorAll('.ts-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ── renderBracketMatch : génère un bloc match pour le bracket ── */
+function renderBracketMatch(m, nomById) {
+  const done  = m.statut === 'terminé';
+  const n1    = m.joueur1_id ? esc(nomById[m.joueur1_id] || '?') : null;
+  const n2    = m.joueur2_id ? esc(nomById[m.joueur2_id] || '?') : null;
+  const j1win = done && m.vainqueur_id === m.joueur1_id;
+  const j2win = done && m.vainqueur_id === m.joueur2_id;
+  const s1    = done ? (m.pts_j1 ?? 0) : '';
+  const s2    = done ? (m.pts_j2 ?? 0) : '';
+  return `<div class="bk-match">
+    <div class="bk-row ${j1win ? 'win' : ''} ${!n1 ? 'tbd' : ''}">
+      <span class="bk-nm">${n1 || 'En attente…'}</span>
+      <span class="bk-sc">${s1}</span>
+    </div>
+    <div class="bk-row ${j2win ? 'win' : ''} ${!n2 ? 'tbd' : ''}">
+      <span class="bk-nm">${n2 || 'En attente…'}</span>
+      <span class="bk-sc">${s2}</span>
+    </div>
+  </div>`;
+}
+
+/* ── renderStatutTournoi : cœur de la visualisation ── */
+async function renderStatutTournoi(tournoiId) {
+  const container = document.getElementById('ts-container');
+  if (!container) return;
+
   const { data: matchs } = await sbT.from('tournoi_matchs')
-    .select('mode_jeu, statut').eq('tournoi_id', tournoiId);
-  if (!matchs?.length) { el.textContent = ''; return; }
-  const counts = {}, nonResolus = matchs.filter(m => !m.mode_jeu && m.statut !== 'terminé').length;
-  matchs.filter(m => m.mode_jeu).forEach(m => {
-    counts[m.mode_jeu] = (counts[m.mode_jeu] || 0) + 1;
-  });
-  const parts = Object.entries(counts).map(([k, v]) => {
-    const m = MODES_ADMIN[k];
-    return `<span style="color:${m?.color||'var(--text2)'}">${m?.icon||''} ${m?.label||k} ×${v}</span>`;
-  });
-  if (nonResolus) parts.push(`<span style="color:var(--text2)">⏳ Vote en cours ×${nonResolus}</span>`);
-  el.innerHTML = parts.length ? parts.join('  ·  ') : '<span style="color:var(--text3)">—</span>';
+    .select('id,phase,poule_id,joueur1_id,joueur2_id,statut,vainqueur_id,pts_j1,pts_j2')
+    .eq('tournoi_id', tournoiId)
+    .order('created_at');
+
+  if (!matchs?.length) {
+    container.innerHTML = `<div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);text-align:center;padding:16px;letter-spacing:2px">Aucun match généré</div>`;
+    return;
+  }
+
+  const statut      = TOURNOI.statut;
+  const nomById     = Object.fromEntries(TOURNOI_JOUEURS.map(j => [j.id, j.nom || '?']));
+  const hasPoules   = matchs.some(m => m.phase === 'poule');
+  const hasFinales  = matchs.some(m => m.phase === 'demi' || m.phase === 'finale');
+  const showTabs    = hasPoules && hasFinales;
+  const initView    = (statut === 'finales' || statut === 'terminé') ? 'finales' : 'poules';
+  let html = '';
+
+  // ── Onglets si les deux phases existent ──
+  if (showTabs) {
+    html += `<div class="ts-tabs">
+      <button class="ts-tab ${initView==='poules'?'active':''}" onclick="tsSwitch('poules',this)">⚔️ Poules</button>
+      <button class="ts-tab ${initView==='finales'?'active':''}" onclick="tsSwitch('finales',this)">🏆 Finales</button>
+    </div>`;
+  }
+
+  // ══════════════════ VUE POULES ══════════════════
+  if (hasPoules) {
+    html += `<div id="ts-v-poules" class="ts-view ${(!showTabs || initView==='poules') ? 'active' : ''}">`;
+    const pouleMatchs  = matchs.filter(m => m.phase === 'poule');
+    const pouleIds     = [...new Set(pouleMatchs.map(m => m.poule_id))].sort((a,b)=>a-b);
+    const nbPoules     = pouleIds.length;
+    const nbQualif     = nbPoules > 1 ? 2 : 1;   // top 2 qualifiés si plusieurs poules
+    const letters      = 'ABCDEFGH';
+
+    html += `<div class="poules-grid">`;
+    for (const pid of pouleIds) {
+      const pm  = pouleMatchs.filter(m => m.poule_id === pid);
+      const ltr = letters[(pid - 1)] || pid;
+      const jids = [...new Set(pm.flatMap(m => [m.joueur1_id, m.joueur2_id]))];
+
+      // ── Matchs ──
+      html += `<div class="poule-card">
+        <div class="poule-head">
+          <span class="poule-name">Poule ${ltr}</span>
+          <span class="poule-nb">${jids.length} joueurs</span>
+        </div>
+        <div class="ts-sec">Matchs</div>
+        <div>`;
+      for (const m of pm) {
+        const n1   = esc(nomById[m.joueur1_id] || '?');
+        const n2   = esc(nomById[m.joueur2_id] || '?');
+        const done = m.statut === 'terminé';
+        const live = m.statut === 'en_cours';
+        const j1w  = done && m.vainqueur_id === m.joueur1_id;
+        const j2w  = done && m.vainqueur_id === m.joueur2_id;
+        const scCls = done ? 'done' : live ? 'live' : '';
+        const scTxt = done ? `${m.pts_j1 ?? 0} – ${m.pts_j2 ?? 0}` : live ? 'en cours' : '–';
+        html += `<div class="ts-mrow">
+          <span class="ts-mp left ${j1w?'win':done?'lose':''}">${n1}</span>
+          <span class="ts-sc ${scCls}">${scTxt}</span>
+          <span class="ts-mp right ${j2w?'win':done?'lose':''}">${n2}</span>
+        </div>`;
+      }
+      html += `</div>`;
+
+      // ── Classement ──
+      const standings = jids.map(jid => {
+        let wins = 0, pp = 0, pc = 0;
+        for (const m of pm) {
+          if (m.statut !== 'terminé') continue;
+          if (m.joueur1_id !== jid && m.joueur2_id !== jid) continue;
+          if (m.vainqueur_id === jid) wins++;
+          if (m.joueur1_id === jid) { pp += m.pts_j1 ?? 0; pc += m.pts_j2 ?? 0; }
+          else                      { pp += m.pts_j2 ?? 0; pc += m.pts_j1 ?? 0; }
+        }
+        return { jid, nom: nomById[jid] || '?', wins, diff: pp - pc };
+      }).sort((a, b) => b.wins - a.wins || b.diff - a.diff || a.nom.localeCompare(b.nom));
+
+      html += `<div class="ts-sec" style="margin-top:2px">Classement</div>
+        <table class="ts-tbl"><thead><tr>
+          <th>Joueur</th><th>V</th><th>Diff</th><th>Rang</th>
+        </tr></thead><tbody>`;
+      standings.forEach((s, i) => {
+        const rkCls  = i === 0 ? 'r1' : i < nbQualif ? 'r2' : 'rn';
+        const rkNum  = i + 1;
+        const qual   = i < nbQualif;
+        const diff   = s.diff > 0 ? `+${s.diff}` : `${s.diff}`;
+        const difCol = s.diff >= 0 ? 'var(--cyan)' : 'var(--red)';
+        const rngTxt = qual
+          ? `<span style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--green)">✓ Qualif.</span>`
+          : `<span style="color:var(--text3)">—</span>`;
+        html += `<tr>
+          <td><span class="ts-rk ${rkCls}">${rkNum}</span>${esc(s.nom)}</td>
+          <td>${s.wins}</td>
+          <td style="font-family:'Orbitron',monospace;font-size:.65rem;color:${difCol}">${diff}</td>
+          <td>${rngTxt}</td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  // ══════════════════ VUE BRACKET ══════════════════
+  if (hasFinales || statut === 'finales' || statut === 'terminé') {
+    html += `<div id="ts-v-finales" class="ts-view ${(!showTabs || initView==='finales') ? 'active' : ''}">`;
+    const demis    = matchs.filter(m => m.phase === 'demi');
+    const finales  = matchs.filter(m => m.phase === 'finale');
+    html += `<div class="bk-wrap">`;
+
+    // Demi-finales
+    if (demis.length > 0) {
+      html += `<div class="bk-round">
+        <div class="bk-rhead">Demi-finales</div>
+        <div class="bk-rmatches">`;
+      demis.forEach(m => { html += renderBracketMatch(m, nomById); });
+      html += `</div></div>`;
+      // Connecteur
+      const nConn = demis.length;
+      html += `<div class="bk-conn">`;
+      for (let i = 0; i < nConn; i++) html += `<div class="bk-cl"></div>`;
+      html += `</div>`;
+    }
+
+    // Finale
+    html += `<div class="bk-round">
+      <div class="bk-rhead">Finale</div>
+      <div class="bk-rmatches" style="justify-content:center">`;
+    if (finales.length > 0) {
+      finales.forEach(m => { html += renderBracketMatch(m, nomById); });
+    } else {
+      html += `<div class="bk-match">
+        <div class="bk-row tbd"><span class="bk-nm">En attente…</span></div>
+        <div class="bk-row tbd"><span class="bk-nm">En attente…</span></div>
+      </div>`;
+    }
+    html += `</div></div>`;
+
+    // Connecteur + Champion
+    const champId  = finales[0]?.vainqueur_id;
+    const champNom = champId ? nomById[champId] : null;
+    html += `<div class="bk-conn"><div class="bk-cl" style="flex:none;height:50%;margin-top:auto"></div></div>
+      <div class="bk-round">
+        <div class="bk-rhead">Champion</div>
+        <div class="bk-rmatches" style="justify-content:center">`;
+    if (champNom) {
+      html += `<div class="bk-champ">
+        <div class="bk-champ-lbl">🏆 CAPITAINE CHAMPION</div>
+        <div class="bk-champ-nm">${esc(champNom)}</div>
+      </div>`;
+    } else {
+      html += `<div class="bk-match">
+        <div class="bk-row tbd"><span class="bk-nm">En attente…</span></div>
+      </div>`;
+    }
+    html += `</div></div>`;
+
+    html += `</div></div>`;
+  }
+
+  container.innerHTML = html;
 }
 
 async function adminChargerMatchsUrgence(){
