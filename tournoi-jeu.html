@@ -103,6 +103,59 @@ main{padding:12px}
 .bye-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--gold);margin-bottom:8px}
 .bye-sub{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:1.5px;line-height:2}
 @media(max-width:400px){main{padding:8px}}
+/* ── TOURNAMENT VISUALIZATION ── */
+.ts-tabs{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:12px;width:fit-content}
+.ts-tab{padding:6px 15px;font-family:'Rajdhani',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;background:transparent;color:var(--text3);border:none;border-right:1px solid var(--border);transition:all .15s}
+.ts-tab:last-child{border-right:none}
+.ts-tab.active{background:rgba(0,212,255,.1);color:var(--cyan)}
+.ts-view{display:none}.ts-view.active{display:block}
+.poules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:12px;margin-bottom:4px}
+.poule-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.poule-head{padding:9px 13px;background:rgba(0,212,255,.07);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.poule-name{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--cyan)}
+.poule-nb{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text3);letter-spacing:1px}
+.ts-sec{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text3);letter-spacing:1.5px;padding:7px 12px 4px;border-bottom:1px solid var(--border2)}
+.ts-mrow{display:flex;align-items:center;gap:5px;padding:6px 12px;border-bottom:1px solid var(--border2)}
+.ts-mrow:last-child{border-bottom:none}
+.ts-mrow.me-match{background:rgba(245,200,66,.04)}
+.ts-mp{flex:1;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)}
+.ts-mp.left{text-align:left}.ts-mp.right{text-align:right}
+.ts-mp.win{color:var(--text);font-weight:700}.ts-mp.lose{color:var(--text3)}
+.ts-mp.me{color:var(--gold) !important}
+.ts-sc{font-family:'Orbitron',monospace;font-size:.65rem;min-width:54px;text-align:center;padding:3px 7px;border-radius:4px;background:var(--bg2);border:1px solid var(--border2);color:var(--text3)}
+.ts-sc.done{background:rgba(0,212,255,.07);border-color:rgba(0,212,255,.3);color:var(--cyan)}
+.ts-sc.live{background:rgba(255,136,68,.1);border-color:var(--orange);color:var(--orange)}
+.ts-tbl{width:100%;border-collapse:collapse;font-size:.82rem}
+.ts-tbl th{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text3);letter-spacing:1px;text-align:center;padding:5px 8px;border-bottom:1px solid var(--border)}
+.ts-tbl th:first-child{text-align:left}
+.ts-tbl td{padding:6px 8px;text-align:center;border-bottom:1px solid var(--border2)}
+.ts-tbl td:first-child{text-align:left}
+.ts-tbl tr:last-child td{border-bottom:none}
+.ts-tbl tr.me-row td{background:rgba(245,200,66,.05)}
+.ts-rk{display:inline-flex;width:20px;height:20px;border-radius:50%;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.52rem;font-weight:700;margin-right:6px;vertical-align:middle}
+.ts-rk.r1{background:rgba(245,200,66,.2);border:1px solid var(--gold);color:var(--gold)}
+.ts-rk.r2{background:rgba(0,212,255,.12);border:1px solid var(--cyan);color:var(--cyan)}
+.ts-rk.rn{background:var(--bg2);border:1px solid var(--border);color:var(--text3)}
+.bk-wrap{display:flex;align-items:stretch;overflow-x:auto;padding:4px 0 8px}
+.bk-round{display:flex;flex-direction:column;min-width:142px}
+.bk-rhead{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text3);letter-spacing:2px;text-align:center;padding:7px 10px;border-bottom:1px solid var(--border)}
+.bk-rmatches{display:flex;flex-direction:column;justify-content:space-around;flex:1;padding:8px 0}
+.bk-match{background:var(--bg2);border:1px solid var(--border);border-radius:7px;margin:5px 8px;overflow:hidden}
+.bk-match.me-match{border-color:rgba(245,200,66,.4)}
+.bk-row{display:flex;align-items:center;padding:7px 10px;border-bottom:1px solid var(--border2)}
+.bk-row:last-child{border-bottom:none}
+.bk-row.win{background:rgba(0,232,120,.07)}
+.bk-row.tbd{opacity:.38}
+.bk-nm{flex:1;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)}
+.bk-row.win .bk-nm{color:var(--green);font-weight:700}
+.bk-nm.me{color:var(--gold) !important}
+.bk-sc{font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;min-width:20px;text-align:right;color:var(--text3)}
+.bk-row.win .bk-sc{color:var(--green)}
+.bk-conn{width:20px;flex-shrink:0;display:flex;flex-direction:column}
+.bk-cl{flex:1;border-right:1px solid var(--border)}
+.bk-champ{background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.35);border-radius:8px;padding:14px;text-align:center;margin:6px 8px}
+.bk-champ-lbl{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--gold);letter-spacing:2px;margin-bottom:6px}
+.bk-champ-nm{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--gold)}
 
 /* ══ ANIMATIONS TACTIQUES (depuis capitaine.html) ══ */
 #sunkOverlay{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;pointer-events:none}
@@ -1781,106 +1834,179 @@ async function renderTournoi(){
   const demiMatchs =allMatchs?.filter(m=>m.phase==='demi')||[];
   const finaleMatch=allMatchs?.find(m=>m.phase==='finale');
   const pouleIds=[...new Set(allJoueurs?.map(j=>j.poule_id).filter(Boolean))].sort();
-
   const nomById={};
   (allJoueurs||[]).forEach(j=>nomById[j.id]=j.nom||'?');
 
-  // Statut tournoi
   const statutColor={inscription:'var(--text2)',poules:'var(--cyan)',finales:'var(--gold)',terminé:'var(--green)'}[tData?.statut]||'var(--text2)';
-  const statutLabel={inscription:'INSCRIPTIONS',poules:'PHASE DE POULES',finales:'PHASES FINALES',terminé:'🏆 TOURNOI TERMINÉ'}[tData?.statut]||'—';
+  const statutLabel={inscription:'INSCRIPTIONS',poules:'PHASE DE POULES',finales:'PHASES FINALES',terminé:'🏆 TERMINÉ'}[tData?.statut]||'—';
+  const hasFinales=demiMatchs.length>0||!!finaleMatch;
+  const showTabs=pouleIds.length>0&&hasFinales;
+  const initView=(tData?.statut==='finales'||tData?.statut==='terminé')?'finales':'poules';
 
   let h=`<div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <div class="card-title" style="margin:0">🏆 Tableau du tournoi</div>
-      <span style="font-family:'Orbitron',monospace;font-size:.6rem;color:${statutColor};letter-spacing:2px;font-weight:700">${statutLabel}</span>
+      <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:${statutColor};letter-spacing:1.5px;background:rgba(0,0,0,.25);border:1px solid ${statutColor};padding:3px 9px;border-radius:12px;opacity:.85">${statutLabel}</span>
     </div>`;
 
-  // ── POULES ──
-  for(const pouleId of pouleIds){
-    const standings=await calcStandingsPoule(pouleId,pouleMatchs,allJoueurs||[]);
-    const pouleMatchsLocal=pouleMatchs.filter(m=>m.poule_id===pouleId);
-    const total=pouleMatchsLocal.length,done=pouleMatchsLocal.filter(m=>m.statut==='terminé').length;
-
-    h+=`<div style="margin-bottom:14px">
-      <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--teal);letter-spacing:2px;margin-bottom:8px;display:flex;justify-content:space-between">
-        <span>POULE ${pouleId}</span>
-        <span style="color:var(--text2)">${done}/${total} matchs</span>
-      </div>
-      <table class="rank-table"><thead><tr><th>Rg</th><th style="text-align:left">Joueur</th><th>Pts</th><th>B/M</th></tr></thead><tbody>`;
-
-    standings.forEach((j,i)=>{
-      const isMe=j.id===MOI.id;
-      const inDemi=demiMatchs.some(m=>m.joueur1_id===j.id||m.joueur2_id===j.id);
-      const qualBadge=inDemi?'<span style="font-size:.55rem;color:var(--gold);margin-left:4px">★</span>':'';
-      h+=`<tr class="${isMe?'me-row':''}">
-        <td><span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--text2)">#${i+1}</span></td>
-        <td style="text-align:left;font-weight:700">${esc(j.nom||'?')}${qualBadge}${isMe?'<span style="font-size:.6rem;color:var(--cyan);margin-left:4px">◀</span>':''}${j.bye?'<span style="font-size:.55rem;color:var(--gold);margin-left:4px">BYE</span>':''}</td>
-        <td><span style="font-family:'Orbitron',monospace;font-weight:900;font-size:1rem;color:var(--gold)">${j.pts}</span></td>
-        <td style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2)">+${j.bonusNet>=0?j.bonusNet:0}/-${j.bonusNet<0?Math.abs(j.bonusNet):0}</td>
-      </tr>`;
-    });
-    h+=`</tbody></table></div>`;
+  // ── Onglets ──
+  if(showTabs){
+    h+=`<div class="ts-tabs">
+      <button class="ts-tab ${initView==='poules'?'active':''}" onclick="tsTournSwitch('poules',this)">⚔️ Poules</button>
+      <button class="ts-tab ${initView==='finales'?'active':''}" onclick="tsTournSwitch('finales',this)">🏆 Finales</button>
+    </div>`;
   }
-  h+=`</div>`; // close card
 
-  // ── PHASES FINALES ──
-  if(demiMatchs.length>0||finaleMatch){
-    h+=`<div class="card"><div class="card-title">⚔️ Phases finales</div>`;
+  // ══ VUE POULES ══
+  if(pouleIds.length>0){
+    h+=`<div id="ts-v-poules" class="ts-view ${(!showTabs||initView==='poules')?'active':''}">
+      <div class="poules-grid">`;
+    const letters='ABCDEFGH';
+    const nbQualif=pouleIds.length>1?2:1;
+
+    for(const pouleId of pouleIds){
+      const pm=pouleMatchs.filter(m=>m.poule_id===pouleId);
+      const totalM=pm.length,doneM=pm.filter(m=>m.statut==='terminé').length;
+      const ltr=letters[(pouleId-1)]||pouleId;
+      const jids=[...new Set(pm.flatMap(m=>[m.joueur1_id,m.joueur2_id]))];
+
+      h+=`<div class="poule-card">
+        <div class="poule-head">
+          <span class="poule-name">Poule ${ltr}</span>
+          <span class="poule-nb">${doneM}/${totalM} matchs</span>
+        </div>
+        <div class="ts-sec">Matchs</div><div>`;
+
+      for(const m of pm){
+        const n1=esc(nomById[m.joueur1_id]||'?');
+        const n2=esc(nomById[m.joueur2_id]||'?');
+        const done=m.statut==='terminé',live=m.statut==='en_cours';
+        const j1w=done&&m.vainqueur_id===m.joueur1_id;
+        const j2w=done&&m.vainqueur_id===m.joueur2_id;
+        const isMyMatch=m.joueur1_id===MOI.id||m.joueur2_id===MOI.id;
+        const scCls=done?'done':live?'live':'';
+        const scTxt=done?`${m.pts_j1??0} – ${m.pts_j2??0}`:live?'en cours':'–';
+        const me1=m.joueur1_id===MOI.id,me2=m.joueur2_id===MOI.id;
+        h+=`<div class="ts-mrow${isMyMatch?' me-match':''}">
+          <span class="ts-mp left ${j1w?'win':done?'lose':''} ${me1?'me':''}">${n1}</span>
+          <span class="ts-sc ${scCls}">${scTxt}</span>
+          <span class="ts-mp right ${j2w?'win':done?'lose':''} ${me2?'me':''}">${n2}</span>
+        </div>`;
+      }
+      h+=`</div>`;
+
+      // ── Classement ──
+      const standings=jids.map(jid=>{
+        let wins=0,pp=0,pc=0,bonus=0,malus=0;
+        for(const m of pm){
+          if(m.statut!=='terminé')continue;
+          if(m.joueur1_id!==jid&&m.joueur2_id!==jid)continue;
+          if(m.vainqueur_id===jid)wins++;
+          if(m.joueur1_id===jid){pp+=m.pts_j1??0;pc+=m.pts_j2??0;bonus+=m.bonus_j1||0;malus+=m.malus_j1||0;}
+          else{pp+=m.pts_j2??0;pc+=m.pts_j1??0;bonus+=m.bonus_j2||0;malus+=m.malus_j2||0;}
+        }
+        return{jid,nom:nomById[jid]||'?',wins,diff:pp-pc,bonus,malus};
+      }).sort((a,b)=>b.wins-a.wins||b.diff-a.diff||a.nom.localeCompare(b.nom));
+
+      h+=`<div class="ts-sec" style="margin-top:2px">Classement</div>
+        <table class="ts-tbl"><thead><tr>
+          <th>Joueur</th><th>V</th><th>Diff</th><th>B/M</th>
+        </tr></thead><tbody>`;
+
+      standings.forEach((s,i)=>{
+        const isMe=s.jid===MOI.id;
+        const rkCls=i===0?'r1':i<nbQualif?'r2':'rn';
+        const diff=s.diff>0?`+${s.diff}`:`${s.diff}`;
+        const difCol=s.diff>=0?'var(--cyan)':'var(--red)';
+        const bm=`+${s.bonus}/-${s.malus}`;
+        const inDemi=demiMatchs.some(m=>m.joueur1_id===s.jid||m.joueur2_id===s.jid);
+        const qualStar=inDemi?'<span style="color:var(--gold);margin-left:3px;font-size:.65rem">★</span>':'';
+        const meBadge=isMe?'<span style="font-family:\'Orbitron\',monospace;font-size:.45rem;color:var(--cyan);margin-left:4px">◀</span>':'';
+        h+=`<tr class="${isMe?'me-row':''}">
+          <td><span class="ts-rk ${rkCls}">${i+1}</span>${esc(s.nom)}${qualStar}${meBadge}</td>
+          <td>${s.wins}</td>
+          <td style="font-family:'Orbitron',monospace;font-size:.6rem;color:${difCol}">${diff}</td>
+          <td style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2)">${bm}</td>
+        </tr>`;
+      });
+      h+=`</tbody></table></div>`;
+    }
+    h+=`</div></div>`;
+  }
+
+  // ══ VUE BRACKET ══
+  if(hasFinales){
+    h+=`<div id="ts-v-finales" class="ts-view ${(!showTabs||initView==='finales')?'active':''}">
+      <div class="bk-wrap">`;
 
     // Demi-finales
     if(demiMatchs.length>0){
-      h+=`<div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:2px;margin-bottom:10px">DEMI-FINALES</div>`;
-      demiMatchs.forEach((m,i)=>{
-        h+=bracketMatchCard(m,nomById,i+1,'Demi-finale');
-      });
+      h+=`<div class="bk-round"><div class="bk-rhead">Demi-finales</div><div class="bk-rmatches">`;
+      demiMatchs.forEach(m=>{h+=tsBracketRow(m,nomById);});
+      h+=`</div></div><div class="bk-conn">`;
+      demiMatchs.forEach(()=>{h+=`<div class="bk-cl"></div>`;});
+      h+=`</div>`;
     }
 
     // Finale
+    h+=`<div class="bk-round"><div class="bk-rhead">Finale</div><div class="bk-rmatches" style="justify-content:center">`;
     if(finaleMatch){
-      h+=`<div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--gold);letter-spacing:2px;margin:14px 0 10px">FINALE</div>`;
-      h+=bracketMatchCard(finaleMatch,nomById,null,'Finale');
+      h+=tsBracketRow(finaleMatch,nomById);
+    }else{
+      h+=`<div class="bk-match"><div class="bk-row tbd"><span class="bk-nm">En attente…</span></div><div class="bk-row tbd"><span class="bk-nm">En attente…</span></div></div>`;
     }
+    h+=`</div></div>`;
 
-    // Champion
-    if(tData?.statut==='terminé'&&finaleMatch?.vainqueur_id){
-      const champNom=nomById[finaleMatch.vainqueur_id]||'?';
-      h+=`<div style="text-align:center;padding:16px;background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.3);border-radius:8px;margin-top:12px">
-        <div style="font-size:36px;margin-bottom:8px">🏆</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--gold)">CHAMPION</div>
-        <div style="font-size:1.1rem;font-weight:700;color:var(--text);margin-top:4px">${esc(champNom)}</div>
+    // Connecteur + Champion
+    const champId=finaleMatch?.vainqueur_id;
+    const champNom=champId?nomById[champId]:null;
+    h+=`<div class="bk-conn"><div class="bk-cl" style="flex:none;height:50%;margin-top:auto"></div></div>
+      <div class="bk-round"><div class="bk-rhead">Champion</div><div class="bk-rmatches" style="justify-content:center">`;
+    if(champNom){
+      const isMe=champId===MOI.id;
+      h+=`<div class="bk-champ${isMe?' me-match':''}">
+        <div class="bk-champ-lbl">🏆 CHAMPION</div>
+        <div class="bk-champ-nm${isMe?' me':''}" style="${isMe?'color:var(--cyan)':''}">${esc(champNom)}</div>
+        ${isMe?'<div style="font-family:\'Orbitron\',monospace;font-size:.5rem;color:var(--cyan);margin-top:6px;letter-spacing:1.5px">C\'EST TOI !</div>':''}
       </div>`;
+    }else{
+      h+=`<div class="bk-match"><div class="bk-row tbd"><span class="bk-nm">En attente…</span></div></div>`;
     }
-
-    h+=`</div>`;
+    h+=`</div></div></div></div>`;
   }
 
+  h+=`</div>`;
   el.innerHTML=h;
 }
 
-function bracketMatchCard(m,nomById,num,label){
-  const j1Nom=nomById[m.joueur1_id]||'?';
-  const j2Nom=nomById[m.joueur2_id]||'?';
-  const isDone=m.statut==='terminé';
-  const isMe=m.joueur1_id===MOI.id||m.joueur2_id===MOI.id;
-  const stCol={en_attente:'var(--text2)',placement:'var(--text2)',en_cours:'var(--cyan)',terminé:'var(--gold)'}[m.statut];
-  const stLbl={en_attente:'EN ATTENTE',placement:'PLACEMENT',en_cours:'EN COURS',terminé:'TERMINÉ'}[m.statut];
-  const w=m.vainqueur_id;
+function tsTournSwitch(view,btn){
+  const pv=document.getElementById('ts-v-poules');
+  const fv=document.getElementById('ts-v-finales');
+  if(pv)pv.classList.toggle('active',view==='poules');
+  if(fv)fv.classList.toggle('active',view==='finales');
+  btn.closest('.ts-tabs').querySelectorAll('.ts-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+}
 
-  return `<div style="background:${isMe?'rgba(14,165,233,.04)':'var(--bg3)'};border:1px solid ${isMe?'rgba(14,165,233,.3)':'var(--border)'};border-radius:8px;padding:12px;margin-bottom:8px">
-    ${num?`<div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1.5px;margin-bottom:8px">${label.toUpperCase()} ${num}</div>`:''}
-    <div style="display:flex;flex-direction:column;gap:6px">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <span style="font-weight:700;font-size:.95rem;color:${w===m.joueur1_id?'var(--gold)':w&&w!==m.joueur1_id?'var(--text2)':'var(--text)'}">${esc(j1Nom)}${m.joueur1_id===MOI.id?' <span style="font-size:.6rem;color:var(--cyan)">◀</span>':''}</span>
-        ${isDone?`<span style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;color:${w===m.joueur1_id?'var(--green)':'var(--red)'}">${m.pts_j1||0}pts</span>`:''}
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <span style="font-weight:700;font-size:.95rem;color:${w===m.joueur2_id?'var(--gold)':w&&w!==m.joueur2_id?'var(--text2)':'var(--text)'}">${esc(j2Nom)}${m.joueur2_id===MOI.id?' <span style="font-size:.6rem;color:var(--cyan)">◀</span>':''}</span>
-        ${isDone?`<span style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;color:${w===m.joueur2_id?'var(--green)':'var(--red)'}">${m.pts_j2||0}pts</span>`:''}
-      </div>
+function tsBracketRow(m,nomById){
+  const done=m.statut==='terminé';
+  const n1=m.joueur1_id?esc(nomById[m.joueur1_id]||'?'):null;
+  const n2=m.joueur2_id?esc(nomById[m.joueur2_id]||'?'):null;
+  const j1w=done&&m.vainqueur_id===m.joueur1_id;
+  const j2w=done&&m.vainqueur_id===m.joueur2_id;
+  const s1=done?(m.pts_j1??0):'';
+  const s2=done?(m.pts_j2??0):'';
+  const me1=m.joueur1_id===MOI.id,me2=m.joueur2_id===MOI.id;
+  const isMyMatch=me1||me2;
+  const live=m.statut==='en_cours'||m.statut==='placement';
+  return `<div class="bk-match${isMyMatch?' me-match':''}">
+    <div class="bk-row ${j1w?'win':''} ${!n1?'tbd':''}">
+      <span class="bk-nm ${me1?'me':''}">${n1||(live?'En attente…':'?')}${isMyMatch&&me1?'<span style="font-family:\'Orbitron\',monospace;font-size:.45rem;color:var(--gold);margin-left:4px">◀</span>':''}</span>
+      <span class="bk-sc">${s1}</span>
     </div>
-    <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between">
-      <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:${stCol};letter-spacing:1.5px;font-weight:700">${stLbl}</span>
-      ${isMe&&!isDone?`<span style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--cyan)">TON MATCH !</span>`:''}
+    <div class="bk-row ${j2w?'win':''} ${!n2?'tbd':''}">
+      <span class="bk-nm ${me2?'me':''}">${n2||(live?'En attente…':'?')}${isMyMatch&&me2?'<span style="font-family:\'Orbitron\',monospace;font-size:.45rem;color:var(--gold);margin-left:4px">◀</span>':''}</span>
+      <span class="bk-sc">${s2}</span>
     </div>
   </div>`;
 }
