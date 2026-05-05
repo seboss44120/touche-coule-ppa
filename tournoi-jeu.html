@@ -1434,9 +1434,34 @@ function renderResultat(match,el){
 }
 
 /* ══ POULE ══ */
-function renderPoule(){
+async function renderPoule(){
   const el=document.getElementById('mainContent');
   if(!POULE_JOUEURS.length){el.innerHTML=`<div class="card"><p style="color:var(--text2)">Poule non disponible.</p></div>`;return;}
+
+  // Charger les tirs_recus de toutes les grilles de la poule
+  // pour calculer les scores réels (pts navires coulés, pas 3/1/0)
+  let grillePts={};
+  try{
+    const ids=POULE_MATCHS.map(m=>m.id);
+    if(ids.length){
+      const{data:grilles}=await sb.from('tournoi_grilles')
+        .select('match_id,joueur_id,tirs_recus')
+        .in('match_id',ids);
+      if(grilles){
+        POULE_MATCHS.forEach(m=>{
+          // Score J1 = pts des navires coulés dans la grille de J2 (J2 reçoit les tirs de J1)
+          const gJ2=grilles.find(g=>g.match_id===m.id&&g.joueur_id===m.joueur2_id);
+          // Score J2 = pts des navires coulés dans la grille de J1
+          const gJ1=grilles.find(g=>g.match_id===m.id&&g.joueur_id===m.joueur1_id);
+          grillePts[m.id]={
+            j1:(gJ2?.tirs_recus||[]).filter(t=>t.result==='sunk').reduce((a,t)=>a+(t.pts||0),0),
+            j2:(gJ1?.tirs_recus||[]).filter(t=>t.result==='sunk').reduce((a,t)=>a+(t.pts||0),0)
+          };
+        });
+      }
+    }
+  }catch(e){console.warn('renderPoule grilles:',e);}
+
   const standings=POULE_JOUEURS.map(j=>{
     let pts=0,played=0,bonus=0,malus=0;
     POULE_MATCHS.filter(m=>m.statut==='terminé').forEach(m=>{
@@ -1449,7 +1474,13 @@ function renderPoule(){
   }).sort((a,b)=>b.pts-a.pts||(b.bonus-b.malus)-(a.bonus-a.malus));
 
   let h=`<div class="card"><div class="card-title">🏅 Poule ${MOI.poule_id}</div>
-    <table class="rank-table"><thead><tr><th>Rg</th><th style="text-align:left">Joueur</th><th>Pts</th><th>J</th><th>B/M</th></tr></thead><tbody>`;
+    <table class="rank-table"><thead><tr>
+      <th>Rg</th>
+      <th style="text-align:left">Joueur</th>
+      <th>Pts</th>
+      <th><span class="ts-th-tip" ontouchstart="tsTipTap(this)" style="cursor:default">MJ<span class="tip-dot">?</span><span class="tip-box">Matchs joués</span></span></th>
+      <th>B/M</th>
+    </tr></thead><tbody>`;
   standings.forEach((j,i)=>{
     const me=j.id===MOI.id;
     h+=`<tr class="${me?'me-row':''}">
@@ -1461,16 +1492,28 @@ function renderPoule(){
     </tr>`;
   });
   h+=`</tbody></table></div><div class="card"><div class="card-title">📋 Résultats</div>`;
+
   POULE_MATCHS.forEach(m=>{
     const j1=POULE_JOUEURS.find(j=>j.id===m.joueur1_id),j2=POULE_JOUEURS.find(j=>j.id===m.joueur2_id);
-    const stCol={en_attente:'var(--text3)',placement:'var(--text3)',en_cours:'var(--cyan)',terminé:'var(--gold)'}[m.statut];
-    // Calculer le tour max à partir des tirs_recus si match en cours
-    const nbTours=MATCHS.find(x=>x.id===m.id) ? (TOURS[m.id]?.numero_tour||'—') : '—';
-    h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border2)">
-      <div style="font-size:.88rem">${playerTag(j1?.id,'',{size:'small'})} ${esc(j1?.nom||'?')} <span style="color:var(--text2);font-size:.72rem;margin:0 5px">vs</span> ${playerTag(j2?.id,'',{size:'small'})} ${esc(j2?.nom||'?')}</div>
-      <div style="text-align:right"><span style="font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;color:${stCol}">${m.statut.toUpperCase()}</span>
-        ${m.statut==='en_cours'?`<div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan)">Tour ${nbTours}</div>`:''}
-        ${m.statut==='terminé'?`<div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold)">${m.pts_j1||0}—${m.pts_j2||0}</div>`:''}</div>
+    const live=m.statut==='en_cours',done=m.statut==='terminé';
+    const stCol={en_attente:'var(--text3)',placement:'var(--text3)',en_cours:'var(--orange)',terminé:'var(--green)'}[m.statut]||'var(--text3)';
+    const nbTours=MATCHS.find(x=>x.id===m.id)?(TOURS[m.id]?.numero_tour||'—'):'—';
+    const gp=grillePts[m.id]||{j1:0,j2:0};
+    const isMyMatch=m.joueur1_id===MOI.id||m.joueur2_id===MOI.id;
+
+    // Score réel = somme des pts des navires coulés (PA=5 CU=4 CR=3 SM=3 TP=2)
+    const scoreHtml=(live||done)
+      ?`<div style="font-family:'Orbitron',monospace;font-size:.8rem;font-weight:900;letter-spacing:1px;color:${done?'var(--gold)':'var(--orange)'}">${gp.j1} — ${gp.j2}</div>`
+      :'';
+    const statusHtml=live
+      ?`<div style="display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:var(--orange);display:inline-block;animation:badgepulse 1s ease-in-out infinite"></span><span style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--orange)">EN COURS</span></div><div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text3)">Tour ${nbTours}</div>`
+      :done
+        ?`<span style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--green)">✓ TERMINÉ</span>`
+        :`<span style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text3)">${m.statut.toUpperCase()}</span>`;
+
+    h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border2)${isMyMatch?';background:rgba(245,200,66,.03);margin:0 -2px;padding:9px 2px':''}">
+      <div style="font-size:.88rem;min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${playerTag(j1?.id,'',{size:'small'})} ${esc(j1?.nom||'?')} <span style="color:var(--text3);font-size:.68rem;margin:0 4px">vs</span> ${playerTag(j2?.id,'',{size:'small'})} ${esc(j2?.nom||'?')}</div>
+      <div style="text-align:right;flex-shrink:0;margin-left:10px">${scoreHtml}${statusHtml}</div>
     </div>`;
   });
   h+=`</div>`;
