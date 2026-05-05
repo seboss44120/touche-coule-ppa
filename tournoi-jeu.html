@@ -1567,7 +1567,7 @@ async function renderPoule(){
       else{pts+=m.pts_j2||0;bonus+=m.bonus_j2||0;malus+=m.malus_j2||0;}
     });
     return{...j,pts,played,bonus,malus};
-  }).sort((a,b)=>b.pts-a.pts||(b.bonus-b.malus)-(a.bonus-a.malus));
+  }).sort((a,b)=>b.pts-a.pts||(b.bonus-b.malus)-(a.bonus-a.malus)||(a.nom||a.pseudo||'').localeCompare(b.nom||b.pseudo||''));
 
   let h=`<div class="card"><div class="card-title">🏅 Poule ${MOI.poule_id}</div>
     <table class="rank-table"><thead><tr>
@@ -1584,7 +1584,7 @@ async function renderPoule(){
       <td style="text-align:left">${playerTag(j.id,j.nom||'?',{size:'small'})}${j.bye?' <span style="font-size:.6rem;color:var(--gold)">BYE</span>':''}${me?' <span style="font-size:.6rem;color:var(--cyan)">◀</span>':''}</td>
       <td><span style="font-family:'Orbitron',monospace;font-weight:900;font-size:1rem;color:var(--gold)">${j.pts}</span></td>
       <td style="color:var(--text2)">${j.played}</td>
-      <td style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2)">+${j.bonus}/-${j.malus}</td>
+      <td style="font-family:'Orbitron',monospace;font-size:.6rem;color:${(j.bonus-j.malus)>0?'var(--cyan)':(j.bonus-j.malus)<0?'var(--red)':'var(--text2)'}">${(j.bonus-j.malus)>0?'+':''}${j.bonus-j.malus}</td>
     </tr>`;
   });
   h+=`</tbody></table></div><div class="card"><div class="card-title">📋 Résultats</div>`;
@@ -2099,14 +2099,14 @@ async function renderTournoi(){
           else{pp+=m.pts_j2??0;pc+=m.pts_j1??0;bonus+=m.bonus_j2||0;malus+=m.malus_j2||0;}
         }
         return{jid,nom:nomById[jid]||'?',wins,diff:pp-pc,bonus,malus};
-      }).sort((a,b)=>b.wins-a.wins||b.diff-a.diff||a.nom.localeCompare(b.nom));
+      }).sort((a,b)=>b.wins-a.wins||b.diff-a.diff||(b.bonus-b.malus)-(a.bonus-a.malus)||a.nom.localeCompare(b.nom));
 
       h+=`<div class="ts-sec" style="margin-top:2px">Classement</div>
         <table class="ts-tbl"><thead><tr>
           <th>Joueur</th>
           <th><span class="ts-th-tip" ontouchstart="tsTipTap(this)">V<span class="tip-dot">?</span><span class="tip-box">Victoires</span></span></th>
           <th><span class="ts-th-tip" ontouchstart="tsTipTap(this)">Diff<span class="tip-dot">?</span><span class="tip-box">Points marqués − encaissés</span></span></th>
-          <th><span class="ts-th-tip" ontouchstart="tsTipTap(this)">B/M<span class="tip-dot">?</span><span class="tip-box">Bonus / Malus admin</span></span></th>
+          <th><span class="ts-th-tip" ontouchstart="tsTipTap(this)">B/M<span class="tip-dot">?</span><span class="tip-box">Net bonus/malus (critère de départage)</span></span></th>
         </tr></thead><tbody>`;
 
       standings.forEach((s,i)=>{
@@ -2114,7 +2114,9 @@ async function renderTournoi(){
         const rkCls=i===0?'r1':i<nbQualif?'r2':'rn';
         const diff=s.diff>0?`+${s.diff}`:`${s.diff}`;
         const difCol=s.diff>=0?'var(--cyan)':'var(--red)';
-        const bm=`+${s.bonus}/-${s.malus}`;
+        const net=s.bonus-s.malus;
+        const bm=(net>0?'+':'')+net;
+        const bmCol=net>0?'var(--cyan)':net<0?'var(--red)':'var(--text2)';
         const inDemi=demiMatchs.some(m=>m.joueur1_id===s.jid||m.joueur2_id===s.jid);
         const qualStar=inDemi?'<span style="color:var(--gold);margin-left:3px;font-size:.65rem">★</span>':'';
         const meBadge=isMe?'<span style="font-family:\'Orbitron\',monospace;font-size:.45rem;color:var(--cyan);margin-left:4px">◀</span>':'';
@@ -2122,7 +2124,7 @@ async function renderTournoi(){
           <td><span class="ts-rk ${rkCls}">${i+1}</span>${esc(s.nom)}${qualStar}${meBadge}</td>
           <td>${s.wins}</td>
           <td style="font-family:'Orbitron',monospace;font-size:.6rem;color:${difCol}">${diff}</td>
-          <td style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2)">${bm}</td>
+          <td style="font-family:'Orbitron',monospace;font-size:.58rem;color:${bmCol}">${bm}</td>
         </tr>`;
       });
       h+=`</tbody></table></div>`;
