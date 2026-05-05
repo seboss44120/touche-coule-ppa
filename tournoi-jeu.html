@@ -62,9 +62,11 @@ main{padding:12px}
 .gc.miss{background:rgba(0,100,200,.18);border-color:rgba(0,100,200,.35)}
 .gc.sunk{background:rgba(255,68,85,.4);border-color:var(--red)}
 /* ── RAPPORT DE BATAILLE (grilles post-match) ── */
-.result-grid{display:grid;grid-template-columns:11px repeat(10,1fr);gap:1px;width:100%}
-.rg-hdr{display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.35rem;color:var(--text3);line-height:1}
-.rgc{aspect-ratio:1;border-radius:2px;background:rgba(0,50,100,.3);border:1px solid rgba(26,47,74,.7)}
+.result-grids-pair{display:flex;justify-content:center;gap:10px}
+.result-grid-col{display:flex;flex-direction:column;align-items:center;width:44%}
+.result-grid{display:grid;grid-template-columns:9px repeat(10,1fr);gap:1px;width:100%}
+.rg-hdr{display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.3rem;color:var(--text3);line-height:1}
+.rgc{aspect-ratio:1;border-radius:1px;background:rgba(0,50,100,.3);border:1px solid rgba(26,47,74,.7);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.32rem;font-weight:700;line-height:1}
 .rgc.placed-PA{background:rgba(240,192,64,.22);border-color:#f0c040}
 .rgc.placed-CU{background:rgba(0,212,255,.2);border-color:#00d4ff}
 .rgc.placed-CR{background:rgba(0,255,140,.18);border-color:#00ff8c}
@@ -1399,33 +1401,33 @@ function showUnlockToast(msg,color){
 /* ══ GRILLES RAPPORT DE BATAILLE ══ */
 function buildResultGrid(matchId,mode,revealed){
   const gr=GRILLES[matchId];
-  function cellCls(coord){
-    const cls=['rgc'];
+  function cellInfo(coord){
+    const cls=['rgc'];let sym='';
     if(mode==='defense'){
       const myPl=gr?.mine?.grille_placement,myTirs=gr?.mine?.tirs_recus||[];
       if(myPl?.grid_data?.[coord])cls.push('placed-'+myPl.grid_data[coord]);
-      if(myPl?.bonus_cells?.includes(coord))cls.push('bonus-cell');
-      if(myPl?.malus_cells?.includes(coord))cls.push('malus-cell');
+      if(myPl?.bonus_cells?.includes(coord)){cls.push('bonus-cell');sym='B';}
+      if(myPl?.malus_cells?.includes(coord)){cls.push('malus-cell');sym='M';}
       const t=myTirs.find(t=>t.coord===coord);
-      if(t)cls.push({miss:'miss',hit:'hit',sunk:'sunk',bonus:'hit',malus:'miss'}[t.result]||'miss');
+      if(t){cls.push({miss:'miss',hit:'hit',sunk:'sunk',bonus:'hit',malus:'miss'}[t.result]||'miss');if(t.result==='bonus')sym='B';if(t.result==='malus')sym='M';}
     }
     if(mode==='attack'){
       if(revealed){
         const advPl=gr?.theirs?.grille_placement;
         if(advPl?.grid_data?.[coord])cls.push('placed-'+advPl.grid_data[coord]);
-        if(advPl?.bonus_cells?.includes(coord))cls.push('bonus-cell');
-        if(advPl?.malus_cells?.includes(coord))cls.push('malus-cell');
+        if(advPl?.bonus_cells?.includes(coord)){cls.push('bonus-cell');sym='B';}
+        if(advPl?.malus_cells?.includes(coord)){cls.push('malus-cell');sym='M';}
       }
       const t=(gr?.theirs?.tirs_recus||[]).find(t=>t.coord===coord);
-      if(t)cls.push({miss:'miss',hit:'hit',sunk:'sunk',bonus:'hit',malus:'miss'}[t.result]||'miss');
+      if(t){cls.push({miss:'miss',hit:'hit',sunk:'sunk',bonus:'hit',malus:'miss'}[t.result]||'miss');if(t.result==='bonus')sym='B';if(t.result==='malus')sym='M';}
     }
-    return cls.join(' ');
+    return{cls:cls.join(' '),sym};
   }
   let h=`<div class="result-grid"><div class="rg-hdr"></div>`;
   COLS.forEach(c=>h+=`<div class="rg-hdr">${c}</div>`);
   ROWS.forEach(r=>{
     h+=`<div class="rg-hdr">${r}</div>`;
-    COLS.forEach(c=>{h+=`<div class="${cellCls(c+r)}"></div>`;});
+    COLS.forEach(c=>{const{cls,sym}=cellInfo(c+r);h+=`<div class="${cls}">${sym}</div>`;});
   });
   return h+'</div>';
 }
@@ -1456,6 +1458,8 @@ function renderResultat(match,el){
   const advPlDispo=!!(GRILLES[match.id]?.theirs?.grille_placement?.grid_data);
   const mesTirsSignif=mesTirs.filter(t=>!['bonus','malus'].includes(t.result));
   const precision=mesTirsSignif.length>0?Math.round(mesTirsSignif.filter(t=>['hit','sunk'].includes(t.result)).length/mesTirsSignif.length*100):0;
+  const sesTirsSignif=sesTirs.filter(t=>!['bonus','malus'].includes(t.result));
+  const precAdv=sesTirsSignif.length>0?Math.round(sesTirsSignif.filter(t=>['hit','sunk'].includes(t.result)).length/sesTirsSignif.length*100):0;
 
   el.innerHTML=`<div class="card result-screen">
     <span class="result-icon">${draw?'🤝':won?'🏆':'💀'}</span>
@@ -1498,24 +1502,22 @@ function renderResultat(match,el){
       <div class="card-title" style="margin:0">📊 RAPPORT DE BATAILLE</div>
       ${advPlDispo?`<button class="btn btn-sm ${revealed?'btn-orange':'btn-purple'}" onclick="toggleResultReveal('${match.id}')">${revealed?'🙈 MASQUER':'👁 RÉVÉLER'}</button>`:''}
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div>
-        <div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--cyan);letter-spacing:1.5px;margin-bottom:5px;text-align:center">🛡️ MA FLOTTE</div>
+    <div class="result-grids-pair">
+      <div class="result-grid-col">
+        <div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--cyan);letter-spacing:1.5px;margin-bottom:5px">🛡️ MA FLOTTE</div>
         ${buildResultGrid(match.id,'defense',true)}
-        <div style="display:flex;justify-content:center;gap:6px;margin-top:5px;font-family:'Orbitron',monospace;font-size:.44rem">
-          <span style="color:var(--red)">${sesBateauxCoules} coulés</span>
-          <span style="color:var(--text3)">·</span>
-          <span style="color:var(--text3)">${sesTirs.filter(t=>t.result==='miss').length} ratés</span>
+        <div style="margin-top:6px;font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;color:${precAdv>=50?'var(--red)':'var(--green)'}">
+          ${precAdv}%
         </div>
+        <div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--text3);margin-top:1px">PRÉC. ADV.</div>
       </div>
-      <div>
-        <div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--orange);letter-spacing:1.5px;margin-bottom:5px;text-align:center">🎯 FLOTTE ADV.</div>
+      <div class="result-grid-col">
+        <div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--orange);letter-spacing:1.5px;margin-bottom:5px">🎯 FLOTTE ADV.</div>
         ${buildResultGrid(match.id,'attack',revealed)}
-        <div style="display:flex;justify-content:center;gap:6px;margin-top:5px;font-family:'Orbitron',monospace;font-size:.44rem">
-          <span style="color:var(--red)">${mesBateauxCoules} coulés</span>
-          <span style="color:var(--text3)">·</span>
-          <span style="color:var(--green)">${precision}% préc.</span>
+        <div style="margin-top:6px;font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;color:${precision>=50?'var(--green)':'var(--red)'}">
+          ${precision}%
         </div>
+        <div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--text3);margin-top:1px">MA PRÉC.</div>
       </div>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;padding:5px 8px;background:var(--bg2);border-radius:5px;border:1px solid var(--border2)">
