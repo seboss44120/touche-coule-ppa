@@ -61,6 +61,20 @@ main{padding:12px}
 .gc.hit{background:rgba(255,100,30,.35);border-color:var(--orange)}
 .gc.miss{background:rgba(0,100,200,.18);border-color:rgba(0,100,200,.35)}
 .gc.sunk{background:rgba(255,68,85,.4);border-color:var(--red)}
+/* ── RAPPORT DE BATAILLE (grilles post-match) ── */
+.result-grid{display:grid;grid-template-columns:11px repeat(10,1fr);gap:1px;width:100%}
+.rg-hdr{display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.35rem;color:var(--text3);line-height:1}
+.rgc{aspect-ratio:1;border-radius:2px;background:rgba(0,50,100,.3);border:1px solid rgba(26,47,74,.7)}
+.rgc.placed-PA{background:rgba(240,192,64,.22);border-color:#f0c040}
+.rgc.placed-CU{background:rgba(0,212,255,.2);border-color:#00d4ff}
+.rgc.placed-CR{background:rgba(0,255,140,.18);border-color:#00ff8c}
+.rgc.placed-SM{background:rgba(100,255,100,.15);border-color:#64ff64}
+.rgc.placed-TP{background:rgba(255,136,68,.2);border-color:#ff8844}
+.rgc.bonus-cell{background:rgba(204,136,255,.25)!important;border-color:var(--purple)!important}
+.rgc.malus-cell{background:rgba(255,136,68,.2)!important;border-color:var(--orange)!important}
+.rgc.hit{background:rgba(255,100,30,.5);border-color:var(--orange)}
+.rgc.miss{background:rgba(0,100,200,.25);border-color:rgba(0,100,200,.45)}
+.rgc.sunk{background:rgba(255,68,85,.55);border-color:var(--red)}
 .gc.preview-ok{background:rgba(0,212,255,.18)!important;border-color:rgba(0,212,255,.5)!important}
 .gc.preview-bad{background:rgba(255,68,85,.18)!important;border-color:rgba(255,68,85,.5)!important}
 .grid-wrap{overflow-x:auto;margin:8px 0}
@@ -396,6 +410,7 @@ let _seenHitDef={};    // matchId → Set
 let _prevTirsRecusTheirs={}; // matchId → snapshot précédent
 let _prevTirsRecusMine  ={}; // matchId → snapshot précédent
 let _prevToursIds={};        // matchId → Set d'ids de tours connus (pour détecter annulation)
+let _resultRevealed={};      // matchId → bool (révélation navires adverses en écran résultat)
 
 /* ══ ANIMATIONS TACTIQUES ══ */
 const RETICLE_SVG=`<svg viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg">
@@ -1381,6 +1396,46 @@ function showUnlockToast(msg,color){
   setTimeout(()=>t.remove(),5000);
 }
 
+/* ══ GRILLES RAPPORT DE BATAILLE ══ */
+function buildResultGrid(matchId,mode,revealed){
+  const gr=GRILLES[matchId];
+  function cellCls(coord){
+    const cls=['rgc'];
+    if(mode==='defense'){
+      const myPl=gr?.mine?.grille_placement,myTirs=gr?.mine?.tirs_recus||[];
+      if(myPl?.grid_data?.[coord])cls.push('placed-'+myPl.grid_data[coord]);
+      if(myPl?.bonus_cells?.includes(coord))cls.push('bonus-cell');
+      if(myPl?.malus_cells?.includes(coord))cls.push('malus-cell');
+      const t=myTirs.find(t=>t.coord===coord);
+      if(t)cls.push({miss:'miss',hit:'hit',sunk:'sunk',bonus:'hit',malus:'miss'}[t.result]||'miss');
+    }
+    if(mode==='attack'){
+      if(revealed){
+        const advPl=gr?.theirs?.grille_placement;
+        if(advPl?.grid_data?.[coord])cls.push('placed-'+advPl.grid_data[coord]);
+        if(advPl?.bonus_cells?.includes(coord))cls.push('bonus-cell');
+        if(advPl?.malus_cells?.includes(coord))cls.push('malus-cell');
+      }
+      const t=(gr?.theirs?.tirs_recus||[]).find(t=>t.coord===coord);
+      if(t)cls.push({miss:'miss',hit:'hit',sunk:'sunk',bonus:'hit',malus:'miss'}[t.result]||'miss');
+    }
+    return cls.join(' ');
+  }
+  let h=`<div class="result-grid"><div class="rg-hdr"></div>`;
+  COLS.forEach(c=>h+=`<div class="rg-hdr">${c}</div>`);
+  ROWS.forEach(r=>{
+    h+=`<div class="rg-hdr">${r}</div>`;
+    COLS.forEach(c=>{h+=`<div class="${cellCls(c+r)}"></div>`;});
+  });
+  return h+'</div>';
+}
+
+function toggleResultReveal(matchId){
+  _resultRevealed[matchId]=!_resultRevealed[matchId];
+  const match=MATCHS.find(m=>m.id===matchId);
+  if(match)renderResultat(match,document.getElementById('mainContent'));
+}
+
 /* ══ RÉSULTAT ══ */
 function renderResultat(match,el){
   const role=getMyRole(match),won=match.vainqueur_id===MOI.id,draw=!match.vainqueur_id;
@@ -1395,6 +1450,12 @@ function renderResultat(match,el){
 
   // Prochain match non terminé
   const nextMatch=MATCHS.find(m=>m.id!==match.id&&m.statut!=='terminé');
+
+  // Rapport de bataille
+  const revealed=_resultRevealed[match.id]||false;
+  const advPlDispo=!!(GRILLES[match.id]?.theirs?.grille_placement?.grid_data);
+  const mesTirsSignif=mesTirs.filter(t=>!['bonus','malus'].includes(t.result));
+  const precision=mesTirsSignif.length>0?Math.round(mesTirsSignif.filter(t=>['hit','sunk'].includes(t.result)).length/mesTirsSignif.length*100):0;
 
   el.innerHTML=`<div class="card result-screen">
     <span class="result-icon">${draw?'🤝':won?'🏆':'💀'}</span>
@@ -1429,6 +1490,39 @@ function renderResultat(match,el){
       <button class="btn btn-outline btn-sm" onclick="goTab('poule')">🏅 VOIR LA POULE</button>
       <button class="btn btn-outline btn-sm" onclick="goTab('tournoi')">🏆 BRACKET</button>
       ${nextMatch?`<button class="btn btn-gold btn-sm" onclick="goTab('match-${nextMatch.id}')">⚔️ MON PROCHAIN MATCH →</button>`:''}
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="card-title" style="margin:0">📊 RAPPORT DE BATAILLE</div>
+      ${advPlDispo?`<button class="btn btn-sm ${revealed?'btn-orange':'btn-purple'}" onclick="toggleResultReveal('${match.id}')">${revealed?'🙈 MASQUER':'👁 RÉVÉLER'}</button>`:''}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div>
+        <div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--cyan);letter-spacing:1.5px;margin-bottom:5px;text-align:center">🛡️ MA FLOTTE</div>
+        ${buildResultGrid(match.id,'defense',true)}
+        <div style="display:flex;justify-content:center;gap:6px;margin-top:5px;font-family:'Orbitron',monospace;font-size:.44rem">
+          <span style="color:var(--red)">${sesBateauxCoules} coulés</span>
+          <span style="color:var(--text3)">·</span>
+          <span style="color:var(--text3)">${sesTirs.filter(t=>t.result==='miss').length} ratés</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--orange);letter-spacing:1.5px;margin-bottom:5px;text-align:center">🎯 FLOTTE ADV.</div>
+        ${buildResultGrid(match.id,'attack',revealed)}
+        <div style="display:flex;justify-content:center;gap:6px;margin-top:5px;font-family:'Orbitron',monospace;font-size:.44rem">
+          <span style="color:var(--red)">${mesBateauxCoules} coulés</span>
+          <span style="color:var(--text3)">·</span>
+          <span style="color:var(--green)">${precision}% préc.</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;padding:5px 8px;background:var(--bg2);border-radius:5px;border:1px solid var(--border2)">
+      <div style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:var(--text2)"><span style="display:inline-block;width:8px;height:8px;border-radius:1px;background:rgba(0,100,200,.3);border:1px solid rgba(0,100,200,.5)"></span>Raté</div>
+      <div style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:var(--text2)"><span style="display:inline-block;width:8px;height:8px;border-radius:1px;background:rgba(255,100,30,.5);border:1px solid var(--orange)"></span>Touché</div>
+      <div style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:var(--text2)"><span style="display:inline-block;width:8px;height:8px;border-radius:1px;background:rgba(255,68,85,.55);border:1px solid var(--red)"></span>Coulé</div>
+      <div style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:var(--text2)"><span style="display:inline-block;width:8px;height:8px;border-radius:1px;background:rgba(0,212,255,.25);border:1px solid var(--cyan)"></span>Navire</div>
     </div>
   </div>`;
 }
