@@ -156,6 +156,20 @@ main{padding:12px}
 .bk-champ{background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.35);border-radius:8px;padding:14px;text-align:center;margin:6px 8px}
 .bk-champ-lbl{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--gold);letter-spacing:2px;margin-bottom:6px}
 .bk-champ-nm{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--gold)}
+/* ── LÉGENDE ── */
+.ts-legend-btn{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--border2);background:var(--bg3);font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;color:var(--text3);cursor:pointer;flex-shrink:0;transition:border-color .15s,color .15s;user-select:none}
+.ts-legend-btn:hover,.ts-legend-btn.open{border-color:var(--cyan);color:var(--cyan)}
+.ts-legend-panel{background:var(--bg2);border:1px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:12px}
+.ts-leg-row{display:flex;align-items:flex-start;gap:10px;padding:7px 12px;border-bottom:1px solid var(--border2)}
+.ts-leg-row:last-child{border-bottom:none}
+.ts-leg-key{font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;min-width:52px;padding:3px 7px;border-radius:4px;text-align:center;flex-shrink:0;align-self:flex-start;margin-top:1px}
+.ts-leg-txt{font-size:.82rem;color:var(--text2);line-height:1.5}
+.ts-leg-txt strong{color:var(--text);font-weight:700}
+.ts-leg-sep{padding:5px 12px 3px;font-family:'Orbitron',monospace;font-size:.48rem;letter-spacing:1.5px;color:var(--text3);background:var(--bg3);border-bottom:1px solid var(--border2)}
+.ts-th-tip{position:relative;display:inline-flex;align-items:center;gap:3px;cursor:default}
+.ts-th-tip .tip-dot{width:13px;height:13px;border-radius:50%;border:1px solid var(--border2);background:var(--bg3);display:inline-flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.45rem;color:var(--text3);flex-shrink:0}
+.ts-th-tip .tip-box{display:none;position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:5px 9px;font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:600;color:var(--text2);white-space:nowrap;z-index:20;pointer-events:none;text-transform:none;letter-spacing:0}
+.ts-th-tip:hover .tip-box,.ts-th-tip.tap-open .tip-box{display:block}
 
 /* ══ ANIMATIONS TACTIQUES (depuis capitaine.html) ══ */
 #sunkOverlay{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;pointer-events:none}
@@ -1846,7 +1860,47 @@ async function renderTournoi(){
   let h=`<div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <div class="card-title" style="margin:0">🏆 Tableau du tournoi</div>
-      <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:${statutColor};letter-spacing:1.5px;background:rgba(0,0,0,.25);border:1px solid ${statutColor};padding:3px 9px;border-radius:12px;opacity:.85">${statutLabel}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:${statutColor};letter-spacing:1.5px;background:rgba(0,0,0,.25);border:1px solid ${statutColor};padding:3px 9px;border-radius:12px;opacity:.85">${statutLabel}</span>
+        <div class="ts-legend-btn" id="ts-leg-btn" onclick="tsToggleLegend(this)" title="Légende">?</div>
+      </div>
+    </div>
+    <div id="ts-legend-panel" class="ts-legend-panel" style="display:none">
+      <div class="ts-leg-sep">Score d'un match</div>
+      <div class="ts-leg-row">
+        <span class="ts-leg-key" style="background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.3);color:var(--cyan)">3 – 1</span>
+        <span class="ts-leg-txt">Points de navires coulés · <strong>toi – adversaire</strong>. Porte-avions 5 pts · Cuirassé 4 · Croiseur 3 · Sous-marin 3 · Torpilleur 2</span>
+      </div>
+      <div class="ts-leg-sep">Colonnes du classement</div>
+      <div class="ts-leg-row">
+        <span class="ts-leg-key" style="border:1px solid var(--border);color:var(--text2)">V</span>
+        <span class="ts-leg-txt"><strong>Victoires</strong> remportées dans la poule</span>
+      </div>
+      <div class="ts-leg-row">
+        <span class="ts-leg-key" style="border:1px solid var(--border);color:var(--text2)">Diff</span>
+        <span class="ts-leg-txt"><strong>Différentiel</strong> · total points marqués − points encaissés</span>
+      </div>
+      <div class="ts-leg-row">
+        <span class="ts-leg-key" style="border:1px solid var(--border);color:var(--text2)">B/M</span>
+        <span class="ts-leg-txt"><strong>Bonus / Malus</strong> accordés par l'admin en cours de partie</span>
+      </div>
+      <div class="ts-leg-sep">Symboles</div>
+      <div class="ts-leg-row">
+        <span class="ts-leg-key" style="background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.4);color:var(--gold);font-size:.8rem">★</span>
+        <span class="ts-leg-txt">Joueur <strong>qualifié</strong> pour les demi-finales</span>
+      </div>
+      <div class="ts-leg-row">
+        <span class="ts-leg-key" style="border:1px solid var(--border);color:var(--cyan);font-size:.7rem">◀</span>
+        <span class="ts-leg-txt"><strong>C'est toi</strong> dans le tableau</span>
+      </div>
+      <div class="ts-leg-sep">Départage à égalité de victoires</div>
+      <div class="ts-leg-row" style="padding:8px 12px">
+        <span class="ts-leg-txt" style="display:flex;flex-direction:column;gap:4px">
+          <span><strong style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--cyan)">①</strong> &nbsp;Nombre de victoires</span>
+          <span><strong style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--cyan)">②</strong> &nbsp;Différentiel de points</span>
+          <span><strong style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--cyan)">③</strong> &nbsp;Confrontation directe</span>
+        </span>
+      </div>
     </div>`;
 
   // ── Onglets ──
@@ -1910,7 +1964,10 @@ async function renderTournoi(){
 
       h+=`<div class="ts-sec" style="margin-top:2px">Classement</div>
         <table class="ts-tbl"><thead><tr>
-          <th>Joueur</th><th>V</th><th>Diff</th><th>B/M</th>
+          <th>Joueur</th>
+          <th><span class="ts-th-tip" ontouchstart="tsTipTap(this)">V<span class="tip-dot">?</span><span class="tip-box">Victoires</span></span></th>
+          <th><span class="ts-th-tip" ontouchstart="tsTipTap(this)">Diff<span class="tip-dot">?</span><span class="tip-box">Points marqués − encaissés</span></span></th>
+          <th><span class="ts-th-tip" ontouchstart="tsTipTap(this)">B/M<span class="tip-dot">?</span><span class="tip-box">Bonus / Malus admin</span></span></th>
         </tr></thead><tbody>`;
 
       standings.forEach((s,i)=>{
@@ -2009,6 +2066,22 @@ function tsBracketRow(m,nomById){
       <span class="bk-sc">${s2}</span>
     </div>
   </div>`;
+}
+
+function tsToggleLegend(btn){
+  const panel=document.getElementById('ts-legend-panel');
+  if(!panel)return;
+  const open=panel.style.display==='block';
+  panel.style.display=open?'none':'block';
+  btn.classList.toggle('open',!open);
+  btn.textContent=open?'?':'✕';
+}
+
+function tsTipTap(el){
+  // mobile : tap bascule la tooltip (hover non supporté)
+  const wasOpen=el.classList.contains('tap-open');
+  document.querySelectorAll('.ts-th-tip.tap-open').forEach(e=>e.classList.remove('tap-open'));
+  if(!wasOpen)el.classList.add('tap-open');
 }
 
 /* ══ REALTIME ══ */
