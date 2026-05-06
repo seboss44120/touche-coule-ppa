@@ -1415,6 +1415,97 @@ function showUnlockToast(msg,color){
   setTimeout(()=>t.remove(),5000);
 }
 
+/* ══ VOTE REVANCHE / BELLE ══ */
+function renderVoteRevanche(match, role){
+  // Pas d'égalité → rien
+  if(match.vainqueur_id!==null&&match.vainqueur_id!==undefined)return'';
+  const partieNum=match.partie_numero||1;
+  // Belle = 3ème partie max → si déjà à 3, match nul définitif
+  if(partieNum>=3)return`<div style="margin:16px 0;padding:12px;background:rgba(0,212,255,.07);border:1px solid var(--border);border-radius:8px;text-align:center">
+    <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2);letter-spacing:1.5px">MATCH NUL DÉFINITIF</div>
+    <div style="font-size:.85rem;color:var(--text2);margin-top:4px">Après 3 parties serrées — 1 point chacun.</div>
+  </div>`;
+
+  const myVote  = role===1 ? match.vote_revanche_j1 : match.vote_revanche_j2;
+  const advVote = role===1 ? match.vote_revanche_j2 : match.vote_revanche_j1;
+  const advNom  = esc(getAdvNom(match));
+  const label   = partieNum===1?'REVANCHE':'⚡ BELLE';
+  const labelFull= partieNum===1?'une revanche':'la belle (partie 3)';
+  const matchId = match.id;
+
+  // Les deux ont voté oui → création en cours
+  if(myVote===true&&advVote===true)return`<div style="margin:16px 0;padding:12px;background:rgba(0,232,120,.07);border:1px solid var(--green);border-radius:8px;text-align:center">
+    <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--green);letter-spacing:1.5px">🔄 ${label} ACCEPTÉE</div>
+    <div style="font-size:.85rem;color:var(--text2);margin-top:4px">Prépare-toi — déploiement de la flotte en cours…</div>
+  </div>`;
+
+  // J'ai voté oui, j'attends l'adversaire
+  if(myVote===true)return`<div style="margin:16px 0;padding:12px;background:rgba(245,200,66,.07);border:1px solid rgba(245,200,66,.4);border-radius:8px;text-align:center">
+    <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--gold);letter-spacing:1.5px">⏳ EN ATTENTE</div>
+    <div style="font-size:.85rem;color:var(--text2);margin-top:4px">Tu veux ${labelFull}.<br><strong style="color:var(--text)">${advNom}</strong> n'a pas encore répondu.</div>
+  </div>`;
+
+  // J'ai voté non
+  if(myVote===false)return`<div style="margin:16px 0;padding:12px;background:rgba(255,68,85,.06);border:1px solid rgba(255,68,85,.25);border-radius:8px;text-align:center">
+    <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2);letter-spacing:1.5px">REVANCHE REFUSÉE</div>
+    <div style="font-size:.85rem;color:var(--text2);margin-top:4px">1 point chacun — match nul.</div>
+  </div>`;
+
+  // L'adversaire a refusé
+  if(advVote===false)return`<div style="margin:16px 0;padding:12px;background:rgba(255,68,85,.06);border:1px solid rgba(255,68,85,.25);border-radius:8px;text-align:center">
+    <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2);letter-spacing:1.5px">REVANCHE REFUSÉE</div>
+    <div style="font-size:.85rem;color:var(--text2);margin-top:4px"><strong style="color:var(--text)">${advNom}</strong> a décliné — 1 point chacun.</div>
+  </div>`;
+
+  // Ni l'un ni l'autre n'a voté → proposer
+  return`<div style="margin:16px 0;padding:14px;background:rgba(0,212,255,.05);border:1px solid var(--cyan);border-radius:10px;text-align:center">
+    <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--cyan);letter-spacing:2px;margin-bottom:4px">🤝 ÉGALITÉ PARFAITE</div>
+    <div style="font-size:.88rem;color:var(--text2);margin-bottom:14px">Veux-tu jouer ${labelFull} contre <strong style="color:var(--text)">${advNom}</strong> ?<br><span style="font-size:.75rem;color:var(--text3)">Les deux joueurs doivent accepter.</span></div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-cyan" onclick="voterRevanche('${matchId}',true)">🔄 OUI — ${label}</button>
+      <button class="btn btn-outline btn-sm" onclick="voterRevanche('${matchId}',false)">✖ Non merci — 1pt</button>
+    </div>
+  </div>`;
+}
+
+async function voterRevanche(matchId, oui){
+  const match=MATCHS.find(m=>m.id===matchId);if(!match)return;
+  const role=getMyRole(match);
+  const field=role===1?'vote_revanche_j1':'vote_revanche_j2';
+  const{error}=await sb.from('tournoi_matchs').update({[field]:oui}).eq('id',matchId);
+  if(error){showAlert(`alertR-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+  // Recharger le match frais
+  const{data:fresh}=await sb.from('tournoi_matchs').select('*').eq('id',matchId).maybeSingle();
+  if(!fresh)return;
+  const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)MATCHS[idx]=fresh;
+  // Si les deux ont dit oui → créer la partie suivante
+  if(fresh.vote_revanche_j1===true&&fresh.vote_revanche_j2===true){
+    await creerMatchRevanche(fresh);
+  }else{
+    renderTab(currentTab);
+  }
+}
+
+async function creerMatchRevanche(match){
+  const partieNum=(match.partie_numero||1)+1;
+  const{data:nm,error}=await sb.from('tournoi_matchs').insert({
+    tournoi_id:match.tournoi_id,
+    phase:match.phase,
+    poule_id:match.poule_id||null,
+    joueur1_id:match.joueur1_id,
+    joueur2_id:match.joueur2_id,
+    statut:'placement',
+    partie_numero:partieNum,
+  }).select().single();
+  if(error||!nm){showError('Impossible de créer la partie suivante : '+(error?.message||''));return;}
+  await sb.from('tournoi_grilles').insert([
+    {match_id:nm.id,joueur_id:match.joueur1_id},
+    {match_id:nm.id,joueur_id:match.joueur2_id},
+  ]);
+  // Le Realtime détectera le nouveau match et redirigera automatiquement
+  showToastPhase(`🔄 ${partieNum===2?'Revanche':'Belle'} lancée !`,'var(--cyan)');
+}
+
 /* ══ GRILLES RAPPORT DE BATAILLE ══ */
 function buildResultGrid(matchId,mode,revealed){
   const gr=GRILLES[matchId];
@@ -1507,11 +1598,14 @@ function renderResultat(match,el){
       ${myMalus?`<span style="color:var(--orange);margin-left:8px">−${myMalus} malus</span>`:''}
     </div>`:''}
 
-    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+    ${renderVoteRevanche(match,role)}
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px">
       <button class="btn btn-outline btn-sm" onclick="goTab('poule')">🏅 VOIR LA POULE</button>
       <button class="btn btn-outline btn-sm" onclick="goTab('tournoi')">🏆 BRACKET</button>
       ${nextMatch?`<button class="btn btn-gold btn-sm" onclick="goTab('match-${nextMatch.id}')">⚔️ MON PROCHAIN MATCH →</button>`:''}
     </div>
+    <div id="alertR-${match.id}" class="alert" style="margin:8px 0"></div>
   </div>
 
   <div class="card">
@@ -2269,12 +2363,21 @@ function abonnerRealtime(){
           const adId=n.joueur1_id===MOI.id?n.joueur2_id:n.joueur1_id;
           const{data:adv}=await sb.from('tournoi_joueurs').select('id,nom').eq('id',adId).maybeSingle();
           if(adv)ADVERSAIRES[adv.id]=adv;
-          showToastPhase(`⚔️ Ton match est prêt !`,'var(--gold)');
+          const pn=n.partie_numero||1;
+          const lbl=pn===2?'🔄 Revanche':pn===3?'⚡ Belle':'⚔️ Ton match est prêt !';
+          showToastPhase(lbl,'var(--gold)');
           setTimeout(()=>goTab('match-'+n.id),800);
         } else {
-          const phaseLabel={demi:'demi-finale',finale:'finale'}[n.phase]||n.phase;
-          showToastPhase(`⚔️ Tu es qualifié pour la ${phaseLabel} !`,'var(--gold)');
-          setTimeout(()=>goTab('match-'+n.id),1000);
+          const pn=n.partie_numero||1;
+          if(pn>1){
+            const lbl=pn===2?'🔄 Revanche lancée !':'⚡ Belle lancée !';
+            showToastPhase(lbl,'var(--cyan)');
+            setTimeout(()=>goTab('match-'+n.id),800);
+          } else {
+            const phaseLabel={demi:'demi-finale',finale:'finale'}[n.phase]||n.phase;
+            showToastPhase(`⚔️ Tu es qualifié pour la ${phaseLabel} !`,'var(--gold)');
+            setTimeout(()=>goTab('match-'+n.id),1000);
+          }
         }
       }
     }
