@@ -934,7 +934,12 @@ function renderPlacement(match,el){
     ${specialHtml}
     <div class="grid-wrap">${buildGrid(match.id,'placement')}</div>
     <div id="alertP-${match.id}" class="alert" style="margin-top:8px"></div>
-    <button class="btn btn-gold btn-block" style="margin-top:10px" onclick="ouvrirConfirmation('${match.id}')" ${ready?'':'disabled'}>
+    <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn btn-cyan btn-sm" style="flex:1" onclick="genererGrilleAleatoire('${match.id}')">🎲 Aléatoire</button>
+      ${MATCHS.filter(mx=>mx.id!==match.id&&mx.statut==='placement').length?
+        `<button class="btn btn-purple btn-sm" style="flex:1" onclick="copierVerAutresMatchs('${match.id}')">📋 Copier sur mes autres matchs</button>`:''}
+    </div>
+    <button class="btn btn-gold btn-block" style="margin-top:8px" onclick="ouvrirConfirmation('${match.id}')" ${ready?'':'disabled'}>
       ✓ VÉRIFIER ET VALIDER MA GRILLE
     </button>
     ${pl.step!=='ships'?`<button class="btn btn-outline btn-sm" style="margin-top:6px;width:100%"
@@ -951,6 +956,76 @@ function removePlacedShip(matchId,k){
   const pl=_pl[matchId];
   (pl.shipCells[k]||[]).forEach(c=>delete pl.gridData[c]);
   delete pl.shipCells[k];pl.step='ships';renderTab(currentTab);
+}
+
+/* ── GRILLE ALÉATOIRE ── */
+function genererGrilleAleatoire(matchId){
+  const match=MATCHS.find(m=>m.id===matchId);
+  const shipKeys=getShipKeys(match);
+  const gridData={},shipCells={};
+  const occupied=new Set();
+
+  // Placer chaque navire aléatoirement
+  for(const k of shipKeys){
+    const size=SHIPS[k].size;
+    let placed=false,tries=0;
+    while(!placed&&tries<500){
+      tries++;
+      const orient=Math.random()<.5?'H':'V';
+      const col=Math.floor(Math.random()*10);
+      const row=Math.floor(Math.random()*10)+1;
+      const coord=COLS[col]+row;
+      const coords=getShipCoords(coord,size,orient);
+      if(!coords)continue;
+      if(coords.some(c=>occupied.has(c)))continue;
+      // Vérifier zone tampon (1 case autour)
+      const buffer=new Set();
+      coords.forEach(c=>{
+        const ci=COLS.indexOf(c[0]),ri=parseInt(c.slice(1));
+        for(let dc=-1;dc<=1;dc++)for(let dr=-1;dr<=1;dr++){
+          const c2=ci+dc,r2=ri+dr;
+          if(c2>=0&&c2<10&&r2>=1&&r2<=10)buffer.add(COLS[c2]+r2);
+        }
+      });
+      if([...buffer].some(c=>occupied.has(c)&&!coords.includes(c)))continue;
+      coords.forEach(c=>{gridData[c]=k;occupied.add(c);});
+      shipCells[k]=coords;
+      placed=true;
+    }
+    if(!placed){showAlert(`alertP-${matchId}`,'err','Impossible de placer aléatoirement — réessaie.');return;}
+  }
+
+  // Placer bonus et malus (cases libres)
+  const freeCells=[];
+  for(const col of COLS)for(let r=1;r<=10;r++){const c=col+r;if(!occupied.has(c))freeCells.push(c);}
+  const shuffle=arr=>{for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;};
+  shuffle(freeCells);
+  const bonusCells=freeCells.slice(0,2);
+  const malusCells=freeCells.slice(2,4);
+
+  _pl[matchId]={step:'done',selectedShip:null,orient:'H',gridData,shipCells,bonusCells,malusCells,preview:{}};
+  renderTab(currentTab);
+}
+
+/* ── COPIER GRILLE VERS AUTRES MATCHS EN PLACEMENT ── */
+function copierVerAutresMatchs(matchId){
+  const src=_pl[matchId];
+  if(!src?.shipCells||!Object.keys(src.shipCells).length){
+    showAlert(`alertP-${matchId}`,'err','Place d\'abord ta grille avant de la copier.');return;
+  }
+  const cibles=MATCHS.filter(m=>m.id!==matchId&&m.statut==='placement');
+  if(!cibles.length){showAlert(`alertP-${matchId}`,'info','Aucun autre match en placement.');return;}
+  cibles.forEach(m=>{
+    _pl[m.id]={
+      step:'done',selectedShip:null,orient:'H',
+      gridData:{...src.gridData},
+      shipCells:JSON.parse(JSON.stringify(src.shipCells)),
+      bonusCells:[...src.bonusCells],
+      malusCells:[...src.malusCells],
+      preview:{}
+    };
+  });
+  showAlert(`alertP-${matchId}`,'ok',`Grille copiée sur ${cibles.length} match${cibles.length>1?'s':''} !`);
 }
 
 /* ── Grille universelle ── */
@@ -1307,17 +1382,14 @@ async function soumettreCoups_rush(matchId){
   const myTirsAv=myGrille.tirs_recus||[];
   const turnNum=Math.floor(theirTirsAv.length/3)+1;
 
-  // Mine adversaire : si l'adversaire a posé une mine sur ma grille,
-  // ce n'est pas pertinent ici (c'est pour les tirs de l'adversaire sur moi).
-  // Mine du défenseur (adverse) : si l'adversaire a posé une mine sur sa propre grille,
-  // elle explose si je tire dessus → je perds 2pts
+  // ops doit être déclaré AVANT mineAdversaire
+  const ops=_opState[matchId]||{};
+  const myOpsKey=role===1?'j1':'j2';
   const mineAdversaire=role===1?ops?.j2?.mine_pos:ops?.j1?.mine_pos;
   const res=processShots(shots,theirPl,theirTirsAv,theirPl?.bonus_cells||[],theirPl?.malus_cells||[],turnNum,mineAdversaire);
   const newTheirTirs=[...theirTirsAv,...res.history];
 
   // Sonar: désactiver après ce tour
-  const ops=_opState[matchId]||{};
-  const myOpsKey=role===1?'j1':'j2';
   if(ops[myOpsKey]?.sonar_active){
     const newOps={...ops,[myOpsKey]:{...ops[myOpsKey],sonar_active:false}};
     _opState[matchId]=newOps;
