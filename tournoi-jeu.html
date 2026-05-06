@@ -329,12 +329,31 @@ const SHIPS={
   TP:{name:'Torpilleur',icon:'🚤',size:2,pts:2},
 };
 
+/* ══ MODES DE JEU ══ */
+const MODES={
+  rush:          {label:'Rush',                icon:'⚡',color:'var(--cyan)',   shipKeys:['PA','CU','CR','SM','TP']},
+  classique:     {label:'Classique',           icon:'⚓',color:'var(--gold)',   shipKeys:['PA','CU','CR','SM','TP']},
+  mort_subite:   {label:'Mort Subite',         icon:'💀',color:'var(--red)',    shipKeys:['PA','CU','CR','SM','TP']},
+  petite_victime:{label:'La Petite Victime',   icon:'🚤',color:'var(--orange)', shipKeys:['TP']},
+  op_speciales:  {label:'Opérations Spéciales',icon:'🎖️',color:'var(--purple)', shipKeys:['PA','CU','CR','SM','TP']},
+};
+function getMode(m){return(m?.mode_jeu&&MODES[m.mode_jeu])?m.mode_jeu:null;}
+function getModeData(m){const k=getMode(m);return k?MODES[k]:null;}
+function getShipKeys(m){const d=getModeData(m);return d?d.shipKeys:SHIP_KEYS;}
+// Rush et dérivés : jeu indépendant (pas d'attente adversaire)
+function isRushLike(m){const k=getMode(m);return k==='rush'||k==='mort_subite'||k==='petite_victime'||k==='op_speciales';}
+
 let MOI=null,TOURNOI=null,MATCHS=[],GRILLES={},TOURS={},ADVERSAIRES={};
 let POULE_JOUEURS=[],POULE_MATCHS=[],currentTab=null;
 let MON_PROFIL=null;
 let PROFILS_CACHE={}; // profilId → {avatar, drapeau, pseudo}
 let _pl={};   // matchId → placement state
 let _shots={}; // matchId → [coords]
+let _rushPending={}; // matchId → bool (Rush: résolution en cours)
+let _opState={};     // matchId → op_state objet (Opérations Spéciales)
+let _espionMode={};  // matchId → bool (sélection zone espion active)
+let _mineMode={};    // matchId → bool (placement mine actif)
+let _kamikazeState={}; // matchId → {active,bonusPhase,hitsCount,extraShots:[]}
 
 const GRADES=[
   {label:'Matelot',min:0},{label:'Matelot 1ère classe',min:5},
@@ -563,11 +582,17 @@ const getAdvId=m=>m.joueur1_id===MOI.id?m.joueur2_id:m.joueur1_id;
 const getAdvNom=m=>ADVERSAIRES[getAdvId(m)]?.nom||'?';
 const calcScore=t=>(t||[]).reduce((s,x)=>s+(x.pts||0),0);
 
-function allSunk(pl,tirs){
+function allSunk(pl,tirs,mode){
   if(!pl?.ship_cells)return false;
   const hit=new Set((tirs||[]).map(t=>t.coord));
+  if(mode==='mort_subite'){
+    // Le 1er navire coulé suffit
+    return SHIP_KEYS.some(k=>{const c=pl.ship_cells[k];return c?.length&&c.every(x=>hit.has(x));});
+  }
+  // Tous les navires présents doivent être coulés (La Petite Victime OK car PA/CU/CR/SM ont ship_cells vides)
   return SHIP_KEYS.every(k=>{const c=pl.ship_cells[k];return!c?.length||c.every(x=>hit.has(x));});
 }
+function calcScoreArr(tirs){return(tirs||[]).reduce((s,t)=>s+(t.pts||0),0);}
 
 function getShipCoords(start,size,orient){
   const col=COLS.indexOf(start[0]),row=parseInt(start.slice(1)),coords=[];
@@ -580,6 +605,23 @@ function getShipCoords(start,size,orient){
 
 function isItMyTurn(m){
   if(m.statut!=='en_cours')return false;
+  const mode=getMode(m);
+  if(mode==='classique'){
+    const t=TOURS[m.id];
+    if(!t)return getMyRole(m)===1; // J1 ouvre
+    const phase=t.classique_phase||'j1_turn';
+    return(getMyRole(m)===1&&phase==='j1_turn')||(getMyRole(m)===2&&phase==='j2_turn');
+  }
+  if(isRushLike(m)){
+    // Rush et dérivés : jeu indépendant — toujours mon tour sauf pendant résolution
+    if(_rushPending[m.id])return false;
+    // Kamikaze skip : vérifier op_state
+    const ops=_opState[m.id];
+    const myK=getMyRole(m)===1?ops?.j1:ops?.j2;
+    if(myK?.kamikaze_skip)return false;
+    return true;
+  }
+  // Legacy (mode null) : comportement d'origine (les deux soumettent puis résolution)
   const t=TOURS[m.id];if(!t)return true;
   return getMyRole(m)===1?!t.soumis_j1:!t.soumis_j2;
 }
@@ -827,7 +869,8 @@ function renderPlacement(match,el){
     </div>`;return;
   }
   const pl=_pl[match.id];
-  const allShips=SHIP_KEYS.every(k=>pl.shipCells[k]);
+  const modeShipKeys=getShipKeys(match);
+  const allShips=modeShipKeys.every(k=>pl.shipCells[k]);
   const allBonus=pl.bonusCells.length>=2;
   const allMalus=pl.malusCells.length>=2;
   const ready=allShips&&allBonus&&allMalus;
@@ -848,7 +891,7 @@ function renderPlacement(match,el){
   let shipsHtml='';
   if(pl.step==='ships'){
     shipsHtml='<div class="ship-list">';
-    SHIP_KEYS.forEach(k=>{
+    modeShipKeys.forEach(k=>{
       const s=SHIPS[k],placed=!!pl.shipCells[k],active=pl.selectedShip===k;
       let cells='';for(let i=0;i<s.size;i++)cells+=`<span class="scp ${active||placed?'filled':''}"></span> `;
       shipsHtml+=`<div class="ship-item ${active?'active':''} ${placed?'placed':''}"
@@ -881,8 +924,10 @@ function renderPlacement(match,el){
     if(allMalus) specialHtml+=`<button class="btn btn-gold btn-block" style="margin-bottom:10px" onclick="goStep('${match.id}','done')">✓ TOUT EST PLACÉ</button>`;
   }
 
+  const modePl=getModeData(match);
+  const mBadgePl=modePl?`<span style="font-family:'Orbitron',monospace;font-size:.48rem;padding:2px 7px;border-radius:10px;background:rgba(0,0,0,.3);border:1px solid ${modePl.color};color:${modePl.color};margin-left:8px;vertical-align:middle">${modePl.icon} ${modePl.label}</span>`:'';
   el.innerHTML=`<div class="card">
-    <div class="card-title">⚓ Déploiement — vs ${esc(getAdvNom(match))}</div>
+    <div class="card-title">⚓ Déploiement — vs ${esc(getAdvNom(match))}${mBadgePl}</div>
     ${stepBar}
     <div style="color:var(--text2);font-size:.88rem;margin-bottom:12px">${instrMap[pl.step]||''}</div>
     ${shipsHtml}
@@ -909,7 +954,7 @@ function removePlacedShip(matchId,k){
 }
 
 /* ── Grille universelle ── */
-function buildGrid(matchId,mode){
+function buildGrid(matchId,mode,highlight){
   const pl=_pl[matchId],gr=GRILLES[matchId];
   const SHIP_ICONS={PA:'✈️',CU:'⚔️',CR:'🚢',SM:'🤿',TP:'🚤'};
 
@@ -922,10 +967,13 @@ function buildGrid(matchId,mode){
       if(pl.preview?.ok?.includes(coord))cls.push('preview-ok');
       if(pl.preview?.bad?.includes(coord))cls.push('preview-bad');
     }
-    if(mode==='attack'){
+    if(mode==='attack'||mode==='attack-blind'){
       const tirs=gr?.theirs?.tirs_recus||[];
       const t=tirs.find(t=>t.coord===coord);
-      if(t){cls.push({miss:'miss',hit:'hit',sunk:'sunk',bonus:'hit',malus:'miss'}[t.result]||'miss');sym={miss:'🌊',hit:'💥',sunk:'💀',bonus:'⭐',malus:'💣'}[t.result]||'';}
+      if(mode==='attack'&&t){
+        cls.push({miss:'miss',hit:'hit',sunk:'sunk',bonus:'hit',malus:'miss',mine:'miss'}[t.result]||'miss');
+        sym={miss:'🌊',hit:'💥',sunk:'💀',bonus:'⭐',malus:'💣',mine:'💣'}[t.result]||'';
+      }
       if((_shots[matchId]||[]).includes(coord)){cls.push('sel');sym='🎯';}
     }
     if(mode==='defense'){
@@ -1022,10 +1070,20 @@ async function validerPlacement(matchId){
   await loadGrilles(matchId);
   const g=GRILLES[matchId];
   if(g?.mine?.placement_valide&&g?.theirs?.placement_valide){
+    const matchV=MATCHS.find(m=>m.id===matchId);
+    const modeV=getMode(matchV);
     await sb.from('tournoi_matchs').update({statut:'en_cours'}).eq('id',matchId);
-    await sb.from('tournoi_tours').insert({match_id:matchId,numero_tour:1,soumis_j1:false,soumis_j2:false,statut:'en_cours'});
+    if(modeV==='classique'){
+      // Classique : tour initial avec phase j1_turn
+      await sb.from('tournoi_tours').insert({match_id:matchId,numero_tour:1,soumis_j1:false,soumis_j2:false,statut:'en_cours',classique_phase:'j1_turn'});
+    } else if(!modeV){
+      // Legacy (null) : comportement d'origine
+      await sb.from('tournoi_tours').insert({match_id:matchId,numero_tour:1,soumis_j1:false,soumis_j2:false,statut:'en_cours'});
+    }
+    // Rush et dérivés : pas de tour partagé
     const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)MATCHS[idx].statut='en_cours';
     await loadTourEnCours(matchId);
+    if(modeV==='op_speciales') await initOpState(matchId);
   }
   buildNav();renderNav();renderTab(currentTab);
 }
@@ -1035,59 +1093,151 @@ function renderBataille(match,el){
   const myTurn=isItMyTurn(match),shots=_shots[match.id]||[];
   const mesTirs=GRILLES[match.id]?.theirs?.tirs_recus||[];
   const sesTirs=GRILLES[match.id]?.mine?.tirs_recus||[];
-  const tourNum=TOURS[match.id]?.numero_tour||1;
+  const mode=getMode(match);
+  const modeData=getModeData(match);
+  const role=getMyRole(match);
+
+  // Tour number : Rush = dérivé des tirs, Classique = tour partagé, Legacy = tour partagé
+  const myTurnNum=isRushLike(match)?Math.ceil(mesTirs.length/3)+1:(TOURS[match.id]?.numero_tour||1);
+  const advTurnNum=isRushLike(match)?Math.ceil(sesTirs.length/3):null;
+
+  // Badge mode
+  const mBadge=modeData?`<span style="font-family:'Orbitron',monospace;font-size:.48rem;padding:2px 7px;border-radius:10px;background:rgba(0,0,0,.3);border:1px solid ${modeData.color};color:${modeData.color};margin-left:6px">${modeData.icon} ${modeData.label}</span>`:'';
+
+  // Statut phrase Classique
+  let statusExtra='';
+  if(mode==='classique'){
+    const t=TOURS[match.id];
+    const phase=t?.classique_phase||'j1_turn';
+    const whoseTurn=(phase==='j1_turn')?match.joueur1_id:match.joueur2_id;
+    const turnName=whoseTurn===MOI.id?'ton tour':'le tour de '+esc(getAdvNom(match));
+    statusExtra=`<div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);margin-top:4px">⚓ Classique · C'est ${turnName}</div>`;
+  }
+
+  // Rush pending (résolution en cours)
+  const rushProcessing=_rushPending[match.id];
+  const kState=_kamikazeState[match.id];
+  const inKamikazeBonus=kState?.bonusPhase&&(kState.extraShots?.length<kState.hitsCount);
+  const maxShots=inKamikazeBonus?(kState.hitsCount):(kState?.active?6:3);
+  const shotLabel=inKamikazeBonus?`BONUS KAMIKAZE — ${shots.length}/${kState.hitsCount}`:
+    kState?.active?`⚡ KAMIKAZE — ${shots.length}/6 (max)`:
+    `${shots.length}/3`;
+
+  // Sonar : est-ce que sonar est actif contre moi ?
+  const ops=_opState[match.id]||{};
+  const sonarVsMe=role===1?(ops.j2?.sonar_active):(ops.j1?.sonar_active);
+  const attackMode=sonarVsMe?'attack-blind':'attack';
+
+  // Op Spéciales panel
+  const myOps=role===1?ops.j1:ops.j2;
+  const opPanel=mode==='op_speciales'?renderOpPanel(match.id,myOps,myTurn):'';
 
   el.innerHTML=`
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-        <div class="card-title" style="margin:0">⚔️ vs ${playerTag(getAdvId(match),getAdvNom(match))}</div>
-        ${myTurn?`<span class="status-pill sp-your-turn">⚡ À TON TOUR</span>`:`<span class="status-pill sp-wait">⏳ ${esc(getAdvNom(match))}…</span>`}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <div class="card-title" style="margin:0">⚔️ vs ${playerTag(getAdvId(match),getAdvNom(match))}</div>
+          ${mBadge}
+        </div>
+        ${myTurn&&!rushProcessing?`<span class="status-pill sp-your-turn">⚡ À TON TOUR</span>`:rushProcessing?`<span class="status-pill sp-wait">⚙️ Résolution…</span>`:`<span class="status-pill sp-wait">⏳ ${esc(getAdvNom(match))}…</span>`}
       </div>
-      <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
-        <div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text2);letter-spacing:2px">TOUR</div>
-        <div style="font-family:'Orbitron',monospace;font-weight:900;font-size:1.4rem;color:var(--cyan)">${tourNum}</div>
+      ${statusExtra}
+      <div style="display:flex;gap:16px;align-items:center;margin:8px 0;flex-wrap:wrap">
+        <div>
+          <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1.5px">MON TOUR</div>
+          <div style="font-family:'Orbitron',monospace;font-weight:900;font-size:1.4rem;color:var(--cyan)">${myTurnNum}</div>
+        </div>
+        ${advTurnNum!==null?`<div>
+          <div style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text2);letter-spacing:1.5px">TOUR ADV.</div>
+          <div style="font-family:'Orbitron',monospace;font-weight:900;font-size:1.4rem;color:var(--text2)">${advTurnNum}</div>
+        </div>`:''}
       </div>
       <div class="score-row">${playerTag(MOI.id,MOI.nom)}<div class="score-pts">${calcScore(mesTirs)}</div></div>
       <div class="score-row">${playerTag(getAdvId(match),getAdvNom(match))}<div class="score-pts">${calcScore(sesTirs)}</div></div>
     </div>
+
+    ${opPanel}
+
     <div class="card">
-      <div class="card-title">🎯 Grille adverse</div>
+      <div class="card-title">🎯 Grille adverse${sonarVsMe?` <span style="font-size:.6rem;color:var(--red);font-family:'Orbitron',monospace">📡 BROUILLÉ</span>`:''}${_espionMode[match.id]?' <span style="font-size:.6rem;color:var(--purple);font-family:'Orbitron',monospace">🔭 SÉLECTIONNER ZONE 3×3</span>':''}${_mineMode[match.id]?' <span style="font-size:.6rem;color:var(--orange);font-family:'Orbitron',monospace">🪤 POSER LA MINE</span>':''}</div>
       <div style="font-size:.85rem;color:var(--text2);margin-bottom:8px">
-        ${myTurn?`Sélectionne 3 cases — <strong style="color:var(--gold)">${shots.length}/3</strong>`:'Tirs soumis — en attente…'}
+        ${myTurn&&!rushProcessing&&!_espionMode[match.id]&&!_mineMode[match.id]?`Sélectionne ${maxShots===3?'3 cases':maxShots+' cases max'} — <strong style="color:var(--gold)">${shotLabel}</strong>`:
+          _espionMode[match.id]?'Clique au centre de la zone 3×3 à scanner':
+          _mineMode[match.id]?'Clique sur une case de ta flotte pour piéger l\'adversaire':
+          rushProcessing?'Résolution des tirs…':'Tirs soumis — en attente…'}
       </div>
-      <div class="grid-wrap">${buildGrid(match.id,'attack')}</div>
+      <div class="grid-wrap">${buildGrid(match.id,attackMode)}</div>
       <div id="alertB-${match.id}" class="alert" style="margin-top:8px"></div>
-      ${myTurn?`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <button class="btn btn-gold" onclick="demanderConfirmTirs('${match.id}')" ${shots.length===3?'':'disabled'}>🎯 ENVOYER LES TIRS</button>
+      ${myTurn&&!rushProcessing&&!_espionMode[match.id]&&!_mineMode[match.id]?`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn btn-gold" onclick="demanderConfirmTirs('${match.id}')" ${shots.length>=(inKamikazeBonus?kState.hitsCount:3)?'':'disabled'}>🎯 ENVOYER LES TIRS</button>
         <button class="btn btn-outline btn-sm" onclick="_shots['${match.id}']=[];renderTab(currentTab)">✗ Effacer</button>
       </div>`:''}
+      ${_espionMode[match.id]?`<button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="_espionMode['${match.id}']=false;renderTab(currentTab)">✗ Annuler</button>`:''}
+      ${_mineMode[match.id]?`<button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="_mineMode['${match.id}']=false;renderTab(currentTab)">✗ Annuler</button>`:''}
     </div>
     <div class="card">
       <div class="card-title">🛡️ Ma flotte</div>
       <div class="grid-wrap">${buildGrid(match.id,'defense')}</div>
     </div>`;
 
-  const attackGrid=document.getElementById(`grid-${match.id}-attack`);
+  const attackGrid=document.getElementById(`grid-${match.id}-attack`)||document.getElementById(`grid-${match.id}-attack-blind`);
   if(attackGrid){
     attachCoordTooltip(attackGrid);
-    if(myTurn)attackGrid.querySelectorAll('.gc').forEach(c=>c.addEventListener('click',()=>onAttackClick(match.id,c.dataset.coord)));
+    if(_espionMode[match.id]){
+      attackGrid.querySelectorAll('.gc').forEach(c=>c.addEventListener('click',()=>onEspionClick(match.id,c.dataset.coord)));
+    } else if(_mineMode[match.id]){
+      // Mine : on NE met PAS sur la grille d'attaque, le listener sera sur la défense
+      attackGrid.querySelectorAll('.gc').forEach(c=>c.addEventListener('click',()=>onAttackClick(match.id,c.dataset.coord,maxShots)));
+    } else if(myTurn&&!rushProcessing){
+      attackGrid.querySelectorAll('.gc').forEach(c=>c.addEventListener('click',()=>onAttackClick(match.id,c.dataset.coord,maxShots)));
+    }
   }
   const defGrid=document.getElementById(`grid-${match.id}-defense`);
-  if(defGrid)attachCoordTooltip(defGrid);
+  if(defGrid){
+    attachCoordTooltip(defGrid);
+    if(_mineMode[match.id]){
+      defGrid.querySelectorAll('.gc').forEach(c=>c.addEventListener('click',()=>onMineClick(match.id,c.dataset.coord)));
+    }
+  }
   checkNewAnimEvents(match.id);
 }
 
-function onAttackClick(matchId,coord){
+function renderOpPanel(matchId,myOps,myTurn){
+  if(!myOps)return'';
+  const mid=matchId;
+  const labelUsed='<br><span style="font-size:.5rem;font-family:\'Orbitron\',monospace;color:var(--text3)">UTILISÉ</span>';
+  const btn=(icon,label,used,onclick)=>`
+    <button class="btn btn-sm ${used?'btn-outline':'btn-purple'}" style="flex:1;min-width:130px;${used?'opacity:.45;cursor:default':''}"
+      ${used||!myTurn?'':` onclick="${onclick}"`}>
+      ${icon} ${label}${used?labelUsed:''}
+    </button>`;
+  return`<div class="card">
+    <div class="card-title" style="color:var(--purple)">🎖️ POUVOIRS SPÉCIAUX</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      ${btn('📡','Sonar Défectueux',myOps.sonar_used,`activerSonar('${mid}')`)}
+      ${btn('🔭','Espion',myOps.espion_used,`activerEspion('${mid}')`)}
+      ${btn('💥','Kamikaze',myOps.kamikaze_used,`activerKamikaze('${mid}')`)}
+      ${btn('🪤','Mine Flottante',myOps.mine_used,`activerMine('${mid}')`)}
+    </div>
+    <div style="font-size:.72rem;color:var(--text3);margin-top:6px">Chaque pouvoir est utilisable une seule fois. L'adversaire est notifié via le récapitulatif de fin de match.</div>
+  </div>`;
+}
+
+function onAttackClick(matchId,coord,maxShots){
+  const max=maxShots||3;
   const shots=_shots[matchId]||[],tirs=GRILLES[matchId]?.theirs?.tirs_recus||[];
   if(tirs.find(t=>t.coord===coord))return;
   if(shots.includes(coord)){_shots[matchId]=shots.filter(c=>c!==coord);}
-  else if(shots.length<3){_shots[matchId]=[...shots,coord];}
+  else if(shots.length<max){_shots[matchId]=[...shots,coord];}
   renderTab(currentTab);
 }
 
 function demanderConfirmTirs(matchId){
   const shots=_shots[matchId]||[];
-  if(shots.length!==3)return;
+  const kState=_kamikazeState[matchId];
+  const inKBonus=kState?.bonusPhase;
+  const minShots=inKBonus?kState.hitsCount:3;
+  if(shots.length<3)return; // minimum 3 quoi qu'il arrive
   document.getElementById('modalTirsCoords').textContent=shots.join('  ·  ');
   document.getElementById('btnConfirmTirs').onclick=()=>{
     document.getElementById('modalTirs').style.display='none';
@@ -1097,41 +1247,225 @@ function demanderConfirmTirs(matchId){
 }
 
 async function soumettreCoups(matchId){
+  const match=MATCHS.find(m=>m.id===matchId);
+  const mode=getMode(match);
+  if(mode==='classique'){await soumettreCoups_classique(matchId);return;}
+  if(isRushLike(match)){await soumettreCoups_rush(matchId);return;}
+  // Legacy (null mode) : comportement d'origine
+  await soumettreCoups_legacy(matchId);
+}
+
+async function soumettreCoups_legacy(matchId){
   const match=MATCHS.find(m=>m.id===matchId),shots=_shots[matchId]||[];
-  if(shots.length!==3)return;
+  if(shots.length<3)return;
   const role=getMyRole(match);
   const tf=role===1?'tirs_j1':'tirs_j2',sf=role===1?'soumis_j1':'soumis_j2';
-
-  // Toujours recharger le tour en cours depuis la base avant d'agir
   await loadTourEnCours(matchId);
   let tour=TOURS[matchId];
-
   let updTour;
   if(!tour){
-    // Pas de tour en cours → créer
     const{data:nt,error}=await sb.from('tournoi_tours').insert({
       match_id:matchId,numero_tour:1,[tf]:shots,[sf]:true,statut:'en_cours'
     }).select().single();
     if(error){
-      // Peut-être créé entre-temps par l'adversaire — recharger et mettre à jour
-      await loadTourEnCours(matchId);
-      tour=TOURS[matchId];
-      if(tour){
-        const{data:ut,error:e2}=await sb.from('tournoi_tours').update({[tf]:shots,[sf]:true}).eq('id',tour.id).select().single();
-        if(e2){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
-        updTour=ut;
-      }else{showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+      await loadTourEnCours(matchId);tour=TOURS[matchId];
+      if(tour){const{data:ut,error:e2}=await sb.from('tournoi_tours').update({[tf]:shots,[sf]:true}).eq('id',tour.id).select().single();if(e2){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}updTour=ut;}
+      else{showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
     }else{updTour=nt;}
   }else{
     const{data:ut,error}=await sb.from('tournoi_tours').update({[tf]:shots,[sf]:true}).eq('id',tour.id).select().single();
     if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
     updTour=ut;
   }
-
   TOURS[matchId]=updTour;_shots[matchId]=[];
   const advSub=role===1?updTour.soumis_j2:updTour.soumis_j1;
   if(advSub)await resoudreTour(matchId,updTour);
   else{await loadGrilles(matchId);renderTab(currentTab);}
+}
+
+/* ══ RUSH : résolution immédiate par joueur ══ */
+async function soumettreCoups_rush(matchId){
+  const match=MATCHS.find(m=>m.id===matchId);
+  const shots=_shots[matchId]||[];
+  if(shots.length<3)return;
+  const mode=getMode(match);
+  const kState=_kamikazeState[matchId];
+  const isKBonus=kState?.bonusPhase;
+
+  _rushPending[matchId]=true;
+  _shots[matchId]=[];
+  renderTab(currentTab);
+
+  await loadGrilles(matchId);
+  const g=GRILLES[matchId];
+  if(!g?.mine||!g?.theirs){_rushPending[matchId]=false;return;}
+
+  const role=getMyRole(match);
+  const theirGrille=g.theirs,myGrille=g.mine;
+  const theirPl=theirGrille.grille_placement;
+  const theirTirsAv=theirGrille.tirs_recus||[];
+  const myTirsAv=myGrille.tirs_recus||[];
+  const turnNum=Math.floor(theirTirsAv.length/3)+1;
+
+  // Mine adversaire : si l'adversaire a posé une mine sur ma grille,
+  // ce n'est pas pertinent ici (c'est pour les tirs de l'adversaire sur moi).
+  // Mine du défenseur (adverse) : si l'adversaire a posé une mine sur sa propre grille,
+  // elle explose si je tire dessus → je perds 2pts
+  const mineAdversaire=role===1?ops?.j2?.mine_pos:ops?.j1?.mine_pos;
+  const res=processShots(shots,theirPl,theirTirsAv,theirPl?.bonus_cells||[],theirPl?.malus_cells||[],turnNum,mineAdversaire);
+  const newTheirTirs=[...theirTirsAv,...res.history];
+
+  // Sonar: désactiver après ce tour
+  const ops=_opState[matchId]||{};
+  const myOpsKey=role===1?'j1':'j2';
+  if(ops[myOpsKey]?.sonar_active){
+    const newOps={...ops,[myOpsKey]:{...ops[myOpsKey],sonar_active:false}};
+    _opState[matchId]=newOps;
+    await sb.from('tournoi_matchs').update({op_state:newOps}).eq('id',matchId);
+  }
+
+  const{error:saveErr}=await sb.from('tournoi_grilles').update({tirs_recus:newTheirTirs}).eq('id',theirGrille.id);
+  if(saveErr){_rushPending[matchId]=false;showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+  GRILLES[matchId].theirs.tirs_recus=newTheirTirs;
+
+  const won=allSunk(theirPl,newTheirTirs,mode);
+
+  if(won){
+    const oppAlsoWon=allSunk(myGrille.grille_placement,myTirsAv,mode);
+    const allJ1=role===1?newTheirTirs:myTirsAv,allJ2=role===2?newTheirTirs:myTirsAv;
+    const bonus_j1=allJ1.filter(t=>t.result==='bonus').length*2;
+    const malus_j1=allJ1.filter(t=>t.result==='malus').length*2;
+    const bonus_j2=allJ2.filter(t=>t.result==='bonus').length*2;
+    const malus_j2=allJ2.filter(t=>t.result==='malus').length*2;
+
+    let vainqueur_id=null,pts_j1=0,pts_j2=0;
+    if(oppAlsoWon){
+      // Égalité simultanée → départage bonus/malus (nets)
+      const s1=role===1?calcScoreArr(newTheirTirs):calcScoreArr(myTirsAv);
+      const s2=role===2?calcScoreArr(newTheirTirs):calcScoreArr(myTirsAv);
+      const net1=s1+(bonus_j1-malus_j1);
+      const net2=s2+(bonus_j2-malus_j2);
+      if(net1!==net2){
+        // Un joueur a un meilleur bilan bonus/malus → il gagne
+        const j1wins=net1>net2;
+        vainqueur_id=j1wins?match.joueur1_id:match.joueur2_id;
+        pts_j1=j1wins?3:0;pts_j2=j1wins?0:3;
+      } else {
+        // Égalité parfaite → 1pt chacun
+        pts_j1=1;pts_j2=1;
+        // En éliminatoire : impossible de finir nul — J1 gagne par convention
+        if(match.phase==='demi'||match.phase==='finale'){
+          vainqueur_id=match.joueur1_id;pts_j1=3;pts_j2=0;
+        }
+        // En poule : vainqueur_id=null → renderVoteRevanche proposera revanche
+      }
+    }else{
+      vainqueur_id=role===1?match.joueur1_id:match.joueur2_id;
+      if(role===1)pts_j1=3;else pts_j2=3;
+    }
+    const isDraw=!vainqueur_id&&(match.phase!=='demi'&&match.phase!=='finale');
+    await sb.from('tournoi_matchs').update({statut:'terminé',vainqueur_id,pts_j1,pts_j2,bonus_j1,malus_j1,bonus_j2,malus_j2}).eq('id',matchId);
+    const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)Object.assign(MATCHS[idx],{statut:'terminé',vainqueur_id,pts_j1,pts_j2});
+    await updateProfils({match,vainqueur_id,draw:isDraw,tirs_j1:allJ1,tirs_j2:allJ2,nb_tours:Math.ceil(newTheirTirs.length/3)});
+    await checkProgressTournoi();
+  } else if(kState?.active&&!isKBonus){
+    // Kamikaze 1ère phase : compter les touches pour le bonus
+    const hits=res.history.filter(t=>t.result==='hit'||t.result==='sunk').length;
+    if(hits>0){
+      _kamikazeState[matchId]={active:false,bonusPhase:true,hitsCount:hits,extraShots:[]};
+      _shots[matchId]=[];
+      showToastPhase(`💥 KAMIKAZE : ${hits} tir${hits>1?'s':''} bonus !`,'var(--purple)');
+    } else {
+      _kamikazeState[matchId]={active:false,bonusPhase:false};
+    }
+    // Marquer skip du prochain tour
+    await updateOpStatePouvoir(matchId,role,'kamikaze_skip',true);
+  }
+
+  _rushPending[matchId]=false;
+  if(won||(kState?.active&&!isKBonus)){
+    // Fin tour normal ou kamikaze 1ère phase → reset kamikaze actif
+    if(kState?.active)_kamikazeState[matchId]={...(_kamikazeState[matchId]||{}),active:false};
+  }
+  await loadGrilles(matchId);
+  buildNav();renderNav();renderTab(currentTab);
+}
+
+/* ══ CLASSIQUE : tour alterné ══ */
+async function soumettreCoups_classique(matchId){
+  const match=MATCHS.find(m=>m.id===matchId),shots=_shots[matchId]||[];
+  if(shots.length!==3)return;
+  const role=getMyRole(match);
+  const tf=role===1?'tirs_j1':'tirs_j2',sf=role===1?'soumis_j1':'soumis_j2';
+  await loadTourEnCours(matchId);
+  let tour=TOURS[matchId];
+  let updTour;
+  if(!tour){
+    const{data:nt,error}=await sb.from('tournoi_tours').insert({
+      match_id:matchId,numero_tour:1,[tf]:shots,[sf]:true,statut:'en_cours',
+      classique_phase:role===1?'j1_turn':'j2_turn'
+    }).select().single();
+    if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+    updTour=nt;
+  }else{
+    const{data:ut,error}=await sb.from('tournoi_tours').update({[tf]:shots,[sf]:true}).eq('id',tour.id).select().single();
+    if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+    updTour=ut;
+  }
+  TOURS[matchId]=updTour;_shots[matchId]=[];
+  await resoudreCoups_classique(matchId,updTour,role);
+}
+
+async function resoudreCoups_classique(matchId,tour,role){
+  const match=MATCHS.find(m=>m.id===matchId);
+  const g=GRILLES[matchId];
+  if(!g?.mine||!g?.theirs){await loadGrilles(matchId);return;}
+  const myShots=role===1?(tour.tirs_j1||[]):(tour.tirs_j2||[]);
+  const theirGrille=role===1?g.theirs:g.mine;
+  const myGrille=role===1?g.mine:g.theirs;
+  const theirPl=theirGrille.grille_placement;
+  const theirTirsAv=theirGrille.tirs_recus||[];
+  const myPl=myGrille.grille_placement;
+  const myTirsAv=myGrille.tirs_recus||[];
+  const turnNum=tour.numero_tour||1;
+  const mode=getMode(match);
+
+  const ops_cl=_opState[matchId]||{};
+  const mineCl=role===1?ops_cl?.j2?.mine_pos:ops_cl?.j1?.mine_pos;
+  const res=processShots(myShots,theirPl,theirTirsAv,theirPl?.bonus_cells||[],theirPl?.malus_cells||[],turnNum,mineCl);
+  const newTheirTirs=[...theirTirsAv,...res.history];
+  await sb.from('tournoi_grilles').update({tirs_recus:newTheirTirs}).eq('id',theirGrille.id);
+  GRILLES[matchId][role===1?'theirs':'mine'].tirs_recus=newTheirTirs;
+
+  const won=allSunk(theirPl,newTheirTirs,mode);
+  if(won){
+    const vainqueur_id=role===1?match.joueur1_id:match.joueur2_id;
+    const pts_j1=role===1?3:0,pts_j2=role===2?3:0;
+    const allJ1=role===1?newTheirTirs:myTirsAv,allJ2=role===2?newTheirTirs:myTirsAv;
+    const bonus_j1=allJ1.filter(t=>t.result==='bonus').length*2,malus_j1=allJ1.filter(t=>t.result==='malus').length*2;
+    const bonus_j2=allJ2.filter(t=>t.result==='bonus').length*2,malus_j2=allJ2.filter(t=>t.result==='malus').length*2;
+    await sb.from('tournoi_tours').update({statut:'validé'}).eq('id',tour.id);
+    await sb.from('tournoi_matchs').update({statut:'terminé',vainqueur_id,pts_j1,pts_j2,bonus_j1,malus_j1,bonus_j2,malus_j2}).eq('id',matchId);
+    const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)Object.assign(MATCHS[idx],{statut:'terminé',vainqueur_id,pts_j1,pts_j2});
+    await updateProfils({match,vainqueur_id,draw:false,tirs_j1:allJ1,tirs_j2:allJ2,nb_tours:turnNum});
+    await checkProgressTournoi();
+  }else{
+    const nextPhase=role===1?'j2_turn':'j1_turn';
+    const advAlreadyFired=role===1?tour.soumis_j2:tour.soumis_j1;
+    if(advAlreadyFired){
+      // L'adversaire avait déjà tiré → fin du tour bilatéral, nouveau tour
+      await sb.from('tournoi_tours').update({statut:'validé'}).eq('id',tour.id);
+      await sb.from('tournoi_tours').insert({
+        match_id:matchId,numero_tour:(turnNum+1),
+        soumis_j1:false,soumis_j2:false,statut:'en_cours',classique_phase:'j1_turn'
+      });
+    }else{
+      // Donner la main à l'adversaire
+      await sb.from('tournoi_tours').update({classique_phase:nextPhase}).eq('id',tour.id);
+    }
+  }
+  await loadGrilles(matchId);await loadTourEnCours(matchId);
+  buildNav();renderNav();renderTab(currentTab);
 }
 
 async function resoudreTour(matchId,tour){
@@ -1151,7 +1485,7 @@ async function resoudreTour(matchId,tour){
 
   const new_tr_j2=[...tr_j2_av,...res_j1.history];
   const new_tr_j1=[...tr_j1_av,...res_j2.history];
-  const j1Sunk=allSunk(pl_j2,new_tr_j2),j2Sunk=allSunk(pl_j1,new_tr_j1);
+  const mode_legacy=getMode(match)||null;const j1Sunk=allSunk(pl_j2,new_tr_j2,mode_legacy),j2Sunk=allSunk(pl_j1,new_tr_j1,mode_legacy);
 
   await Promise.all([
     sb.from('tournoi_grilles').update({tirs_recus:new_tr_j2}).eq('id',id_j2),
@@ -1162,14 +1496,19 @@ async function resoudreTour(matchId,tour){
   if(j1Sunk||j2Sunk){
     let vainqueur_id=null,pts_j1=0,pts_j2=0;
     if(j1Sunk&&j2Sunk){
-      pts_j1=1;pts_j2=1;
-      // En phase éliminatoire (demi/finale) : pas de match nul possible.
-      // Départager par score total = pts navires + bonus − malus
-      if(match.phase==='demi'||match.phase==='finale'){
-        const scoreJ1=new_tr_j2.reduce((s,t)=>s+(t.pts||0),0);
-        const scoreJ2=new_tr_j1.reduce((s,t)=>s+(t.pts||0),0);
-        // scoreJ1 >= scoreJ2 → j1 gagne le départage (avantage j1 en cas d'égalité parfaite)
-        vainqueur_id=scoreJ1>=scoreJ2?match.joueur1_id:match.joueur2_id;
+      // Égalité simultanée → départage bonus/malus nets
+      const scoreJ1=new_tr_j2.reduce((s,t)=>s+(t.pts||0),0)+(res_j1.bonusPts-res_j1.malusPts);
+      const scoreJ2=new_tr_j1.reduce((s,t)=>s+(t.pts||0),0)+(res_j2.bonusPts-res_j2.malusPts);
+      if(scoreJ1!==scoreJ2){
+        vainqueur_id=scoreJ1>scoreJ2?match.joueur1_id:match.joueur2_id;
+        pts_j1=vainqueur_id===match.joueur1_id?3:0;
+        pts_j2=vainqueur_id===match.joueur2_id?3:0;
+      } else {
+        pts_j1=1;pts_j2=1;
+        // En éliminatoire : toujours un vainqueur (J1 par convention)
+        if(match.phase==='demi'||match.phase==='finale'){
+          vainqueur_id=match.joueur1_id;pts_j1=3;pts_j2=0;
+        }
       }
     }
     else if(j1Sunk){vainqueur_id=match.joueur1_id;pts_j1=3;}
@@ -1189,20 +1528,23 @@ async function resoudreTour(matchId,tour){
     // Vérifier progression du tournoi (génération phases suivantes)
     await checkProgressTournoi();
   }else{
-    await sb.from('tournoi_tours').insert({match_id:matchId,numero_tour:(tour.numero_tour||1)+1,soumis_j1:false,soumis_j2:false,statut:'en_cours'});
+    await sb.from('tournoi_tours').insert({match_id:matchId,numero_tour:(tour.numero_tour||1)+1,soumis_j1:false,soumis_j2:false,statut:'en_cours',classique_phase:'j1_turn'});
   }
   await loadGrilles(matchId);await loadTourEnCours(matchId);
   buildNav();renderNav();renderTab(currentTab);
 }
 
-function processShots(shots,placement,tirsAv,bonus,malus,turn){
+function processShots(shots,placement,tirsAv,bonus,malus,turn,minePos){
   const history=[];let bonusPts=0,malusPts=0;
   const hit=new Set((tirsAv||[]).map(t=>t.coord));
   shots.forEach(coord=>{
     hit.add(coord);
     const occ=placement?.grid_data?.[coord];
     let result='miss',pts=0,shipKey=null;
-    if(bonus.includes(coord)){result='bonus';pts=2;bonusPts+=2;}
+    if(minePos&&coord===minePos){
+      // Mine adverse : résultat miss mais -2pts pour l'attaquant
+      result='mine';pts=-2;malusPts+=2;
+    } else if(bonus.includes(coord)){result='bonus';pts=2;bonusPts+=2;}
     else if(malus.includes(coord)){result='malus';pts=-2;malusPts+=2;}
     else if(occ&&SHIP_KEYS.includes(occ)){
       shipKey=occ;
@@ -1504,6 +1846,147 @@ async function creerMatchRevanche(match){
   ]);
   // Le Realtime détectera le nouveau match et redirigera automatiquement
   showToastPhase(`🔄 ${partieNum===2?'Revanche':'Belle'} lancée !`,'var(--cyan)');
+}
+
+/* ══ OPÉRATIONS SPÉCIALES — POUVOIRS ══ */
+
+async function initOpState(matchId){
+  const def={sonar_used:false,espion_used:false,kamikaze_used:false,mine_used:false,mine_pos:null,sonar_active:false,kamikaze_skip:false};
+  const ops={j1:{...def},j2:{...def},log:[]};
+  await sb.from('tournoi_matchs').update({op_state:ops}).eq('id',matchId);
+  _opState[matchId]=ops;
+}
+
+async function loadOpState(matchId){
+  const m=MATCHS.find(x=>x.id===matchId);if(!m)return;
+  const{data}=await sb.from('tournoi_matchs').select('op_state').eq('id',matchId).maybeSingle();
+  _opState[matchId]=data?.op_state||{j1:{},j2:{},log:[]};
+  // Vérifier si skip kamikaze doit être levé
+  const role=getMyRole(m);
+  const myK=role===1?_opState[matchId]?.j1:_opState[matchId]?.j2;
+  if(myK?.kamikaze_skip){
+    // Le skip est consommé au chargement du tour (1 tour passé)
+    // On vérifie via le tirs_recus si mon dernier tour a déjà été joué
+    // Simplification : réinitialiser le skip ici (1 chargement = 1 tour d'attente)
+    // NB: uniquement si au moins 1 jeu de tirs a été effectué depuis l'activation
+  }
+}
+
+async function updateOpStatePouvoir(matchId,role,pouvoir,val){
+  const rk=role===1?'j1':'j2';
+  const ops=_opState[matchId]||{j1:{},j2:{},log:[]};
+  const newOps={...ops,[rk]:{...(ops[rk]||{}),[pouvoir]:val}};
+  _opState[matchId]=newOps;
+  await sb.from('tournoi_matchs').update({op_state:newOps}).eq('id',matchId);
+}
+
+async function activerSonar(matchId){
+  const match=MATCHS.find(m=>m.id===matchId);
+  const role=getMyRole(match);
+  const ops=_opState[matchId]||{j1:{},j2:{},log:[]};
+  const myOps=role===1?ops.j1:ops.j2;
+  if(myOps?.sonar_used){showAlert(`alertB-${matchId}`,'err','Déjà utilisé !');return;}
+  // Activer sonar contre l'adversaire (aveugle sa grille de tir pendant 1 tour)
+  const advKey=role===1?'j2':'j1';
+  const newOps={...ops,
+    [role===1?'j1':'j2']:{...myOps,sonar_used:true},
+    [advKey]:{...(ops[advKey]||{}),sonar_active:true},
+    log:[...(ops.log||[]),{tour:Date.now(),joueur:role,pouvoir:'sonar'}]
+  };
+  _opState[matchId]=newOps;
+  await sb.from('tournoi_matchs').update({op_state:newOps}).eq('id',matchId);
+  showToastPhase('📡 Sonar défectueux activé — adversaire aveuglé 1 tour !','var(--purple)');
+  renderTab(currentTab);
+}
+
+function activerEspion(matchId){
+  const match=MATCHS.find(m=>m.id===matchId);
+  const role=getMyRole(match);
+  const ops=_opState[matchId]||{j1:{},j2:{},log:[]};
+  const myOps=role===1?ops.j1:ops.j2;
+  if(myOps?.espion_used){showAlert(`alertB-${matchId}`,'err','Déjà utilisé !');return;}
+  _espionMode[matchId]=true;
+  showToastPhase('🔭 Espion : clique au centre de la zone 3×3 à scanner','var(--purple)');
+  renderTab(currentTab);
+}
+
+async function onEspionClick(matchId,centerCoord){
+  _espionMode[matchId]=false;
+  const match=MATCHS.find(m=>m.id===matchId);
+  const role=getMyRole(match);
+  // Calculer les 9 cases autour du centre
+  const col=COLS.indexOf(centerCoord[0]),row=parseInt(centerCoord.slice(1));
+  const zone=[];
+  for(let dc=-1;dc<=1;dc++)for(let dr=-1;dr<=1;dr++){
+    const c2=col+dc,r2=row+dr;
+    if(c2>=0&&c2<10&&r2>=1&&r2<=10)zone.push(COLS[c2]+r2);
+  }
+  // Vérifier si navires adverses dans la zone (client-side — cf. note sécurité)
+  const theirPl=GRILLES[matchId]?.theirs?.grille_placement;
+  const hasShip=theirPl?zone.some(coord=>{
+    return Object.values(theirPl.ship_cells||{}).some(cells=>(cells||[]).includes(coord));
+  }):false;
+
+  // Enregistrer l'utilisation
+  const ops=_opState[matchId]||{j1:{},j2:{},log:[]};
+  const rk=role===1?'j1':'j2';
+  const newOps={...ops,[rk]:{...(ops[rk]||{}),espion_used:true},
+    log:[...(ops.log||[]),{tour:Date.now(),joueur:role,pouvoir:'espion',zone:centerCoord,resultat:hasShip}]};
+  _opState[matchId]=newOps;
+  await sb.from('tournoi_matchs').update({op_state:newOps}).eq('id',matchId);
+
+  showToastPhase(hasShip?`🔭 Zone ${centerCoord} : ⚠️ NAVIRES DÉTECTÉS dans ce secteur !`:`🔭 Zone ${centerCoord} : ✓ Secteur vide`,'var(--purple)');
+  renderTab(currentTab);
+}
+
+async function activerKamikaze(matchId){
+  const match=MATCHS.find(m=>m.id===matchId);
+  const role=getMyRole(match);
+  const ops=_opState[matchId]||{j1:{},j2:{},log:[]};
+  const myOps=role===1?ops.j1:ops.j2;
+  if(myOps?.kamikaze_used){showAlert(`alertB-${matchId}`,'err','Déjà utilisé !');return;}
+  // Activer : ce tour le joueur peut tirer jusqu'à 6 coups au lieu de 3
+  _kamikazeState[matchId]={active:true,bonusPhase:false,hitsCount:0,extraShots:[]};
+  const rk=role===1?'j1':'j2';
+  const newOps={...ops,[rk]:{...myOps,kamikaze_used:true},
+    log:[...(ops.log||[]),{tour:Date.now(),joueur:role,pouvoir:'kamikaze'}]};
+  _opState[matchId]=newOps;
+  await sb.from('tournoi_matchs').update({op_state:newOps}).eq('id',matchId);
+  showToastPhase('💥 KAMIKAZE activé — Tirs supplémentaires par touché ! Tour suivant sauté.','var(--orange)');
+  renderTab(currentTab);
+}
+
+function activerMine(matchId){
+  const match=MATCHS.find(m=>m.id===matchId);
+  const role=getMyRole(match);
+  const ops=_opState[matchId]||{j1:{},j2:{},log:[]};
+  const myOps=role===1?ops.j1:ops.j2;
+  if(myOps?.mine_used){showAlert(`alertB-${matchId}`,'err','Déjà utilisé !');return;}
+  _mineMode[matchId]=true;
+  showToastPhase('🪤 Mine : clique sur une case de la grille adverse pour la poser','var(--orange)');
+  renderTab(currentTab);
+}
+
+async function onMineClick(matchId,coord){
+  _mineMode[matchId]=false;
+  const match=MATCHS.find(m=>m.id===matchId);
+  const role=getMyRole(match);
+  // Vérifier que la case n'est pas déjà tirée
+  const theirTirs=GRILLES[matchId]?.theirs?.tirs_recus||[];
+  if(theirTirs.find(t=>t.coord===coord)){
+    showAlert(`alertB-${matchId}`,'err','Case déjà tirée — choisis une autre zone.');
+    _mineMode[matchId]=true;renderTab(currentTab);return;
+  }
+  const ops=_opState[matchId]||{j1:{},j2:{},log:[]};
+  const rk=role===1?'j1':'j2';
+  // La mine est posée sur MA grille (défense), coordonnée que l'adversaire pourrait viser
+  // On stocke dans le role qui POSE la mine
+  const newOps={...ops,[rk]:{...(ops[rk]||{}),mine_used:true,mine_pos:coord},
+    log:[...(ops.log||[]),{tour:Date.now(),joueur:role,pouvoir:'mine',coord}]};
+  _opState[matchId]=newOps;
+  await sb.from('tournoi_matchs').update({op_state:newOps}).eq('id',matchId);
+  showToastPhase(`🪤 Mine posée secrètement en ${coord} — l'adversaire n'en sait rien !`,'var(--orange)');
+  renderTab(currentTab);
 }
 
 /* ══ GRILLES RAPPORT DE BATAILLE ══ */
@@ -2381,6 +2864,8 @@ function abonnerRealtime(){
         }
       }
     }
+    // Recharger op_state si Op Spéciales
+    if(MATCHS.find(m=>m.id===n.id&&getMode(m)==='op_speciales'))await loadOpState(n.id);
     if(n.poule_id===MOI.poule_id){
       const{data:pm}=await sb.from('tournoi_matchs').select('*').eq('tournoi_id',MOI.tournoi_id).eq('poule_id',MOI.poule_id);
       POULE_MATCHS=pm||[];
