@@ -1159,7 +1159,7 @@ function renderBataille(match,el){
     ${opPanel}
 
     <div class="card">
-      <div class="card-title">🎯 Grille adverse${sonarVsMe?` <span style="font-size:.6rem;color:var(--red);font-family:'Orbitron',monospace">📡 BROUILLÉ</span>`:''}${_espionMode[match.id]?' <span style="font-size:.6rem;color:var(--purple);font-family:'Orbitron',monospace">🔭 SÉLECTIONNER ZONE 3×3</span>':''}${_mineMode[match.id]?' <span style="font-size:.6rem;color:var(--orange);font-family:'Orbitron',monospace">🪤 POSER LA MINE</span>':''}</div>
+      <div class="card-title">🎯 Grille adverse${sonarVsMe?` <span style="font-size:.6rem;color:var(--red);font-family:'Orbitron',monospace">📡 BROUILLÉ</span>`:''}${_espionMode[match.id]?` <span style="font-size:.6rem;color:var(--purple);font-family:'Orbitron',monospace">🔭 SÉLECTIONNER ZONE 3×3</span>`:''}${_mineMode[match.id]?` <span style="font-size:.6rem;color:var(--orange);font-family:'Orbitron',monospace">🪤 POSER SUR TA FLOTTE</span>`:''}</div>
       <div style="font-size:.85rem;color:var(--text2);margin-bottom:8px">
         ${myTurn&&!rushProcessing&&!_espionMode[match.id]&&!_mineMode[match.id]?`Sélectionne ${maxShots===3?'3 cases':maxShots+' cases max'} — <strong style="color:var(--gold)">${shotLabel}</strong>`:
           _espionMode[match.id]?'Clique au centre de la zone 3×3 à scanner':
