@@ -1161,7 +1161,17 @@ async function resoudreTour(matchId,tour){
 
   if(j1Sunk||j2Sunk){
     let vainqueur_id=null,pts_j1=0,pts_j2=0;
-    if(j1Sunk&&j2Sunk){pts_j1=1;pts_j2=1;}
+    if(j1Sunk&&j2Sunk){
+      pts_j1=1;pts_j2=1;
+      // En phase éliminatoire (demi/finale) : pas de match nul possible.
+      // Départager par score total = pts navires + bonus − malus
+      if(match.phase==='demi'||match.phase==='finale'){
+        const scoreJ1=new_tr_j2.reduce((s,t)=>s+(t.pts||0),0);
+        const scoreJ2=new_tr_j1.reduce((s,t)=>s+(t.pts||0),0);
+        // scoreJ1 >= scoreJ2 → j1 gagne le départage (avantage j1 en cas d'égalité parfaite)
+        vainqueur_id=scoreJ1>=scoreJ2?match.joueur1_id:match.joueur2_id;
+      }
+    }
     else if(j1Sunk){vainqueur_id=match.joueur1_id;pts_j1=3;}
     else{vainqueur_id=match.joueur2_id;pts_j2=3;}
     await sb.from('tournoi_matchs').update({statut:'terminé',vainqueur_id,pts_j1,pts_j2,bonus_j1:res_j1.bonusPts,malus_j1:res_j1.malusPts,bonus_j2:res_j2.bonusPts,malus_j2:res_j2.malusPts}).eq('id',matchId);
@@ -1902,6 +1912,11 @@ async function checkProgressTournoi(){
     if(!existF?.length){
       const w1=demiMatchs[0].vainqueur_id;
       const w2=demiMatchs[1]?.vainqueur_id||demiMatchs[0].vainqueur_id;
+      if(!w1||!w2){
+        // Sécurité : une demi n'a pas de vainqueur (cas égalité non résolu) → ne pas générer la finale
+        console.error('checkProgressTournoi: vainqueur_id manquant sur une demi',{w1,w2});
+        return;
+      }
       const{data:fm}=await sb.from('tournoi_matchs').insert({
         tournoi_id:tournoiId,phase:'finale',joueur1_id:w1,joueur2_id:w2,statut:'placement'
       }).select().single();
