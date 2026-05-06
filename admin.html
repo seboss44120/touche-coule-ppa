@@ -284,11 +284,11 @@ const COLS      = ['A','B','C','D','E','F','G','H','I','J'];
 const ROWS      = [1,2,3,4,5,6,7,8,9,10];
 const SHIP_KEYS = ['PA','CU','CR','SM','TP'];
 const MODES_ADMIN = {
-  rush:          { label:'Rush',               icon:'⚡', color:'var(--cyan)' },
-  classique:     { label:'Classique',          icon:'⚓', color:'var(--gold)' },
-  mort_subite:   { label:'Mort Subite',        icon:'💀', color:'var(--red)' },
-  petite_victime:{ label:'Petite Victime',     icon:'🚤', color:'var(--orange)' },
-  leviathan:     { label:'Opé. Léviathan',     icon:'✈️', color:'var(--purple)' },
+  rush:          { label:'Rush',                  icon:'⚡', color:'var(--cyan)' },
+  classique:     { label:'Classique',             icon:'⚓', color:'var(--gold)' },
+  mort_subite:   { label:'Mort Subite',           icon:'💀', color:'var(--red)' },
+  petite_victime:{ label:'La Petite Victime',     icon:'🚤', color:'var(--orange)' },
+  op_speciales:  { label:'Opérations Spéciales',  icon:'🎖️', color:'var(--purple)' },
 };
 const SHIPS = {
   PA: { name:'Porte-avions', icon:'✈️', size:5, points:5 },
@@ -2034,9 +2034,17 @@ async function adminChargerMatchsUrgence(){
 
     // Mode de jeu
     const modeObj=m.mode_jeu?MODES_ADMIN[m.mode_jeu]:null;
+    const modeOptions=Object.entries(MODES_ADMIN).map(([k,v])=>`<option value="${k}" ${m.mode_jeu===k?'selected':''}>${v.icon} ${v.label}</option>`).join('');
     const modeBadge=modeObj
-      ?`<span class="mode-badge-admin" style="background:rgba(0,0,0,.25);border:1px solid ${modeObj.color};color:${modeObj.color}">${modeObj.icon} ${modeObj.label}</span>`
-      :`<span class="mode-badge-admin" style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text2)">⏳ Vote en cours</span>`;
+      ?`<span class="mode-badge-admin" style="background:rgba(0,0,0,.25);border:1px solid ${modeObj.color};color:${modeObj.color}">${modeObj.icon} ${modeObj.label}</span>
+         <button class="btn btn-xs btn-outline" style="margin-left:4px" onclick="ouvrirChangerMode('${m.id}')">✏️</button>`
+      :`<span style="display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap">
+          <select id="mode-sel-${m.id}" class="urgence-select" style="flex:1;min-width:140px;max-width:200px;font-size:.75rem;padding:4px 8px;border-color:var(--orange)">
+            <option value="">— Choisir le mode —</option>
+            ${modeOptions}
+          </select>
+          <button class="btn btn-sm btn-gold" onclick="adminDefinirMode('${m.id}')">✓ Appliquer</button>
+        </span>`;
 
     // Statut du tour en classique
     let tourLabel='';
@@ -2095,6 +2103,28 @@ async function execUrgenceAction(matchId){
   else if(action==='supprimer_match') await adminSupprimerMatch(matchId);
 }
 
+
+async function adminDefinirMode(matchId){
+  const sel=document.getElementById(`mode-sel-${matchId}`);
+  const mode=sel?.value;
+  if(!mode){alert("Choisissez un mode de jeu.");return;}
+  const modeObj=MODES_ADMIN[mode];
+  if(!confirm(`Définir le mode "${modeObj.icon} ${modeObj.label}" pour ce match ?`))return;
+  const{error}=await sbT.from("tournoi_matchs").update({mode_jeu:mode}).eq("id",matchId);
+  if(error){alert("Erreur : "+error.message);return;}
+  await adminChargerMatchsUrgence();
+}
+
+async function ouvrirChangerMode(matchId){
+  const cles=Object.entries(MODES_ADMIN).map(([k,v])=>`${v.icon} ${v.label} → ${k}`).join("\n");
+  const nouveau=(prompt(`Nouveau mode de jeu :\n${cles}`)||"").trim();
+  if(!nouveau||!MODES_ADMIN[nouveau]){if(nouveau)alert("Mode invalide.");return;}
+  const modeObj=MODES_ADMIN[nouveau];
+  if(!confirm(`Changer le mode en "${modeObj.icon} ${modeObj.label}" ?`))return;
+  const{error}=await sbT.from("tournoi_matchs").update({mode_jeu:nouveau}).eq("id",matchId);
+  if(error){alert("Erreur : "+error.message);return;}
+  await adminChargerMatchsUrgence();
+}
 async function adminAnnulerTourMatch(matchId){
   if(!confirm('Annuler le tour en cours ? Les joueurs pourront rejouer ce tour.'))return;
   const{data:tours}=await sbT.from('tournoi_tours').select('id,numero_tour')
