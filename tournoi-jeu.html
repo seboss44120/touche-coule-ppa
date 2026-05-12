@@ -639,36 +639,73 @@ function showError(msg){
 /* ══ INIT ══ */
 async function init(){
   try{
-    const token=new URLSearchParams(location.search).get('token');
-    if(!token){showError('Token manquant.');return;}
-    const{data:moi}=await sb.from('tournoi_joueurs').select('*').eq('token',token).maybeSingle();
-    if(!moi?.nom){showError('Lien invalide ou expiré.');return;}
-    MOI=moi;
-    document.getElementById('hdrPlayer').textContent=moi.nom.toUpperCase();
+    const params=new URLSearchParams(location.search);
+    const permToken=params.get('p');
+    const slotToken=params.get('token');
 
-  // Charger ou retrouver le profil persistant
-  await chargerOuCreerProfil();
+    if(permToken){
+      // ── Lien permanent joueur (nouveau système) ──
+      const{data:profil}=await sb.from('joueur_profils').select('*').eq('token',permToken).maybeSingle();
+      if(!profil){showError('Lien invalide.');return;}
+      MON_PROFIL=profil;PROFILS_CACHE[profil.id]=profil;
 
-  // Afficher le grade dans le header
-  if(MON_PROFIL){
-    const gradeEl=document.getElementById('hdrGrade');
-    if(gradeEl)gradeEl.textContent=getGrade(MON_PROFIL.victoires);
-  }
+      // Chercher toutes les participations de ce joueur
+      const{data:participations}=await sb.from('tournoi_joueurs')
+        .select('*').eq('profil_id',profil.id).order('created_at',{ascending:false});
+      const tournoiIds=[...new Set((participations||[]).map(j=>j.tournoi_id))];
 
-  const{data:t}=await sb.from('tournois').select('*').eq('id',moi.tournoi_id).maybeSingle();
-  TOURNOI=t;
+      let moi=null;
+      if(tournoiIds.length){
+        // Trouver le tournoi actif le plus récent
+        const{data:tournoisActifs}=await sb.from('tournois')
+          .select('*').in('id',tournoiIds).neq('statut','terminé')
+          .order('created_at',{ascending:false}).limit(1);
+        if(tournoisActifs?.length){
+          TOURNOI=tournoisActifs[0];
+          moi=(participations||[]).find(j=>j.tournoi_id===TOURNOI.id)||null;
+        }
+      }
+
+      // Aucun tournoi actif → écran d'attente permanent
+      if(!moi){renderAttenteProchain(profil);return;}
+
+      MOI=moi;
+      document.getElementById('hdrPlayer').textContent=(profil.pseudo||moi.nom||'?').toUpperCase();
+      const gradeEl=document.getElementById('hdrGrade');
+      if(gradeEl)gradeEl.textContent=getGrade(profil.victoires||0);
+
+    }else if(slotToken){
+      // ── Lien slot (rétrocompatibilité) ──
+      const{data:moi}=await sb.from('tournoi_joueurs').select('*').eq('token',slotToken).maybeSingle();
+      if(!moi?.nom){showError('Lien invalide ou expiré.');return;}
+      MOI=moi;
+      document.getElementById('hdrPlayer').textContent=moi.nom.toUpperCase();
+      // Charger ou retrouver le profil persistant
+      await chargerOuCreerProfil();
+      if(MON_PROFIL){
+        const gradeEl=document.getElementById('hdrGrade');
+        if(gradeEl)gradeEl.textContent=getGrade(MON_PROFIL.victoires);
+      }
+      const{data:t}=await sb.from('tournois').select('*').eq('id',moi.tournoi_id).maybeSingle();
+      TOURNOI=t;
+
+    }else{
+      showError('Token manquant.');return;
+    }
+
+  // ── Suite commune : chargement matchs, grilles, poule ──
   const{data:matchs}=await sb.from('tournoi_matchs').select('*')
-    .eq('tournoi_id',moi.tournoi_id).or(`joueur1_id.eq.${moi.id},joueur2_id.eq.${moi.id}`).order('created_at');
+    .eq('tournoi_id',MOI.tournoi_id).or(`joueur1_id.eq.${MOI.id},joueur2_id.eq.${MOI.id}`).order('created_at');
   MATCHS=matchs||[];
   const advIds=[...new Set(MATCHS.map(m=>getAdvId(m)).filter(Boolean))];
   if(advIds.length){const{data:a}=await sb.from('tournoi_joueurs').select('id,nom,profil_id').in('id',advIds);(a||[]).forEach(j=>ADVERSAIRES[j.id]=j);}
 
   for(const m of MATCHS){await loadGrilles(m.id);await loadTourEnCours(m.id);initPL(m.id);initSeenSets(m.id);}
 
-  if(moi.poule_id){
-    const{data:pj}=await sb.from('tournoi_joueurs').select('id,nom,bye,profil_id').eq('tournoi_id',moi.tournoi_id).eq('poule_id',moi.poule_id);
+  if(MOI.poule_id){
+    const{data:pj}=await sb.from('tournoi_joueurs').select('id,nom,bye,profil_id').eq('tournoi_id',MOI.tournoi_id).eq('poule_id',MOI.poule_id);
     POULE_JOUEURS=pj||[];
-    const{data:pm}=await sb.from('tournoi_matchs').select('*').eq('tournoi_id',moi.tournoi_id).eq('poule_id',moi.poule_id);
+    const{data:pm}=await sb.from('tournoi_matchs').select('*').eq('tournoi_id',MOI.tournoi_id).eq('poule_id',MOI.poule_id);
     POULE_MATCHS=pm||[];
   }
 
@@ -681,15 +718,42 @@ async function init(){
     currentTab='attente';
     renderNav();
     renderAttenteMatchs();
-  } else {
+  }else{
     const fa=MATCHS.find(m=>m.statut!=='terminé');
     currentTab=fa?'match-'+fa.id:'poule';
     renderNav();renderTab(currentTab);
   }
   }catch(e){
-    console.error('init() error:', e);
+    console.error('init() error:',e);
     showError('Erreur de chargement : '+e.message);
   }
+}
+
+/* ── Écran d'attente : aucun tournoi actif (lien permanent) ── */
+function renderAttenteProchain(profil){
+  const grade=getGrade(profil.victoires||0);
+  document.getElementById('hdrPlayer').textContent=(profil.pseudo||'?').toUpperCase();
+  const gradeEl=document.getElementById('hdrGrade');
+  if(gradeEl)gradeEl.textContent=grade;
+  const ratio=profil.matchs_joues>0?Math.round((profil.victoires/profil.matchs_joues)*100)+'%':'—';
+  document.getElementById('mainContent').innerHTML=`
+    <div class="center-screen" style="gap:18px;padding:32px 16px">
+      <div style="font-size:3.5rem;filter:drop-shadow(0 0 14px rgba(245,200,66,.35))">${esc(profil.avatar||'⚓')}</div>
+      <div style="text-align:center">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--gold);letter-spacing:3px">${esc(profil.pseudo||'Capitaine')}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text3);letter-spacing:2px;margin-top:3px">${esc(grade)}</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px 28px;text-align:center;max-width:300px;width:100%">
+        <div style="font-size:2rem;margin-bottom:10px">⏳</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--cyan);letter-spacing:2px;margin-bottom:8px">AUCUN TOURNOI ACTIF</div>
+        <div style="color:var(--text2);font-size:.88rem;line-height:1.6">Reviens quand le prochain tournoi est lancé.<br>Ce lien est permanent — ne le perds pas.</div>
+      </div>
+      <div style="display:flex;gap:24px;font-family:'Orbitron',monospace;font-size:.55rem;letter-spacing:1.5px">
+        <div style="text-align:center"><div style="color:var(--gold);font-size:1.3rem;font-weight:900;line-height:1">${profil.victoires||0}</div><div style="color:var(--text3);margin-top:3px">VICTOIRES</div></div>
+        <div style="text-align:center"><div style="color:var(--cyan);font-size:1.3rem;font-weight:900;line-height:1">${profil.matchs_joues||0}</div><div style="color:var(--text3);margin-top:3px">MATCHS</div></div>
+        <div style="text-align:center"><div style="color:var(--text2);font-size:1.3rem;font-weight:900;line-height:1">${ratio}</div><div style="color:var(--text3);margin-top:3px">RATIO</div></div>
+      </div>
+    </div>`;
 }
 
 async function chargerOuCreerProfil(){
@@ -759,6 +823,7 @@ function playerTag(joueurId,nom,opts={}){
   </span>`
 }
 function renderAttenteMatchs(){
+  const enInscription=TOURNOI?.statut==='inscription';
   const adv=POULE_JOUEURS.filter(j=>j.id!==MOI.id).map(j=>
     '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border2)">'
     +'<div style="font-size:1.1rem">⚓</div>'
@@ -766,18 +831,21 @@ function renderAttenteMatchs(){
     +'</div>').join('');
   document.getElementById('mainContent').innerHTML=
     '<div class="card" style="text-align:center;padding:32px">'
-    +'<div style="font-size:48px;margin-bottom:14px">⏳</div>'
-    +'<div style="font-family:Bebas Neue,sans-serif;font-size:1.5rem;letter-spacing:2px;color:var(--cyan);margin-bottom:8px">EN ATTENTE DES MATCHS</div>'
+    +'<div style="font-size:48px;margin-bottom:14px">'+(enInscription?'⚓':'⏳')+'</div>'
+    +'<div style="font-family:Bebas Neue,sans-serif;font-size:1.5rem;letter-spacing:2px;color:var(--cyan);margin-bottom:8px">'
+    +(enInscription?'TOURNOI EN PRÉPARATION':'EN ATTENTE DES MATCHS')+'</div>'
     +'<div style="font-family:Orbitron,monospace;font-size:.58rem;color:var(--text2);letter-spacing:1.5px;line-height:2">'
-    +'Le tournoi est lancé — tes matchs arrivent dans quelques instants.</div>'
+    +(enInscription
+      ? "L'organisateur finalise les inscriptions.<br>Le tournoi démarrera d'un instant à l'autre."
+      : 'Le tournoi est lancé — tes matchs arrivent dans quelques instants.')
+    +'</div>'
     +'<div style="margin-top:14px;font-family:Orbitron,monospace;font-size:.55rem;color:var(--text2)">'
     +'<span class="pulse-dot"></span>EN ATTENTE…</div>'
     +'</div>'
-    +'<div class="card">'
-    +'<div class="card-title">🏅 Poule '+(MOI.poule_id||'?')+'</div>'
-    +(adv ? '<div style="font-family:Orbitron,monospace;font-size:.58rem;color:var(--text2);margin-bottom:8px">TES ADVERSAIRES :</div>'+adv
-          : '<p style="color:var(--text2)">Chargement…</p>')
-    +'</div>';
+    +(adv ? '<div class="card">'
+      +'<div class="card-title">🏅 Poule '+(MOI.poule_id||'?')+'</div>'
+      +'<div style="font-family:Orbitron,monospace;font-size:.58rem;color:var(--text2);margin-bottom:8px">TES ADVERSAIRES :</div>'+adv
+      +'</div>' : '');
 }
 
 function initPL(matchId){
