@@ -710,11 +710,17 @@ function renderConfig() {
             </select>
           </div>
           <div class="form-group" id="grpNbJoueurs" style="display:none">
-            <div class="form-label">Joueurs participants (2 à 8)</div>
-            <div id="rosterSelector" style="margin-top:6px">
-              ${renderRosterSelector()}
-            </div>
-            <div id="formatPreview" style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1px;margin-top:8px;text-align:center;min-height:16px"></div>
+            <div class="form-label">Nombre de joueurs cible (2 à 8)</div>
+            <select id="nbJoueursInp" style="width:100%;margin-top:4px" onchange="updateFormatPreview()">
+              <option value="2">2 joueurs</option>
+              <option value="3">3 joueurs</option>
+              <option value="4" selected>4 joueurs</option>
+              <option value="5">5 joueurs</option>
+              <option value="6">6 joueurs</option>
+              <option value="7">7 joueurs</option>
+              <option value="8">8 joueurs</option>
+            </select>
+            <div id="formatPreview" style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan);letter-spacing:1px;margin-top:6px;text-align:center;min-height:16px">4 joueurs — 1 poule de 4 — vainqueur = champion</div>
           </div>
           <button class="btn btn-gold" style="margin-top:8px;width:100%" onclick="creerPartie()">
             ▶ Créer la partie
@@ -838,14 +844,13 @@ function onModeChange() {
   }
 }
 
-// Mise à jour du preview format en live (roster checkboxes)
-document.addEventListener('change', e => {
-  if (e.target.closest('#rosterSelector')) {
-    const n = document.querySelectorAll('#rosterSelector input[type="checkbox"]:checked').length;
-    const prev = document.getElementById('formatPreview');
-    if (prev) prev.textContent = n >= 2 ? (FORMATS_TOURNOI[n] || `${n} joueurs sélectionnés`) : n === 1 ? 'Sélectionnez au moins 2 joueurs' : '';
-  }
-});
+function updateFormatPreview() {
+  const sel = document.getElementById('nbJoueursInp');
+  const prev = document.getElementById('formatPreview');
+  if (!sel || !prev) return;
+  const n = parseInt(sel.value);
+  prev.textContent = FORMATS_TOURNOI[n] || `${n} joueurs`;
+}
 
 async function creerPartie() {
   const mode = document.querySelector('input[name="modeJeu"]:checked')?.value || 'duel_equipes';
@@ -896,49 +901,24 @@ async function creerPartie() {
 
 async function creerTournoi() {
   const alert = document.getElementById('createAlert');
-
-  // Récupérer les joueurs cochés dans le roster
-  const checked = [...document.querySelectorAll('#rosterSelector input[type="checkbox"]:checked')];
-  const selectedIds = checked.map(cb => cb.value);
-
-  if (selectedIds.length < 2) {
-    alert.className='alert err show'; alert.textContent='Sélectionnez au moins 2 joueurs dans le Roster.'; return;
+  const n = parseInt(document.getElementById('nbJoueursInp')?.value || '4');
+  if (n < 2 || n > 8) {
+    alert.className='alert err show'; alert.textContent='Nombre de joueurs invalide (2 à 8).'; return;
   }
-  if (selectedIds.length > 8) {
-    alert.className='alert err show'; alert.textContent='Maximum 8 joueurs.'; return;
-  }
-
-  const selectedProfils = ROSTER.filter(p => selectedIds.includes(p.id));
-  const n = selectedProfils.length;
-  alert.className='alert info show'; alert.textContent='Création du tournoi…';
-
+  alert.className = 'alert info show'; alert.textContent = 'Création du tournoi…';
   try {
-    // 1. Créer le tournoi
     const { data: t, error: errT } = await sbT.from('tournois')
       .insert({ nb_joueurs_cible: n, statut: 'inscription' })
       .select().single();
     if (errT) throw errT;
     TOURNOI = t;
-
-    // 2. Créer les entrées joueurs depuis le roster (nom + profil_id pré-remplis)
-    const joueurs = selectedProfils.map(p => ({
-      tournoi_id: t.id,
-      nom: p.pseudo,
-      profil_id: p.id,
-    }));
-    const { error: errJ } = await sbT.from('tournoi_joueurs').insert(joueurs);
-    if (errJ) throw errJ;
-
-    // Charger les joueurs générés
-    const { data: jData } = await sbT.from('tournoi_joueurs').select('*').eq('tournoi_id', t.id).order('created_at');
-    TOURNOI_JOUEURS = jData || [];
-
+    TOURNOI_JOUEURS = [];
     currentTab = 'tournoi';
     buildNav();
     renderTab('tournoi');
     alert.style.display = 'none';
   } catch(err) {
-    alert.className='alert err show'; alert.textContent='Erreur : '+err.message;
+    alert.className = 'alert err show'; alert.textContent = 'Erreur : ' + err.message;
   }
 }
 
@@ -1595,6 +1575,94 @@ function renderTournoi() {
         </div>
       </div>
     </div>`;
+
+    // ── Card gestion des joueurs ──
+    const dejaInscritsIds = new Set(TOURNOI_JOUEURS.filter(j=>j.profil_id).map(j=>j.profil_id));
+    const rosterDisponible = ROSTER.filter(p => !dejaInscritsIds.has(p.id));
+
+    h += `<div class="card">
+      <div class="card-title">👥 Joueurs inscrits</div>`;
+
+    // Joueurs déjà inscrits
+    if (TOURNOI_JOUEURS.length) {
+      h += `<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:14px">`;
+      TOURNOI_JOUEURS.forEach(j => {
+        const profil = ROSTER.find(p => p.id === j.profil_id);
+        const isRoster = !!profil;
+        h += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;
+          background:var(--bg3);border:1px solid rgba(0,232,120,.3);border-radius:6px">
+          <div style="font-size:1.2rem;flex-shrink:0">${esc(profil?.avatar||'⚓')}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:.88rem">${esc(j.nom||'?')}</div>
+            <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:${isRoster?'var(--cyan)':'var(--text3)'};letter-spacing:1px">
+              ${isRoster ? '🔗 Roster permanent' : '🆕 Nouveau joueur'}
+              ${profil?.email ? ' · '+esc(profil.email) : ''}
+            </div>
+          </div>
+          <button class="btn btn-danger btn-xs" onclick="adminSupprimerJoueurDeTournoi('${j.id}')" title="Retirer du tournoi">✕</button>
+        </div>`;
+      });
+      h += `</div>`;
+    } else {
+      h += `<div style="text-align:center;padding:14px;font-family:'Orbitron',monospace;font-size:.56rem;color:var(--text3);letter-spacing:1.5px;margin-bottom:10px">Aucun joueur inscrit pour l'instant</div>`;
+    }
+
+    // Ajouter depuis le Roster
+    h += `<div style="border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:10px">
+      <div style="padding:7px 12px;background:rgba(0,212,255,.06);border-bottom:1px solid var(--border);
+        font-family:'Orbitron',monospace;font-size:.54rem;color:var(--cyan);letter-spacing:1.5px">
+        DEPUIS LE ROSTER
+      </div>
+      <div style="padding:10px">`;
+
+    if (!rosterDisponible.length) {
+      h += `<div style="font-family:'Orbitron',monospace;font-size:.54rem;color:var(--text3);text-align:center;padding:8px 0;letter-spacing:1px">
+        ${ROSTER.length ? 'Tous les joueurs du Roster sont déjà inscrits' : 'Roster vide — créez des joueurs ci-dessous'}
+      </div>`;
+    } else {
+      h += `<div style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto">`;
+      rosterDisponible.forEach(p => {
+        const grade = _adminGetGrade(p.victoires||0);
+        h += `<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;
+          background:var(--bg3);border:1px solid var(--border);border-radius:5px;cursor:pointer;transition:border-color .15s"
+          onmouseover="this.style.borderColor='rgba(0,212,255,.4)'" onmouseout="this.style.borderColor='var(--border)'"
+          onclick="adminAjouterJoueurDuRoster('${p.id}')">
+          <span style="font-size:1.1rem">${esc(p.avatar||'⚓')}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:.85rem">${esc(p.pseudo||'—')}</div>
+            <div style="font-family:'Orbitron',monospace;font-size:.44rem;color:var(--text3);letter-spacing:1px">
+              ${esc(grade)} · ${p.victoires||0}V · ${p.matchs_joues||0}M
+            </div>
+          </div>
+          <span style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--cyan)">+ Ajouter</span>
+        </div>`;
+      });
+      h += `</div>`;
+    }
+    h += `</div></div>`;
+
+    // Créer un nouveau joueur
+    h += `<div style="border:1px solid var(--border);border-radius:6px;overflow:hidden">
+      <div style="padding:7px 12px;background:rgba(245,200,66,.06);border-bottom:1px solid var(--border);
+        font-family:'Orbitron',monospace;font-size:.54rem;color:var(--gold);letter-spacing:1.5px">
+        NOUVEAU JOUEUR
+      </div>
+      <div style="padding:10px;display:flex;flex-direction:column;gap:7px">
+        <div class="form-group">
+          <div class="form-label">Pseudo</div>
+          <input type="text" id="newTJPseudo" placeholder="Ex: Leblond" maxlength="20" style="width:100%"
+            onkeydown="if(event.key==='Enter')document.getElementById('newTJEmail')?.focus()">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Email <span style="color:var(--text3)">(optionnel — pour envoyer le lien permanent)</span></div>
+          <input type="email" id="newTJEmail" placeholder="joueur@exemple.com" style="width:100%"
+            onkeydown="if(event.key==='Enter')adminCreerNouveauJoueurTournoi()">
+        </div>
+        <button class="btn btn-gold btn-sm" onclick="adminCreerNouveauJoueurTournoi()">✓ Créer et inscrire</button>
+        <div id="alertJoueurs" class="alert"></div>
+      </div>
+    </div>
+    </div>`;
   } else {
     // ── Card tournoi en cours — visualisation riche ──
     const statutLabel = {'poules':'⚔️ POULES','finales':'🏆 FINALES','terminé':'✅ TERMINÉ'}[statut] || statut.toUpperCase();
@@ -2204,6 +2272,97 @@ async function adminPurgerBase(){
 }
 
 /* ════════════════════════════════════════════════════════
+   GESTION JOUEURS TOURNOI (phase inscription)
+════════════════════════════════════════════════════════ */
+async function adminAjouterJoueurDuRoster(profilId) {
+  if (TOURNOI_JOUEURS.find(j => j.profil_id === profilId)) return; // déjà inscrit
+  const profil = ROSTER.find(p => p.id === profilId);
+  if (!profil) return;
+  const alertEl = document.getElementById('alertJoueurs');
+  try {
+    const { data, error } = await sbT.from('tournoi_joueurs')
+      .insert({ tournoi_id: TOURNOI.id, nom: profil.pseudo, profil_id: profil.id })
+      .select().single();
+    if (error) throw error;
+    TOURNOI_JOUEURS.push(data);
+    renderTournoi();
+  } catch(e) {
+    if (alertEl) { alertEl.className='alert err show'; alertEl.textContent='Erreur : '+e.message; }
+  }
+}
+
+async function adminCreerNouveauJoueurTournoi() {
+  const pseudo  = (document.getElementById('newTJPseudo')?.value || '').trim();
+  const email   = (document.getElementById('newTJEmail')?.value || '').trim();
+  const alertEl = document.getElementById('alertJoueurs');
+
+  if (pseudo.length < 2) {
+    if (alertEl) { alertEl.className='alert err show'; alertEl.textContent='Pseudo trop court (min. 2 caractères).'; }
+    return;
+  }
+  if (ROSTER.find(p => p.pseudo.toLowerCase() === pseudo.toLowerCase())) {
+    if (alertEl) { alertEl.className='alert err show'; alertEl.textContent='Ce pseudo existe déjà dans le Roster.'; }
+    return;
+  }
+
+  if (alertEl) { alertEl.className='alert info show'; alertEl.textContent='Création du joueur…'; }
+  try {
+    // 1. Créer le profil permanent
+    const insertData = { pseudo, avatar: '⚓', drapeau: 'fr' };
+    let np;
+    if (email) {
+      const { data, error } = await sbT.from('joueur_profils').insert({ ...insertData, email }).select().single();
+      if (error && (error.code === '42703' || error.message?.includes('email'))) {
+        // Colonne email absente → retry sans
+        const { data: d2, error: e2 } = await sbT.from('joueur_profils').insert(insertData).select().single();
+        if (e2) throw e2;
+        np = d2;
+      } else {
+        if (error) throw error;
+        np = data;
+      }
+    } else {
+      const { data, error } = await sbT.from('joueur_profils').insert(insertData).select().single();
+      if (error) throw error;
+      np = data;
+    }
+    ROSTER.push(np);
+    ROSTER.sort((a,b) => a.pseudo.localeCompare(b.pseudo));
+
+    // 2. Inscrire au tournoi
+    const { data: tj, error: errJ } = await sbT.from('tournoi_joueurs')
+      .insert({ tournoi_id: TOURNOI.id, nom: np.pseudo, profil_id: np.id })
+      .select().single();
+    if (errJ) throw errJ;
+    TOURNOI_JOUEURS.push(tj);
+
+    // 3. Afficher le lien permanent
+    const permUrl = np.token ? `${BASE_URL_JEU}?p=${np.token}` : null;
+    const linkMsg = permUrl
+      ? `✓ ${np.pseudo} inscrit ! Lien permanent : ${permUrl}`
+      : `✓ ${np.pseudo} inscrit ! (Exécutez la migration SQL dans le Roster pour générer son lien permanent)`;
+
+    if (alertEl) { alertEl.className='alert ok show'; alertEl.textContent=linkMsg; }
+    if (document.getElementById('newTJPseudo')) document.getElementById('newTJPseudo').value='';
+    if (document.getElementById('newTJEmail')) document.getElementById('newTJEmail').value='';
+    renderTournoi();
+
+    // Copier le lien si disponible
+    if (permUrl) { try { await navigator.clipboard.writeText(permUrl); } catch(e) {} }
+  } catch(e) {
+    if (alertEl) { alertEl.className='alert err show'; alertEl.textContent='Erreur : '+e.message; }
+  }
+}
+
+async function adminSupprimerJoueurDeTournoi(joueurId) {
+  if (!confirm('Retirer ce joueur du tournoi ?')) return;
+  const { error } = await sbT.from('tournoi_joueurs').delete().eq('id', joueurId);
+  if (error) { alert('Erreur : ' + error.message); return; }
+  TOURNOI_JOUEURS = TOURNOI_JOUEURS.filter(j => j.id !== joueurId);
+  renderTournoi();
+}
+
+/* ════════════════════════════════════════════════════════
    TAB : ROSTER (joueurs permanents)
 ════════════════════════════════════════════════════════ */
 function _adminGetGrade(v) {
@@ -2252,6 +2411,11 @@ function renderRoster() {
       <div class="form-group" style="margin-bottom:8px">
         <div class="form-label">Pseudo du joueur</div>
         <input type="text" id="newRosterPseudo" placeholder="Ex: Leblond" maxlength="20"
+          style="width:100%" onkeydown="if(event.key==='Enter')document.getElementById('newRosterEmail')?.focus()">
+      </div>
+      <div class="form-group" style="margin-bottom:8px">
+        <div class="form-label">Email <span style="color:var(--text3)">(optionnel)</span></div>
+        <input type="email" id="newRosterEmail" placeholder="joueur@exemple.com"
           style="width:100%" onkeydown="if(event.key==='Enter')adminAjouterJoueurRoster()">
       </div>
       <div style="display:flex;gap:8px">
@@ -2297,16 +2461,21 @@ function renderRoster() {
     h += `</div>`;
   }
 
-  h += `</div>
-  <div class="card" style="border-color:rgba(245,200,66,.2)">
-    <div class="card-title" style="color:var(--gold);font-size:.85rem">🔧 Migration SQL requise</div>
-    <div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);letter-spacing:1px;line-height:2;margin-bottom:10px">
-      Si les tokens permanents n'apparaissent pas, exécutez cette migration dans Supabase SQL Editor :
-    </div>
-    <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-family:'Courier New',monospace;font-size:.72rem;color:var(--cyan);letter-spacing:.5px;word-break:break-all;cursor:pointer"
-      onclick="copyUrl(this.textContent.trim())" title="Cliquer pour copier">ALTER TABLE joueur_profils ADD COLUMN IF NOT EXISTS token text UNIQUE DEFAULT gen_random_uuid()::text;</div>
-    <div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text3);margin-top:6px;letter-spacing:.5px">Cliquez sur le bloc pour copier · Non-destructif · À exécuter une seule fois</div>
-  </div>`;
+  // Clôturer la card principale
+  h += `</div>`;
+
+  // Migration SQL — uniquement si des joueurs manquent encore leur token
+  if (ROSTER.some(p => !p.token)) {
+    h += `<div class="card" style="border-color:rgba(245,200,66,.2)">
+      <div class="card-title" style="color:var(--gold);font-size:.85rem">🔧 Migration SQL requise</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);letter-spacing:1px;line-height:2;margin-bottom:10px">
+        Des joueurs n'ont pas encore de token permanent. Exécutez cette migration dans Supabase SQL Editor :
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-family:'Courier New',monospace;font-size:.72rem;color:var(--cyan);letter-spacing:.5px;word-break:break-all;cursor:pointer"
+        onclick="copyUrl(this.textContent.trim())" title="Cliquer pour copier">ALTER TABLE joueur_profils ADD COLUMN IF NOT EXISTS token text UNIQUE DEFAULT gen_random_uuid()::text;</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text3);margin-top:6px;letter-spacing:.5px">Cliquez sur le bloc pour copier · Non-destructif · À exécuter une seule fois</div>
+    </div>`;
+  }
 
   el.innerHTML = h;
 }
@@ -2318,8 +2487,10 @@ function showAddRosterForm() {
 
 async function adminAjouterJoueurRoster() {
   const input  = document.getElementById('newRosterPseudo');
+  const emailInp = document.getElementById('newRosterEmail');
   const alertEl = document.getElementById('rosterAddAlert');
   const pseudo = (input?.value || '').trim();
+  const email  = (emailInp?.value || '').trim();
   if (pseudo.length < 2) { if(alertEl){alertEl.className='alert err show';alertEl.textContent='Pseudo trop court (min. 2 caractères).';} return; }
 
   // Vérifier doublon
@@ -2330,18 +2501,32 @@ async function adminAjouterJoueurRoster() {
 
   if(alertEl){alertEl.className='alert info show';alertEl.textContent='Création…';}
   try {
-    const { data: np, error } = await sbT.from('joueur_profils')
-      .insert({ pseudo, avatar: '⚓', drapeau: 'fr' }).select().single();
-    if (error) throw error;
+    const insertData = { pseudo, avatar: '⚓', drapeau: 'fr' };
+    let np;
+    // Essai avec email (si colonne existe)
+    if (email) {
+      const { data, error } = await sbT.from('joueur_profils').insert({ ...insertData, email }).select().single();
+      if (error && (error.code === '42703' || error.message?.includes('email'))) {
+        // Colonne email absente → retry sans
+        const { data: d2, error: e2 } = await sbT.from('joueur_profils').insert(insertData).select().single();
+        if (e2) throw e2;
+        np = d2;
+      } else {
+        if (error) throw error;
+        np = data;
+      }
+    } else {
+      const { data, error } = await sbT.from('joueur_profils').insert(insertData).select().single();
+      if (error) throw error;
+      np = data;
+    }
     ROSTER.push(np);
     ROSTER.sort((a,b) => a.pseudo.localeCompare(b.pseudo));
     if (input) input.value = '';
+    if (emailInp) emailInp.value = '';
     document.getElementById('addRosterForm').style.display = 'none';
     if(alertEl) alertEl.style.display = 'none';
     renderRoster();
-    // Rafraîchir aussi le sélecteur dans la config si visible
-    const sel = document.getElementById('rosterSelector');
-    if (sel) sel.innerHTML = renderRosterSelector();
   } catch(e) {
     if(alertEl){alertEl.className='alert err show';alertEl.textContent='Erreur : '+e.message;}
   }
