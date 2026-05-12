@@ -337,6 +337,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
 // Client pour les tables tournoi (schéma public)
 const sbT = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 const BASE_URL_TOURNOI = location.href.replace(/[^/]*$/, 'tournoi-capitaine-inscription.html');
+const BASE_URL_JEU     = location.href.replace(/[^/]*$/, 'tournoi-jeu.html');
 
 /* ════════════════════════════════════════════════════════
    STATE
@@ -349,6 +350,7 @@ let _tourSel       = {}; // duelId → selected team num for manual entry
 // Tournoi
 let TOURNOI        = null;
 let TOURNOI_JOUEURS = [];
+let ROSTER         = []; // joueur_profils — joueurs permanents
 let _nbJoueursSelect = null;
 
 /* ════════════════════════════════════════════════════════
@@ -472,6 +474,10 @@ async function loadAllData() {
     // Si tournoi actif, basculer sur l'onglet tournoi
     if (currentTab === 'config' && TOURNOI) currentTab = 'tournoi';
   }
+
+  // Charger le roster des joueurs permanents
+  const { data: rosterData } = await sbT.from('joueur_profils').select('*').order('pseudo');
+  ROSTER = rosterData || [];
 }
 
 async function doRefresh() {
@@ -572,10 +578,12 @@ const TABS_DUEL = [
   { id:'classement', label:'🏆 Classement' },
   { id:'flottes',    label:'⚓ Flottes' },
   { id:'historique', label:'📋 Historique' },
+  { id:'roster',     label:'👥 Roster' },
 ];
 const TABS_TOURNOI = [
   { id:'config',   label:'⚙️ Config' },
   { id:'tournoi',  label:'🏆 Tournoi' },
+  { id:'roster',   label:'👥 Roster' },
 ];
 function getTabs() {
   return TOURNOI ? TABS_TOURNOI : TABS_DUEL;
@@ -611,6 +619,7 @@ function renderTab(t) {
   if (t === 'flottes')    renderFlottes();
   if (t === 'historique') renderHistorique();
   if (t === 'tournoi')    renderTournoi();
+  if (t === 'roster')     renderRoster();
 }
 
 function updateHeaderStatus() {
@@ -701,11 +710,9 @@ function renderConfig() {
             </select>
           </div>
           <div class="form-group" id="grpNbJoueurs" style="display:none">
-            <div class="form-label">Nombre de joueurs (2 à 8)</div>
-            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:4px" id="nbJoueursSelector">
-              ${[2,3,4,5,6,7,8].map(n=>`<button type="button"
-                onclick="_nbJoueursSelect=${n};document.querySelectorAll('.nbj-btn').forEach(b=>b.classList.remove('nbj-active'));this.classList.add('nbj-active')"
-                class="btn btn-outline btn-sm nbj-btn" style="padding:8px 0;font-size:.9rem">${n}</button>`).join('')}
+            <div class="form-label">Joueurs participants (2 à 8)</div>
+            <div id="rosterSelector" style="margin-top:6px">
+              ${renderRosterSelector()}
             </div>
             <div id="formatPreview" style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1px;margin-top:8px;text-align:center;min-height:16px"></div>
           </div>
@@ -831,12 +838,12 @@ function onModeChange() {
   }
 }
 
-// Mise à jour du preview format en live
-document.addEventListener('click', e => {
-  if (e.target.classList.contains('nbj-btn')) {
-    const n = parseInt(e.target.textContent);
+// Mise à jour du preview format en live (roster checkboxes)
+document.addEventListener('change', e => {
+  if (e.target.closest('#rosterSelector')) {
+    const n = document.querySelectorAll('#rosterSelector input[type="checkbox"]:checked').length;
     const prev = document.getElementById('formatPreview');
-    if (prev) prev.textContent = FORMATS_TOURNOI[n] || '';
+    if (prev) prev.textContent = n >= 2 ? (FORMATS_TOURNOI[n] || `${n} joueurs sélectionnés`) : n === 1 ? 'Sélectionnez au moins 2 joueurs' : '';
   }
 });
 
@@ -888,11 +895,21 @@ async function creerPartie() {
 }
 
 async function creerTournoi() {
-  const n = _nbJoueursSelect;
   const alert = document.getElementById('createAlert');
-  if (!n) {
-    alert.className='alert err show'; alert.textContent='Choisissez le nombre de joueurs.'; return;
+
+  // Récupérer les joueurs cochés dans le roster
+  const checked = [...document.querySelectorAll('#rosterSelector input[type="checkbox"]:checked')];
+  const selectedIds = checked.map(cb => cb.value);
+
+  if (selectedIds.length < 2) {
+    alert.className='alert err show'; alert.textContent='Sélectionnez au moins 2 joueurs dans le Roster.'; return;
   }
+  if (selectedIds.length > 8) {
+    alert.className='alert err show'; alert.textContent='Maximum 8 joueurs.'; return;
+  }
+
+  const selectedProfils = ROSTER.filter(p => selectedIds.includes(p.id));
+  const n = selectedProfils.length;
   alert.className='alert info show'; alert.textContent='Création du tournoi…';
 
   try {
@@ -903,8 +920,12 @@ async function creerTournoi() {
     if (errT) throw errT;
     TOURNOI = t;
 
-    // 2. Générer N entrées joueurs (nom null = pas encore inscrit)
-    const joueurs = Array.from({ length: n }, () => ({ tournoi_id: t.id, nom: null }));
+    // 2. Créer les entrées joueurs depuis le roster (nom + profil_id pré-remplis)
+    const joueurs = selectedProfils.map(p => ({
+      tournoi_id: t.id,
+      nom: p.pseudo,
+      profil_id: p.id,
+    }));
     const { error: errJ } = await sbT.from('tournoi_joueurs').insert(joueurs);
     if (errJ) throw errJ;
 
@@ -1623,7 +1644,10 @@ function renderTournoi() {
         <div id="alertCopyAll" class="alert" style="margin-bottom:8px"></div>`;
 
   TOURNOI_JOUEURS.forEach((j, i) => {
-    const url      = `${BASE_URL_TOURNOI}?token=${j.token}`;
+    const profil   = ROSTER.find(p => p.id === j.profil_id);
+    const permLink = profil?.token ? `${BASE_URL_JEU}?p=${profil.token}` : null;
+    const url      = permLink || `${BASE_URL_TOURNOI}?token=${j.token}`;
+    const isPerm   = !!permLink;
     const inscrit  = !!j.nom;
     const isBye    = j.bye;
     h += `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;
@@ -1635,9 +1659,12 @@ function renderTournoi() {
         ${i+1}
       </div>
       <div style="flex:1;min-width:0">
-        <div style="font-weight:700;font-size:.9rem;color:${inscrit?'var(--text)':'var(--text2)'}">
-          ${inscrit ? esc(j.nom) : '<em style="color:var(--text2);font-size:.8rem">En attente…</em>'}
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-weight:700;font-size:.9rem;color:${inscrit?'var(--text)':'var(--text2)'}">
+            ${inscrit ? esc(j.nom) : '<em style="color:var(--text2);font-size:.8rem">En attente…</em>'}
+          </span>
           ${isBye ? '&nbsp;<span style="font-family:\'Orbitron\',monospace;font-size:.5rem;padding:2px 7px;border-radius:10px;background:rgba(245,200,66,.15);border:1px solid var(--gold);color:var(--gold)">BYE</span>' : ''}
+          ${isPerm ? '<span style="font-family:\'Orbitron\',monospace;font-size:.44rem;padding:2px 6px;border-radius:8px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);color:var(--cyan)">🔗 LIEN PERMANENT</span>' : ''}
         </div>
         <div class="url-box" onclick="copyUrl('${esc(url)}')" style="margin-top:3px" title="Cliquer pour copier">
           ${url.length>60?url.slice(0,60)+'…':url}
@@ -2174,6 +2201,177 @@ async function adminPurgerBase(){
     renderTab('config');
     alert('✓ Base purgée avec succès.');
   }catch(e){alert('Erreur purge : '+e.message);}
+}
+
+/* ════════════════════════════════════════════════════════
+   TAB : ROSTER (joueurs permanents)
+════════════════════════════════════════════════════════ */
+function _adminGetGrade(v) {
+  const G=[{l:'Matelot',m:0},{l:'Matelot 1ère classe',m:5},{l:'Matelot 2nde classe',m:10},{l:'Quartier-maître',m:15},{l:'Second maître',m:20},{l:'Maître',m:25},{l:'Premier maître',m:35},{l:'Maître principal',m:45},{l:'Major',m:55},{l:'Aspirant',m:65},{l:'Enseigne de vaisseau',m:80},{l:'Lieutenant de vaisseau',m:95},{l:'Capitaine de corvette',m:110},{l:'Capitaine de frégate',m:125},{l:'Capitaine de vaisseau',m:140},{l:'Amiral',m:155}];
+  let g=G[0];for(const gr of G){if(v>=gr.m)g=gr;else break;}return g.l;
+}
+
+function renderRosterSelector() {
+  if (!ROSTER.length) {
+    return `<div style="padding:14px;text-align:center;background:var(--bg3);border:1px dashed var(--border);border-radius:8px">
+      <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text2);letter-spacing:1px;margin-bottom:8px">Aucun joueur dans le Roster</div>
+      <button class="btn btn-cyan btn-sm" type="button" onclick="goTab('roster')">👥 Créer des joueurs d'abord</button>
+    </div>`;
+  }
+  return `<div style="display:flex;flex-direction:column;gap:5px;max-height:300px;overflow-y:auto;padding-right:2px">
+    ${ROSTER.map(p => {
+      const grade = _adminGetGrade(p.victoires || 0);
+      return `<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;
+        background:var(--bg3);border:1px solid var(--border);border-radius:6px;cursor:pointer;user-select:none;
+        transition:border-color .15s" onmouseover="this.style.borderColor='rgba(245,200,66,.4)'" onmouseout="this.style.borderColor='var(--border)'">
+        <input type="checkbox" value="${p.id}" style="accent-color:var(--gold);width:16px;height:16px;flex-shrink:0">
+        <span style="font-size:1.2rem">${esc(p.avatar||'⚓')}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.pseudo||'—')}</div>
+          <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text3);letter-spacing:1px">${esc(grade)} · ${p.victoires||0}V · ${p.matchs_joues||0}M</div>
+        </div>
+      </label>`;
+    }).join('')}
+  </div>`;
+}
+
+function renderRoster() {
+  const el = document.getElementById('tab-roster');
+  if (!el) return;
+
+  let h = `<div class="card">
+    <div class="card-title">👥 Roster — Joueurs permanents</div>
+    <div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);letter-spacing:1px;line-height:1.9;margin-bottom:14px">
+      Chaque joueur a un lien <strong style="color:var(--cyan)">unique et permanent</strong> — distribué une seule fois, valide pour tous les tournois à venir.
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn btn-gold btn-sm" onclick="showAddRosterForm()">+ Nouveau joueur</button>
+      ${ROSTER.length ? `<button class="btn btn-cyan btn-sm" onclick="adminCopierTousLiensPermanents()">📋 Copier tous les liens</button>` : ''}
+    </div>
+    <div id="addRosterForm" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px">
+      <div class="form-group" style="margin-bottom:8px">
+        <div class="form-label">Pseudo du joueur</div>
+        <input type="text" id="newRosterPseudo" placeholder="Ex: Leblond" maxlength="20"
+          style="width:100%" onkeydown="if(event.key==='Enter')adminAjouterJoueurRoster()">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-gold btn-sm" onclick="adminAjouterJoueurRoster()">✓ Créer</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('addRosterForm').style.display='none'">Annuler</button>
+      </div>
+      <div id="rosterAddAlert" class="alert" style="margin-top:8px"></div>
+    </div>`;
+
+  if (!ROSTER.length) {
+    h += `<div style="text-align:center;padding:28px;color:var(--text3);font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:1.5px">
+      Aucun joueur enregistré.<br>
+      <span style="font-size:.52rem;line-height:2.2">Ajoutez vos joueurs pour générer leurs liens permanents.</span>
+    </div>`;
+  } else {
+    h += `<div style="display:flex;flex-direction:column;gap:6px">`;
+    ROSTER.forEach(p => {
+      const pUrl  = p.token ? `${BASE_URL_JEU}?p=${p.token}` : null;
+      const grade = _adminGetGrade(p.victoires || 0);
+      const ratio = p.matchs_joues > 0 ? Math.round((p.victoires/p.matchs_joues)*100)+'%' : '—';
+      h += `<div style="display:flex;align-items:center;gap:10px;padding:11px 12px;
+        background:var(--bg3);border:1px solid var(--border);border-radius:8px">
+        <div style="font-size:1.6rem;flex-shrink:0;text-align:center;width:32px">${esc(p.avatar||'⚓')}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px">
+            <span style="font-weight:700;font-size:.92rem">${esc(p.pseudo||'—')}</span>
+            <span style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--gold);letter-spacing:1px">${esc(grade)}</span>
+          </div>
+          <div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text3);letter-spacing:1px;margin-bottom:4px">
+            ${p.victoires||0}V &nbsp;·&nbsp; ${p.matchs_joues||0}M &nbsp;·&nbsp; ${ratio}
+          </div>
+          ${pUrl
+            ? `<div class="url-box" onclick="copyUrl('${esc(pUrl)}')" title="Cliquer pour copier" style="font-size:.62rem">${pUrl.length>58?pUrl.slice(0,58)+'…':pUrl}</div>`
+            : `<div style="font-size:.72rem;color:var(--red);font-family:'Orbitron',monospace">⚠ Token manquant — exécutez la migration SQL</div>`
+          }
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
+          ${pUrl ? `<button class="btn btn-outline btn-xs" onclick="copyUrl('${esc(pUrl)}')" title="Copier le lien permanent">📋</button>` : ''}
+          <button class="btn btn-danger btn-xs" onclick="adminSupprimerJoueurRoster('${p.id}','${esc(p.pseudo||'')}')" title="Supprimer ce joueur">🗑️</button>
+        </div>
+      </div>`;
+    });
+    h += `</div>`;
+  }
+
+  h += `</div>
+  <div class="card" style="border-color:rgba(245,200,66,.2)">
+    <div class="card-title" style="color:var(--gold);font-size:.85rem">🔧 Migration SQL requise</div>
+    <div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);letter-spacing:1px;line-height:2;margin-bottom:10px">
+      Si les tokens permanents n'apparaissent pas, exécutez cette migration dans Supabase SQL Editor :
+    </div>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-family:'Courier New',monospace;font-size:.72rem;color:var(--cyan);letter-spacing:.5px;word-break:break-all;cursor:pointer"
+      onclick="copyUrl(this.textContent.trim())" title="Cliquer pour copier">ALTER TABLE joueur_profils ADD COLUMN IF NOT EXISTS token text UNIQUE DEFAULT gen_random_uuid()::text;</div>
+    <div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text3);margin-top:6px;letter-spacing:.5px">Cliquez sur le bloc pour copier · Non-destructif · À exécuter une seule fois</div>
+  </div>`;
+
+  el.innerHTML = h;
+}
+
+function showAddRosterForm() {
+  const f = document.getElementById('addRosterForm');
+  if (f) { f.style.display = 'block'; setTimeout(()=>document.getElementById('newRosterPseudo')?.focus(), 100); }
+}
+
+async function adminAjouterJoueurRoster() {
+  const input  = document.getElementById('newRosterPseudo');
+  const alertEl = document.getElementById('rosterAddAlert');
+  const pseudo = (input?.value || '').trim();
+  if (pseudo.length < 2) { if(alertEl){alertEl.className='alert err show';alertEl.textContent='Pseudo trop court (min. 2 caractères).';} return; }
+
+  // Vérifier doublon
+  if (ROSTER.find(p => p.pseudo.toLowerCase() === pseudo.toLowerCase())) {
+    if(alertEl){alertEl.className='alert err show';alertEl.textContent='Ce pseudo est déjà dans le roster.';}
+    return;
+  }
+
+  if(alertEl){alertEl.className='alert info show';alertEl.textContent='Création…';}
+  try {
+    const { data: np, error } = await sbT.from('joueur_profils')
+      .insert({ pseudo, avatar: '⚓', drapeau: 'fr' }).select().single();
+    if (error) throw error;
+    ROSTER.push(np);
+    ROSTER.sort((a,b) => a.pseudo.localeCompare(b.pseudo));
+    if (input) input.value = '';
+    document.getElementById('addRosterForm').style.display = 'none';
+    if(alertEl) alertEl.style.display = 'none';
+    renderRoster();
+    // Rafraîchir aussi le sélecteur dans la config si visible
+    const sel = document.getElementById('rosterSelector');
+    if (sel) sel.innerHTML = renderRosterSelector();
+  } catch(e) {
+    if(alertEl){alertEl.className='alert err show';alertEl.textContent='Erreur : '+e.message;}
+  }
+}
+
+async function adminSupprimerJoueurRoster(profilId, pseudo) {
+  if (!confirm(`Supprimer "${pseudo}" du roster ?\n\nSes stats et son historique restent en base, mais son lien permanent sera invalide.`)) return;
+  try {
+    const { error } = await sbT.from('joueur_profils').delete().eq('id', profilId);
+    if (error) throw error;
+    ROSTER = ROSTER.filter(p => p.id !== profilId);
+    renderRoster();
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+  }
+}
+
+async function adminCopierTousLiensPermanents() {
+  const lignes = ROSTER
+    .filter(p => p.token)
+    .map(p => `${p.pseudo} : ${BASE_URL_JEU}?p=${p.token}`);
+  if (!lignes.length) { alert('Aucun token disponible — exécutez la migration SQL d\'abord.'); return; }
+  const texte = `LIENS PERMANENTS TOUCHÉ COULÉ\n${'─'.repeat(40)}\n${lignes.join('\n')}`;
+  await navigator.clipboard.writeText(texte);
+  const a = document.createElement('div');
+  a.className='alert ok show';
+  a.textContent='✓ Tous les liens permanents copiés !';
+  a.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:999;min-width:260px;text-align:center';
+  document.body.appendChild(a);
+  setTimeout(() => a.remove(), 2500);
 }
 
 /* ════════════════════════════════════════════════════════
