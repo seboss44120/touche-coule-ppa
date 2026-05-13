@@ -717,6 +717,17 @@ async function init(){
   await chargerProfilsJoueurs();
   buildNav();abonnerRealtime();
 
+  // Auto-refresh toutes les 5 minutes (resync données sans rechargement brutal)
+  setInterval(async()=>{
+    try{
+      const{data:matchsF}=await sb.from('tournoi_matchs').select('*')
+        .eq('tournoi_id',MOI.tournoi_id).or(`joueur1_id.eq.${MOI.id},joueur2_id.eq.${MOI.id}`).order('created_at');
+      if(matchsF)MATCHS=matchsF;
+      for(const m of MATCHS){await loadGrilles(m.id);await loadTourEnCours(m.id);}
+      buildNav();renderNav();renderTab(currentTab);
+    }catch(e){console.warn('auto-refresh error:',e);}
+  },5*60*1000);
+
   // Onglet par défaut
   if(MATCHS.length===0){
     currentTab='attente';
@@ -1647,8 +1658,9 @@ async function resoudreCoups_classique(matchId,tour,role){
   const g=GRILLES[matchId];
   if(!g?.mine||!g?.theirs){await loadGrilles(matchId);return;}
   const myShots=role===1?(tour.tirs_j1||[]):(tour.tirs_j2||[]);
-  const theirGrille=role===1?g.theirs:g.mine;
-  const myGrille=role===1?g.mine:g.theirs;
+  // FIX: g.mine/g.theirs sont toujours relatifs à MOI — pas de swap selon role
+  const theirGrille=g.theirs;
+  const myGrille=g.mine;
   const theirPl=theirGrille.grille_placement;
   const theirTirsAv=theirGrille.tirs_recus||[];
   const myPl=myGrille.grille_placement;
@@ -1661,7 +1673,7 @@ async function resoudreCoups_classique(matchId,tour,role){
   const res=processShots(myShots,theirPl,theirTirsAv,theirPl?.bonus_cells||[],theirPl?.malus_cells||[],turnNum,mineCl);
   const newTheirTirs=[...theirTirsAv,...res.history];
   await sb.from('tournoi_grilles').update({tirs_recus:newTheirTirs}).eq('id',theirGrille.id);
-  GRILLES[matchId][role===1?'theirs':'mine'].tirs_recus=newTheirTirs;
+  GRILLES[matchId].theirs.tirs_recus=newTheirTirs;
 
   const won=allSunk(theirPl,newTheirTirs,mode);
   if(won){
@@ -1728,8 +1740,9 @@ async function resoudreCoups_op_speciales(matchId,tour,role){
   const g=GRILLES[matchId];
   if(!g?.mine||!g?.theirs){await loadGrilles(matchId);return;}
   const myShots=role===1?(tour.tirs_j1||[]):(tour.tirs_j2||[]);
-  const theirGrille=role===1?g.theirs:g.mine;
-  const myGrille=role===1?g.mine:g.theirs;
+  // FIX: g.mine/g.theirs sont toujours relatifs à MOI — pas de swap selon role
+  const theirGrille=g.theirs;
+  const myGrille=g.mine;
   const theirPl=theirGrille.grille_placement;
   const theirTirsAv=theirGrille.tirs_recus||[];
   const myTirsAv=myGrille.tirs_recus||[];
@@ -1746,7 +1759,7 @@ async function resoudreCoups_op_speciales(matchId,tour,role){
   const res=processShots(myShots,theirPl,theirTirsAv,theirPl?.bonus_cells||[],theirPl?.malus_cells||[],turnNum,mineAdversaire);
   const newTheirTirs=[...theirTirsAv,...res.history];
   await sb.from('tournoi_grilles').update({tirs_recus:newTheirTirs}).eq('id',theirGrille.id);
-  GRILLES[matchId][role===1?'theirs':'mine'].tirs_recus=newTheirTirs;
+  GRILLES[matchId].theirs.tirs_recus=newTheirTirs;
 
   // Sonar : désactiver après ce tour
   if(ops[myOpsKey]?.sonar_active){
