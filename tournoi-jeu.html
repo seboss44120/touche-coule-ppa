@@ -3198,6 +3198,14 @@ function abonnerRealtime(){
       buildNav();renderNav();if(currentTab==='match-'+matchId)renderTab(currentTab);
     }
   }).subscribe();
+
+  // Détection suppression/annulation du tournoi par l'admin
+  sb.channel('jeu-tournoi').on('postgres_changes',{event:'DELETE',schema:'public',table:'tournois',filter:`id=eq.${MOI.tournoi_id}`},()=>{
+    TOURNOI=null;MATCHS=[];GRILLES={};TOURS={};
+    const profil=MON_PROFIL||{pseudo:MOI?.nom||'?',victoires:0,matchs_joues:0,avatar:'⚓'};
+    showToastPhase('🏳️ Le tournoi a été annulé','var(--red)');
+    setTimeout(()=>renderAttenteProchain(profil),1200);
+  }).subscribe();
 }
 
 /* ══ BOOT ══ */
