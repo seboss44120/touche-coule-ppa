@@ -990,8 +990,19 @@ function renderPlacement(match,el){
 
   const modePl=getModeData(match);
   const mBadgePl=modePl?`<span style="font-family:'Orbitron',monospace;font-size:.48rem;padding:2px 7px;border-radius:10px;background:rgba(0,0,0,.3);border:1px solid ${modePl.color};color:${modePl.color};margin-left:8px;vertical-align:middle">${modePl.icon} ${modePl.label}</span>`:'';
+
+  // Bandeau mode de jeu (navires requis)
+  const modeBannerPl = modePl ? `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(0,0,0,.2);border:1px solid ${modePl.color}55;border-radius:6px;margin-bottom:12px">
+    <span style="font-size:1.4rem;flex-shrink:0">${modePl.icon}</span>
+    <div>
+      <div style="font-family:'Orbitron',monospace;font-size:.55rem;color:${modePl.color};letter-spacing:1.5px">${modePl.label}</div>
+      <div style="font-size:.8rem;color:var(--text2);margin-top:2px">Navires à placer : <strong style="color:var(--text)">${modeShipKeys.map(k=>SHIPS[k].icon+' '+SHIPS[k].name).join(' · ')}</strong></div>
+    </div>
+  </div>` : '';
+
   el.innerHTML=`<div class="card">
     <div class="card-title">⚓ Déploiement — vs ${esc(getAdvNom(match))}${mBadgePl}</div>
+    ${modeBannerPl}
     ${stepBar}
     <div style="color:var(--text2);font-size:.88rem;margin-bottom:12px">${instrMap[pl.step]||''}</div>
     ${shipsHtml}
