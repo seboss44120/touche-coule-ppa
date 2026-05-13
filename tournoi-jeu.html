@@ -341,7 +341,7 @@ function getMode(m){return(m?.mode_jeu&&MODES[m.mode_jeu])?m.mode_jeu:null;}
 function getModeData(m){const k=getMode(m);return k?MODES[k]:null;}
 function getShipKeys(m){const d=getModeData(m);return d?d.shipKeys:SHIP_KEYS;}
 // Rush et dérivés : jeu indépendant (pas d'attente adversaire) — op_speciales est tour-par-tour
-function isRushLike(m){const k=getMode(m);return k==='rush'||k==='mort_subite'||k==='petite_victime';}
+function isRushLike(m){const k=getMode(m);return k==='rush'||k==='mort_subite';}
 
 let MOI=null,TOURNOI=null,MATCHS=[],GRILLES={},TOURS={},ADVERSAIRES={};
 let POULE_JOUEURS=[],POULE_MATCHS=[],currentTab=null;
@@ -606,10 +606,14 @@ function getShipCoords(start,size,orient){
 function isItMyTurn(m){
   if(m.statut!=='en_cours')return false;
   const mode=getMode(m);
-  if(mode==='classique'||mode==='op_speciales'){
+  if(mode==='classique'||mode==='op_speciales'||mode==='petite_victime'){
     const t=TOURS[m.id];
     if(!t)return getMyRole(m)===1; // J1 ouvre
     const phase=t.classique_phase||'j1_turn';
+    // petite_victime : J1 ne joue que si !soumis_j1, J2 que si J1 a soumis et !soumis_j2
+    if(mode==='petite_victime'){
+      return(getMyRole(m)===1&&phase==='j1_turn'&&!(t?.soumis_j1))||(getMyRole(m)===2&&phase==='j2_turn'&&!(t?.soumis_j2));
+    }
     return(getMyRole(m)===1&&phase==='j1_turn')||(getMyRole(m)===2&&phase==='j2_turn');
   }
   if(isRushLike(m)){
@@ -1223,8 +1227,8 @@ async function validerPlacement(matchId){
     const matchV=MATCHS.find(m=>m.id===matchId);
     const modeV=getMode(matchV);
     await sb.from('tournoi_matchs').update({statut:'en_cours'}).eq('id',matchId);
-    if(modeV==='classique'||modeV==='op_speciales'){
-      // Classique / Op Spéciales : tour initial avec phase j1_turn
+    if(modeV==='classique'||modeV==='op_speciales'||modeV==='petite_victime'){
+      // Classique / Op Spéciales / Petite Victime : tour initial avec phase j1_turn
       await sb.from('tournoi_tours').insert({match_id:matchId,numero_tour:1,soumis_j1:false,soumis_j2:false,statut:'en_cours',classique_phase:'j1_turn'});
     } else if(!modeV){
       // Legacy (null) : comportement d'origine
@@ -1256,12 +1260,12 @@ function renderBataille(match,el){
 
   // Statut phrase Classique
   let statusExtra='';
-  if(mode==='classique'||mode==='op_speciales'){
+  if(mode==='classique'||mode==='op_speciales'||mode==='petite_victime'){
     const t=TOURS[match.id];
     const phase=t?.classique_phase||'j1_turn';
     const whoseTurn=(phase==='j1_turn')?match.joueur1_id:match.joueur2_id;
     const turnName=whoseTurn===MOI.id?'ton tour':'le tour de '+esc(getAdvNom(match));
-    const modeLabel=mode==='op_speciales'?'🎖️ Op. Spéciales':'⚓ Classique';
+    const modeLabel=mode==='op_speciales'?'🎖️ Op. Spéciales':mode==='petite_victime'?'🚤 Petite Victime':'⚓ Classique';
     statusExtra=`<div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);margin-top:4px">${modeLabel} · C'est ${turnName}</div>`;
   }
 
@@ -1408,6 +1412,7 @@ async function soumettreCoups(matchId){
   const mode=getMode(match);
   if(mode==='classique'){await soumettreCoups_classique(matchId);return;}
   if(mode==='op_speciales'){await soumettreCoups_op_speciales(matchId);return;}
+  if(mode==='petite_victime'){await soumettreCoups_petite_victime(matchId);return;}
   if(isRushLike(match)){await soumettreCoups_rush(matchId);return;}
   // Legacy (null mode) : comportement d'origine
   await soumettreCoups_legacy(matchId);
@@ -1439,6 +1444,58 @@ async function soumettreCoups_legacy(matchId){
   const advSub=role===1?updTour.soumis_j2:updTour.soumis_j1;
   if(advSub)await resoudreTour(matchId,updTour);
   else{await loadGrilles(matchId);renderTab(currentTab);}
+}
+
+
+/* ══ PETITE VICTIME : J1 soumet → attend J2 → résolution simultanée ══ */
+async function soumettreCoups_petite_victime(matchId){
+  const match=MATCHS.find(m=>m.id===matchId),shots=_shots[matchId]||[];
+  if(shots.length<3)return;
+  const role=getMyRole(match);
+  const tf=role===1?'tirs_j1':'tirs_j2';
+  const sf=role===1?'soumis_j1':'soumis_j2';
+
+  await loadTourEnCours(matchId);
+  let tour=TOURS[matchId];
+  let updTour;
+
+  if(!tour){
+    // Créer le tour initial (uniquement J1)
+    const{data:nt,error}=await sb.from('tournoi_tours').insert({
+      match_id:matchId,numero_tour:1,[tf]:shots,[sf]:true,
+      statut:'en_cours',classique_phase:'j2_turn'
+    }).select().single();
+    if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+    updTour=nt;
+  }else{
+    if(role===1){
+      // J1 soumet en premier → passer la main à J2, PAS de résolution
+      const{data:ut,error}=await sb.from('tournoi_tours')
+        .update({[tf]:shots,[sf]:true,classique_phase:'j2_turn'})
+        .eq('id',tour.id).select().single();
+      if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+      updTour=ut;
+    }else{
+      // J2 soumet → les deux ont joué → résolution simultanée
+      const{data:ut,error}=await sb.from('tournoi_tours')
+        .update({[tf]:shots,[sf]:true})
+        .eq('id',tour.id).select().single();
+      if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+      updTour=ut;
+      TOURS[matchId]=updTour;_shots[matchId]=[];
+      // Vérifier doublon (J1 pourrait avoir résolu via realtime)
+      const{data:fresh}=await sb.from('tournoi_tours').select('*').eq('id',updTour.id).maybeSingle();
+      if(fresh&&fresh.statut==='en_cours'){
+        await resoudreTour(matchId,fresh);
+      }else{
+        await loadGrilles(matchId);buildNav();renderNav();renderTab(currentTab);
+      }
+      return;
+    }
+  }
+
+  TOURS[matchId]=updTour;_shots[matchId]=[];
+  await loadGrilles(matchId);buildNav();renderNav();renderTab(currentTab);
 }
 
 /* ══ RUSH : résolution immédiate par joueur ══ */
@@ -1791,8 +1848,9 @@ async function resoudreTour(matchId,tour){
     let vainqueur_id=null,pts_j1=0,pts_j2=0;
     if(j1Sunk&&j2Sunk){
       // Égalité simultanée → départage bonus/malus nets
-      const scoreJ1=new_tr_j2.reduce((s,t)=>s+(t.pts||0),0)+(res_j1.bonusPts-res_j1.malusPts);
-      const scoreJ2=new_tr_j1.reduce((s,t)=>s+(t.pts||0),0)+(res_j2.bonusPts-res_j2.malusPts);
+      // Départage égalité : total des pts (navires+bonus-malus) — déjà inclus dans les tirs_recus
+      const scoreJ1=new_tr_j2.reduce((s,t)=>s+(t.pts||0),0);
+      const scoreJ2=new_tr_j1.reduce((s,t)=>s+(t.pts||0),0);
       if(scoreJ1!==scoreJ2){
         vainqueur_id=scoreJ1>scoreJ2?match.joueur1_id:match.joueur2_id;
         pts_j1=vainqueur_id===match.joueur1_id?3:0;
@@ -2053,14 +2111,16 @@ function showUnlockToast(msg,color){
 
 /* ══ VOTE REVANCHE / BELLE ══ */
 function renderVoteRevanche(match, role){
-  // Pas d'égalité → rien
-  if(match.vainqueur_id!==null&&match.vainqueur_id!==undefined)return'';
   const partieNum=match.partie_numero||1;
-  // Belle = 3ème partie max → si déjà à 3, match nul définitif
-  if(partieNum>=3)return`<div style="margin:16px 0;padding:12px;background:rgba(0,212,255,.07);border:1px solid var(--border);border-radius:8px;text-align:center">
-    <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2);letter-spacing:1.5px">MATCH NUL DÉFINITIF</div>
-    <div style="font-size:.85rem;color:var(--text2);margin-top:4px">Après 3 parties serrées — 1 point chacun.</div>
-  </div>`;
+
+  // Après belle (partie 3) — série définitivement terminée
+  if(partieNum>=3){
+    const draw3=!match.vainqueur_id;
+    return`<div style="margin:16px 0;padding:12px;background:rgba(0,212,255,.07);border:1px solid var(--border);border-radius:8px;text-align:center">
+      <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2);letter-spacing:1.5px">${draw3?'⚖️ MATCH NUL DÉFINITIF':'⚓ SÉRIE TERMINÉE'}</div>
+      <div style="font-size:.85rem;color:var(--text2);margin-top:4px">${draw3?'Après 3 parties serrées — 1 point chacun.':'La belle a tranché — la série est close.'}</div>
+    </div>`;
+  }
 
   const myVote  = role===1 ? match.vote_revanche_j1 : match.vote_revanche_j2;
   const advVote = role===1 ? match.vote_revanche_j2 : match.vote_revanche_j1;
@@ -2068,6 +2128,8 @@ function renderVoteRevanche(match, role){
   const label   = partieNum===1?'REVANCHE':'⚡ BELLE';
   const labelFull= partieNum===1?'une revanche':'la belle (partie 3)';
   const matchId = match.id;
+  const won=match.vainqueur_id===MOI.id;
+  const draw=!match.vainqueur_id;
 
   // Les deux ont voté oui → création en cours
   if(myVote===true&&advVote===true)return`<div style="margin:16px 0;padding:12px;background:rgba(0,232,120,.07);border:1px solid var(--green);border-radius:8px;text-align:center">
@@ -2078,28 +2140,43 @@ function renderVoteRevanche(match, role){
   // J'ai voté oui, j'attends l'adversaire
   if(myVote===true)return`<div style="margin:16px 0;padding:12px;background:rgba(245,200,66,.07);border:1px solid rgba(245,200,66,.4);border-radius:8px;text-align:center">
     <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--gold);letter-spacing:1.5px">⏳ EN ATTENTE</div>
-    <div style="font-size:.85rem;color:var(--text2);margin-top:4px">Tu veux ${labelFull}.<br><strong style="color:var(--text)">${advNom}</strong> n'a pas encore répondu.</div>
+    <div style="font-size:.85rem;color:var(--text2);margin-top:4px">Tu as demandé ${labelFull}.<br><strong style="color:var(--text)">${advNom}</strong> n'a pas encore répondu.</div>
   </div>`;
 
   // J'ai voté non
   if(myVote===false)return`<div style="margin:16px 0;padding:12px;background:rgba(255,68,85,.06);border:1px solid rgba(255,68,85,.25);border-radius:8px;text-align:center">
-    <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2);letter-spacing:1.5px">REVANCHE REFUSÉE</div>
-    <div style="font-size:.85rem;color:var(--text2);margin-top:4px">1 point chacun — match nul.</div>
+    <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2);letter-spacing:1.5px">SÉRIE TERMINÉE</div>
+    <div style="font-size:.85rem;color:var(--text2);margin-top:4px">Tu as décliné la ${label.toLowerCase()} — la série s'arrête ici.</div>
   </div>`;
 
   // L'adversaire a refusé
   if(advVote===false)return`<div style="margin:16px 0;padding:12px;background:rgba(255,68,85,.06);border:1px solid rgba(255,68,85,.25);border-radius:8px;text-align:center">
-    <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2);letter-spacing:1.5px">REVANCHE REFUSÉE</div>
-    <div style="font-size:.85rem;color:var(--text2);margin-top:4px"><strong style="color:var(--text)">${advNom}</strong> a décliné — 1 point chacun.</div>
+    <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2);letter-spacing:1.5px">SÉRIE TERMINÉE</div>
+    <div style="font-size:.85rem;color:var(--text2);margin-top:4px"><strong style="color:var(--text)">${advNom}</strong> a décliné — la série s'arrête ici.</div>
   </div>`;
 
-  // Ni l'un ni l'autre n'a voté → proposer
+  // L'adversaire a demandé la revanche, moi pas encore répondu
+  if(advVote===true&&(myVote===null||myVote===undefined)){
+    return`<div style="margin:16px 0;padding:14px;background:rgba(245,200,66,.07);border:1px solid var(--gold);border-radius:10px;text-align:center">
+      <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--gold);letter-spacing:2px;margin-bottom:4px">🔄 ${label} PROPOSÉE</div>
+      <div style="font-size:.88rem;color:var(--text2);margin-bottom:14px"><strong style="color:var(--text)">${advNom}</strong> veut jouer ${labelFull}.<br><span style="font-size:.75rem;color:var(--text3)">Acceptes-tu ?</span></div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-gold" onclick="voterRevanche('${matchId}',true)">✓ OUI — ${label}</button>
+        <button class="btn btn-outline btn-sm" onclick="voterRevanche('${matchId}',false)">✖ Non merci</button>
+      </div>
+    </div>`;
+  }
+
+  // Ni l'un ni l'autre n'a voté — proposer (victoire, défaite ou égalité)
+  const resultContext=draw
+    ?'🤝 Égalité — envie de rejouer ?'
+    :won?`🏆 Victoire — défie à nouveau ${advNom} ?`:`💀 Défaite — envie de te venger ?`;
   return`<div style="margin:16px 0;padding:14px;background:rgba(0,212,255,.05);border:1px solid var(--cyan);border-radius:10px;text-align:center">
-    <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--cyan);letter-spacing:2px;margin-bottom:4px">🤝 ÉGALITÉ PARFAITE</div>
-    <div style="font-size:.88rem;color:var(--text2);margin-bottom:14px">Veux-tu jouer ${labelFull} contre <strong style="color:var(--text)">${advNom}</strong> ?<br><span style="font-size:.75rem;color:var(--text3)">Les deux joueurs doivent accepter.</span></div>
+    <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--cyan);letter-spacing:2px;margin-bottom:4px">${resultContext}</div>
+    <div style="font-size:.88rem;color:var(--text2);margin-bottom:14px">Veux-tu jouer ${labelFull} contre <strong style="color:var(--text)">${advNom}</strong> ?<br><span style="font-size:.75rem;color:var(--text3)">L'adversaire devra accepter.</span></div>
     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
       <button class="btn btn-cyan" onclick="voterRevanche('${matchId}',true)">🔄 OUI — ${label}</button>
-      <button class="btn btn-outline btn-sm" onclick="voterRevanche('${matchId}',false)">✖ Non merci — 1pt</button>
+      <button class="btn btn-outline btn-sm" onclick="voterRevanche('${matchId}',false)">✖ Non merci</button>
     </div>
   </div>`;
 }
