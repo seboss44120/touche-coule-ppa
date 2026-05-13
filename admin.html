@@ -351,7 +351,8 @@ let _tourSel       = {}; // duelId → selected team num for manual entry
 let TOURNOI        = null;
 let TOURNOI_JOUEURS = [];
 let ROSTER         = []; // joueur_profils — joueurs permanents
-let _nbJoueursSelect = null;
+let _nbJoueursSelect  = null;
+let _tournoiModeJeu   = null; // mode de jeu sélectionné avant lancement tournoi
 
 /* ════════════════════════════════════════════════════════
    HELPERS
@@ -1534,12 +1535,32 @@ function renderTournoi() {
   const cible      = TOURNOI.nb_joueurs_cible;
   const pct        = Math.round((inscrits.length / cible) * 100);
   const statut     = TOURNOI.statut;
-  const peutLancer = inscrits.length >= 2;
-  const complet    = inscrits.length === cible;
+  const modeSelectionne = TOURNOI.mode_jeu || _tournoiModeJeu;
+  const peutLancer      = inscrits.length >= 2 && !!modeSelectionne;
+  const complet         = inscrits.length === cible;
 
   let h = '';
 
   if (statut === 'inscription') {
+    // ── Sélecteur de mode de jeu (construit avant le template) ──
+    const MODES_DESCS_T = {
+      rush:           'Résolution immédiate — chaque joueur tire indépendamment.',
+      classique:      'Tour alterné : J1 tire, puis J2, à chaque manche.',
+      mort_subite:    'Le premier navire coulé met fin au match.',
+      petite_victime: 'Un seul navire à placer : le Torpilleur (2 cases).',
+      op_speciales:   'Pouvoirs spéciaux disponibles : Sonar, Espion, Kamikaze.',
+    };
+    let modeHtml = `<div style="margin-bottom:14px">
+      <div class="stitle" style="margin-bottom:8px">⚙️ MODE DE JEU
+        <span style="color:var(--red);font-family:'Orbitron',monospace;font-size:.48rem;letter-spacing:1px"> — REQUIS</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">`;
+    Object.entries(MODES_ADMIN).forEach(([key, m]) => {
+      const sel = modeSelectionne === key;
+      modeHtml += `<label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;background:var(--bg3);border:1px solid ${sel ? m.color : 'var(--border)'};border-radius:6px;transition:border-color .15s" onclick="selectModeJeuTournoi('${key}')"><input type="radio" name="modeJeuTournoi" value="${key}" ${sel?'checked':''} style="margin-top:3px;accent-color:${m.color};pointer-events:none"><span><strong style="color:${m.color}">${m.icon} ${m.label}</strong><br><span style="font-size:.78rem;color:var(--text2)">${MODES_DESCS_T[key]||''}</span></span></label>`;
+    });
+    modeHtml += `</div></div>`;
+
     // ── Card inscription ──
     h += `<div class="card">
       <div class="card-title">📡 Statut du tournoi</div>
@@ -1555,10 +1576,11 @@ function renderTournoi() {
       <div style="background:var(--border);border-radius:4px;height:4px;margin-bottom:14px;overflow:hidden">
         <div style="height:100%;width:${pct}%;background:var(--cyan);border-radius:4px;transition:width .5s;box-shadow:0 0 8px var(--cyan)"></div>
       </div>
+      ${modeHtml}
       <div id="alertTournoi" class="alert" style="margin-bottom:8px"></div>
       <button class="btn btn-gold" style="width:100%" ${peutLancer?'':'disabled'}
         onclick="adminLancerTournoi()">
-        ${complet ? '⚓ LANCER LE TOURNOI' : `⚓ LANCER QUAND MÊME (${inscrits.length}/${cible})`}
+        ${!modeSelectionne ? '⚙️ SÉLECTIONNEZ UN MODE DE JEU' : complet ? '⚓ LANCER LE TOURNOI' : `⚓ LANCER QUAND MÊME (${inscrits.length}/${cible})`}
       </button>
       <div style="margin-top:10px;border:1px solid #8b0000;border-radius:6px;overflow:hidden">
         <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 12px;background:rgba(139,0,0,.15);user-select:none"
@@ -1795,8 +1817,18 @@ function roundRobin(joueurs){
 }
 
 async function adminLancerTournoi() {
+  const modeJeu  = TOURNOI.mode_jeu || _tournoiModeJeu;
   const inscrits = TOURNOI_JOUEURS.filter(j=>!!j.nom);
-  if(!confirm(`Lancer le tournoi avec ${inscrits.length} joueur(s) ?`))return;
+
+  // Garde-fou mode
+  if (!modeJeu) {
+    const alertEl=document.getElementById('alertTournoi');
+    if(alertEl){alertEl.className='alert err show';alertEl.textContent='Sélectionnez un mode de jeu avant de lancer.';}
+    return;
+  }
+
+  const modeLabel = MODES_ADMIN[modeJeu]?.label || modeJeu;
+  if(!confirm(`Lancer le tournoi avec ${inscrits.length} joueur(s) en mode ${modeLabel} ?`))return;
   const alertEl=document.getElementById('alertTournoi');
   if(alertEl){alertEl.className='alert info show';alertEl.textContent='Tirage en cours…';}
 
@@ -1810,7 +1842,8 @@ async function adminLancerTournoi() {
       for(const [j1,j2] of roundRobin(reels)){
         const {data:m}=await sbT.from('tournoi_matchs').insert({
           tournoi_id:TOURNOI.id,phase:'poule',poule_id:pi+1,
-          joueur1_id:j1.id,joueur2_id:j2.id,statut:'placement'
+          joueur1_id:j1.id,joueur2_id:j2.id,statut:'placement',
+          mode_jeu:modeJeu
         }).select().single();
         if(m){
           await sbT.from('tournoi_grilles').insert([
@@ -1828,6 +1861,16 @@ async function adminLancerTournoi() {
   }catch(e){
     if(alertEl){alertEl.className='alert err show';alertEl.textContent='Erreur : '+e.message;}
   }
+}
+
+/* Sélection du mode de jeu (phase inscription) */
+function selectModeJeuTournoi(mode) {
+  _tournoiModeJeu  = mode;
+  TOURNOI.mode_jeu = mode; // local — persiste tant que la page est ouverte
+  // Tentative de persistance DB (gracieuse si colonne absente)
+  sbT.from('tournois').update({ mode_jeu: mode }).eq('id', TOURNOI.id)
+    .then(({ error }) => { if (error) console.warn('mode_jeu non persisté:', error.message); });
+  renderTournoi();
 }
 
 async function adminRegenererMatchs(){
@@ -1863,7 +1906,8 @@ async function adminRegenererMatchs(){
       for(const[j1,j2] of roundRobin(reels)){
         const{data:m,error:e2}=await sbT.from('tournoi_matchs').insert({
           tournoi_id:TOURNOI.id,phase:'poule',poule_id:pi+1,
-          joueur1_id:j1.id,joueur2_id:j2.id,statut:'placement'
+          joueur1_id:j1.id,joueur2_id:j2.id,statut:'placement',
+          mode_jeu:TOURNOI.mode_jeu||_tournoiModeJeu||null
         }).select().single();
         if(e2){showErr('Erreur match : '+e2.message);return;}
         if(m){
