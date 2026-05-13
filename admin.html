@@ -2073,9 +2073,9 @@ async function renderStatutTournoi(tournoiId) {
         if(pNum>1) scTxt += ` <span style="font-family:'Orbitron',monospace;font-size:.42rem;opacity:.7">P${pNum}</span>`;
         // Sous-label statut série
         let serieLabel = '';
-        if(done&&pNum===1&&revancheAsked&&!revancheRefused) serieLabel='<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--gold);letter-spacing:1px;margin-top:1px">Revanche demandée</div>';
-        else if(done&&pNum===2&&revancheAsked&&!revancheRefused) serieLabel='<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--orange);letter-spacing:1px;margin-top:1px">Belle demandée</div>';
-        else if(done&&pNum>=3) serieLabel='<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--text3);letter-spacing:1px;margin-top:1px">Terminé définitivement</div>';
+        if(done&&pNum===1&&revancheAsked&&!revancheRefused) serieLabel=`<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--gold);letter-spacing:1px;margin-top:1px">Revanche demandée</div>`;
+        else if(done&&pNum===2&&revancheAsked&&!revancheRefused) serieLabel=`<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--orange);letter-spacing:1px;margin-top:1px">Belle demandée</div>`;
+        else if(done&&pNum>=3) serieLabel=`<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--text3);letter-spacing:1px;margin-top:1px">Terminé définitivement</div>`;
         html += `<div class="ts-mrow">
           <span class="ts-mp left ${j1w?'win':done?'lose':''}">${n1}</span>
           <span class="ts-sc ${scCls}" style="text-align:center">${scTxt}${serieLabel}</span>
