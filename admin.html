@@ -1932,7 +1932,17 @@ async function adminRegenererMatchs(){
 
 async function adminAnnulerTournoi(){
   if(!confirm('Supprimer ce tournoi définitivement ?'))return;
-  await sbT.from('tournois').delete().eq('id',TOURNOI.id);
+  const tid=TOURNOI.id;
+  // Supprimer dans l'ordre des dépendances FK pour éviter les violations de contraintes
+  const{data:matchs}=await sbT.from('tournoi_matchs').select('id').eq('tournoi_id',tid);
+  const mids=(matchs||[]).map(m=>m.id);
+  if(mids.length){
+    await sbT.from('tournoi_tours').delete().in('match_id',mids);
+    await sbT.from('tournoi_grilles').delete().in('match_id',mids);
+    await sbT.from('tournoi_matchs').delete().eq('tournoi_id',tid);
+  }
+  await sbT.from('tournoi_joueurs').delete().eq('tournoi_id',tid);
+  await sbT.from('tournois').delete().eq('id',tid);
   TOURNOI=null;TOURNOI_JOUEURS=[];
   currentTab='config';buildNav();renderTab('config');
 }
