@@ -442,6 +442,10 @@ async function init() {
   await loadAllData();
   setupRealtime();
   startGrillesPolling();
+
+  // Auto-refresh toutes les 5 minutes
+  setInterval(async()=>{ try{ await doRefresh(); }catch(e){ console.warn('auto-refresh admin error:',e); } }, 5*60*1000);
+
   buildNav();
   renderTab(currentTab);
 }
