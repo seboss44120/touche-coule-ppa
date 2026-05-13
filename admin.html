@@ -567,6 +567,20 @@ function setupRealtime() {
         if (currentTab === 'tournoi') renderTournoi();
       })
       .subscribe();
+
+    // Matchs — mise à jour temps réel (statut, score, votes revanche)
+    sbT.channel('admin-tournoi-matchs')
+      .on('postgres_changes', {
+        event:'UPDATE', schema:'public', table:'tournoi_matchs',
+        filter:`tournoi_id=eq.${TOURNOI.id}`
+      }, async () => {
+        updateHeaderStatus();
+        if (currentTab === 'tournoi') {
+          await renderStatutTournoi(TOURNOI.id);
+          adminChargerMatchsUrgence();
+        }
+      })
+      .subscribe();
   }
 }
 
@@ -1994,7 +2008,7 @@ async function renderStatutTournoi(tournoiId) {
   if (!container) return;
 
   const { data: matchs } = await sbT.from('tournoi_matchs')
-    .select('id,phase,poule_id,joueur1_id,joueur2_id,statut,vainqueur_id,pts_j1,pts_j2')
+    .select('id,phase,poule_id,joueur1_id,joueur2_id,statut,vainqueur_id,pts_j1,pts_j2,partie_numero,vote_revanche_j1,vote_revanche_j2')
     .eq('tournoi_id', tournoiId)
     .order('created_at');
 
@@ -2049,11 +2063,22 @@ async function renderStatutTournoi(tournoiId) {
         const live = m.statut === 'en_cours';
         const j1w  = done && m.vainqueur_id === m.joueur1_id;
         const j2w  = done && m.vainqueur_id === m.joueur2_id;
-        const scCls = done ? 'done' : live ? 'live' : '';
-        const scTxt = done ? `${m.pts_j1 ?? 0} – ${m.pts_j2 ?? 0}` : live ? 'en cours' : '–';
+        // Statut série revanche
+        const pNum = m.partie_numero||1;
+        const v1 = m.vote_revanche_j1, v2 = m.vote_revanche_j2;
+        const revancheAsked = done && (v1===true||v2===true) && v1!==false && v2!==false;
+        const revancheRefused = done && (v1===false||v2===false);
+        let scCls = done ? 'done' : live ? 'live' : '';
+        let scTxt = done ? `${m.pts_j1??0}–${m.pts_j2??0}` : live ? 'en cours' : '–';
+        if(pNum>1) scTxt += ` <span style="font-family:'Orbitron',monospace;font-size:.42rem;opacity:.7">P${pNum}</span>`;
+        // Sous-label statut série
+        let serieLabel = '';
+        if(done&&pNum===1&&revancheAsked&&!revancheRefused) serieLabel='<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--gold);letter-spacing:1px;margin-top:1px">Revanche demandée</div>';
+        else if(done&&pNum===2&&revancheAsked&&!revancheRefused) serieLabel='<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--orange);letter-spacing:1px;margin-top:1px">Belle demandée</div>';
+        else if(done&&pNum>=3) serieLabel='<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--text3);letter-spacing:1px;margin-top:1px">Terminé définitivement</div>';
         html += `<div class="ts-mrow">
           <span class="ts-mp left ${j1w?'win':done?'lose':''}">${n1}</span>
-          <span class="ts-sc ${scCls}">${scTxt}</span>
+          <span class="ts-sc ${scCls}" style="text-align:center">${scTxt}${serieLabel}</span>
           <span class="ts-mp right ${j2w?'win':done?'lose':''}">${n2}</span>
         </div>`;
       }
@@ -2195,14 +2220,18 @@ async function adminChargerMatchsUrgence(){
           <button class="btn btn-sm btn-gold" onclick="adminDefinirMode('${m.id}')">✓ Appliquer</button>
         </span>`;
 
-    // Statut du tour en classique
+    // Statut du tour en classique / petite_victime
     let tourLabel='';
     if(tour&&m.statut==='en_cours'){
       const mode=m.mode_jeu||'rush';
-      if(mode==='classique'){
+      if(mode==='classique'||mode==='petite_victime'){
         const ph=tour.classique_phase||'j1_turn';
         const quiJoue=ph==='j1_turn'?j1:j2;
-        tourLabel=`🎯 <strong>${quiJoue}</strong> doit tirer (Classique · Tour ${tour.numero_tour})`;
+        const mLbl=mode==='petite_victime'?'🚤 Petite Victime':'⚓ Classique';
+        // En petite_victime : si J1 a soumis mais pas J2, phase=j2_turn mais résolution pas encore faite
+        const soumis1=tour.soumis_j1,soumis2=tour.soumis_j2;
+        if(mode==='petite_victime'&&soumis1&&!soumis2) tourLabel=`⏳ ${j1} a tiré — en attente de <strong>${j2}</strong> (${mLbl} · Tour ${tour.numero_tour})`;
+        else tourLabel=`🎯 <strong>${quiJoue}</strong> doit tirer (${mLbl} · Tour ${tour.numero_tour})`;
       }else{
         if(!tour.soumis_j1&&!tour.soumis_j2) tourLabel=`⏳ En attente de <strong>${j1}</strong> et <strong>${j2}</strong>`;
         else if(tour.soumis_j1&&!tour.soumis_j2) tourLabel=`⏳ En attente de <strong>${j2}</strong> — ${j1} a joué`;
