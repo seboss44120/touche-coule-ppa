@@ -340,8 +340,8 @@ const MODES={
 function getMode(m){return(m?.mode_jeu&&MODES[m.mode_jeu])?m.mode_jeu:null;}
 function getModeData(m){const k=getMode(m);return k?MODES[k]:null;}
 function getShipKeys(m){const d=getModeData(m);return d?d.shipKeys:SHIP_KEYS;}
-// Rush et dérivés : jeu indépendant (pas d'attente adversaire)
-function isRushLike(m){const k=getMode(m);return k==='rush'||k==='mort_subite'||k==='petite_victime'||k==='op_speciales';}
+// Rush et dérivés : jeu indépendant (pas d'attente adversaire) — op_speciales est tour-par-tour
+function isRushLike(m){const k=getMode(m);return k==='rush'||k==='mort_subite'||k==='petite_victime';}
 
 let MOI=null,TOURNOI=null,MATCHS=[],GRILLES={},TOURS={},ADVERSAIRES={};
 let POULE_JOUEURS=[],POULE_MATCHS=[],currentTab=null;
@@ -606,7 +606,7 @@ function getShipCoords(start,size,orient){
 function isItMyTurn(m){
   if(m.statut!=='en_cours')return false;
   const mode=getMode(m);
-  if(mode==='classique'){
+  if(mode==='classique'||mode==='op_speciales'){
     const t=TOURS[m.id];
     if(!t)return getMyRole(m)===1; // J1 ouvre
     const phase=t.classique_phase||'j1_turn';
@@ -1223,14 +1223,14 @@ async function validerPlacement(matchId){
     const matchV=MATCHS.find(m=>m.id===matchId);
     const modeV=getMode(matchV);
     await sb.from('tournoi_matchs').update({statut:'en_cours'}).eq('id',matchId);
-    if(modeV==='classique'){
-      // Classique : tour initial avec phase j1_turn
+    if(modeV==='classique'||modeV==='op_speciales'){
+      // Classique / Op Spéciales : tour initial avec phase j1_turn
       await sb.from('tournoi_tours').insert({match_id:matchId,numero_tour:1,soumis_j1:false,soumis_j2:false,statut:'en_cours',classique_phase:'j1_turn'});
     } else if(!modeV){
       // Legacy (null) : comportement d'origine
       await sb.from('tournoi_tours').insert({match_id:matchId,numero_tour:1,soumis_j1:false,soumis_j2:false,statut:'en_cours'});
     }
-    // Rush et dérivés : pas de tour partagé
+    // Rush et dérivés (hors op_speciales) : pas de tour partagé
     const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)MATCHS[idx].statut='en_cours';
     await loadTourEnCours(matchId);
     if(modeV==='op_speciales') await initOpState(matchId);
@@ -1256,12 +1256,13 @@ function renderBataille(match,el){
 
   // Statut phrase Classique
   let statusExtra='';
-  if(mode==='classique'){
+  if(mode==='classique'||mode==='op_speciales'){
     const t=TOURS[match.id];
     const phase=t?.classique_phase||'j1_turn';
     const whoseTurn=(phase==='j1_turn')?match.joueur1_id:match.joueur2_id;
     const turnName=whoseTurn===MOI.id?'ton tour':'le tour de '+esc(getAdvNom(match));
-    statusExtra=`<div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);margin-top:4px">⚓ Classique · C'est ${turnName}</div>`;
+    const modeLabel=mode==='op_speciales'?'🎖️ Op. Spéciales':'⚓ Classique';
+    statusExtra=`<div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);margin-top:4px">${modeLabel} · C'est ${turnName}</div>`;
   }
 
   // Rush pending (résolution en cours)
@@ -1406,6 +1407,7 @@ async function soumettreCoups(matchId){
   const match=MATCHS.find(m=>m.id===matchId);
   const mode=getMode(match);
   if(mode==='classique'){await soumettreCoups_classique(matchId);return;}
+  if(mode==='op_speciales'){await soumettreCoups_op_speciales(matchId);return;}
   if(isRushLike(match)){await soumettreCoups_rush(matchId);return;}
   // Legacy (null mode) : comportement d'origine
   await soumettreCoups_legacy(matchId);
@@ -1628,6 +1630,131 @@ async function resoudreCoups_classique(matchId,tour,role){
       });
     }else{
       // Donner la main à l'adversaire
+      await sb.from('tournoi_tours').update({classique_phase:nextPhase}).eq('id',tour.id);
+    }
+  }
+  await loadGrilles(matchId);await loadTourEnCours(matchId);
+  buildNav();renderNav();renderTab(currentTab);
+}
+
+/* ══ OP SPÉCIALES : tour alterné + pouvoirs ══ */
+async function soumettreCoups_op_speciales(matchId){
+  const match=MATCHS.find(m=>m.id===matchId),shots=_shots[matchId]||[];
+  const ops=_opState[matchId]||{};
+  const role=getMyRole(match);
+  const myOpsKey=role===1?'j1':'j2';
+  const kamikazeBonusShots=(ops[myOpsKey]?.kamikaze_bonus_shots)||0;
+  const maxShots=3+kamikazeBonusShots;
+  if(shots.length<3)return; // minimum 3 quoi qu'il arrive
+  const tf=role===1?'tirs_j1':'tirs_j2',sf=role===1?'soumis_j1':'soumis_j2';
+  await loadTourEnCours(matchId);
+  let tour=TOURS[matchId];
+  let updTour;
+  if(!tour){
+    const{data:nt,error}=await sb.from('tournoi_tours').insert({
+      match_id:matchId,numero_tour:1,[tf]:shots,[sf]:true,statut:'en_cours',
+      classique_phase:role===1?'j1_turn':'j2_turn'
+    }).select().single();
+    if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+    updTour=nt;
+  }else{
+    const{data:ut,error}=await sb.from('tournoi_tours').update({[tf]:shots,[sf]:true}).eq('id',tour.id).select().single();
+    if(error){showAlert(`alertB-${matchId}`,'err','Erreur réseau — réessaie.');return;}
+    updTour=ut;
+  }
+  TOURS[matchId]=updTour;_shots[matchId]=[];
+  await resoudreCoups_op_speciales(matchId,updTour,role);
+}
+
+async function resoudreCoups_op_speciales(matchId,tour,role){
+  const match=MATCHS.find(m=>m.id===matchId);
+  const g=GRILLES[matchId];
+  if(!g?.mine||!g?.theirs){await loadGrilles(matchId);return;}
+  const myShots=role===1?(tour.tirs_j1||[]):(tour.tirs_j2||[]);
+  const theirGrille=role===1?g.theirs:g.mine;
+  const myGrille=role===1?g.mine:g.theirs;
+  const theirPl=theirGrille.grille_placement;
+  const theirTirsAv=theirGrille.tirs_recus||[];
+  const myTirsAv=myGrille.tirs_recus||[];
+  const turnNum=tour.numero_tour||1;
+  const mode=getMode(match);
+
+  // Pouvoirs op_speciales
+  const ops=_opState[matchId]||{};
+  const myOpsKey=role===1?'j1':'j2';
+  const mineAdversaire=role===1?ops?.j2?.mine_pos:ops?.j1?.mine_pos;
+  const kState=_kamikazeState[matchId];
+  const kamikazeBonusShots=(ops[myOpsKey]?.kamikaze_bonus_shots)||0;
+
+  const res=processShots(myShots,theirPl,theirTirsAv,theirPl?.bonus_cells||[],theirPl?.malus_cells||[],turnNum,mineAdversaire);
+  const newTheirTirs=[...theirTirsAv,...res.history];
+  await sb.from('tournoi_grilles').update({tirs_recus:newTheirTirs}).eq('id',theirGrille.id);
+  GRILLES[matchId][role===1?'theirs':'mine'].tirs_recus=newTheirTirs;
+
+  // Sonar : désactiver après ce tour
+  if(ops[myOpsKey]?.sonar_active){
+    const newOps={...ops,[myOpsKey]:{...ops[myOpsKey],sonar_active:false}};
+    _opState[matchId]=newOps;
+    await sb.from('tournoi_matchs').update({op_state:newOps}).eq('id',matchId);
+  }
+
+  // Kamikaze — tour d'activation : compter les touches, stocker bonus pour tour suivant
+  if(kState?.tracking){
+    const hits=res.history.filter(t=>t.result==='hit'||t.result==='sunk').length;
+    _kamikazeState[matchId]={};
+    if(hits>0){
+      const opsNow=_opState[matchId]||{};
+      const newOps={...opsNow,[myOpsKey]:{...(opsNow[myOpsKey]||{}),kamikaze_bonus_shots:hits}};
+      _opState[matchId]=newOps;
+      await sb.from('tournoi_matchs').update({op_state:newOps}).eq('id',matchId);
+      _enqueueAnim(()=>buildTacScreen({
+        mode:'victory',compact:true,duration:5000,matchId,
+        stampText:'KAMIKAZE',stampClass:'stamp-victory',
+        lines:[
+          {text:'💥 KAMIKAZE — ANALYSE DES DOMMAGES',cls:'orange',delay:0},
+          {text:`${hits} TOUCHÉ${hits>1?'S':''} ENREGISTRÉ${hits>1?'S':''}`,cls:'gold',delay:700,lockRet:true,lockClass:'locked-green',showStamp:true},
+          {text:`+${hits} TIR${hits>1?'S':''} BONUS AU PROCHAIN TOUR`,cls:'green',delay:1400},
+        ],
+      }),5000);
+      showToastPhase(`💥 KAMIKAZE : ${hits} touché${hits>1?'s':''} — +${hits} tir${hits>1?'s':''} bonus au prochain tour !`,'var(--orange)');
+    }else{
+      showToastPhase('💥 KAMIKAZE activé — aucun touché ce tour, pas de bonus.','var(--text3)');
+    }
+  }
+
+  // Kamikaze — vider les bonus shots une fois consommés
+  if(!kState?.tracking&&kamikazeBonusShots>0){
+    const opsNow=_opState[matchId]||{};
+    const newOps={...opsNow,[myOpsKey]:{...(opsNow[myOpsKey]||{}),kamikaze_bonus_shots:0}};
+    _opState[matchId]=newOps;
+    await sb.from('tournoi_matchs').update({op_state:newOps}).eq('id',matchId);
+  }
+
+  // Vérifier victoire
+  const won=allSunk(theirPl,newTheirTirs,mode);
+  if(won){
+    const vainqueur_id=role===1?match.joueur1_id:match.joueur2_id;
+    const pts_j1=role===1?3:0,pts_j2=role===2?3:0;
+    const allJ1=role===1?newTheirTirs:myTirsAv,allJ2=role===2?newTheirTirs:myTirsAv;
+    const bonus_j1=allJ1.filter(t=>t.result==='bonus').length*2,malus_j1=allJ1.filter(t=>t.result==='malus').length*2;
+    const bonus_j2=allJ2.filter(t=>t.result==='bonus').length*2,malus_j2=allJ2.filter(t=>t.result==='malus').length*2;
+    await sb.from('tournoi_tours').update({statut:'validé'}).eq('id',tour.id);
+    await sb.from('tournoi_matchs').update({statut:'terminé',vainqueur_id,pts_j1,pts_j2,bonus_j1,malus_j1,bonus_j2,malus_j2}).eq('id',matchId);
+    const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)Object.assign(MATCHS[idx],{statut:'terminé',vainqueur_id,pts_j1,pts_j2});
+    await updateProfils({match,vainqueur_id,draw:false,tirs_j1:allJ1,tirs_j2:allJ2,nb_tours:turnNum});
+    await checkProgressTournoi();
+  }else{
+    const nextPhase=role===1?'j2_turn':'j1_turn';
+    const advAlreadyFired=role===1?tour.soumis_j2:tour.soumis_j1;
+    if(advAlreadyFired){
+      // L'adversaire avait déjà joué ce tour → clore et démarrer le suivant
+      await sb.from('tournoi_tours').update({statut:'validé'}).eq('id',tour.id);
+      await sb.from('tournoi_tours').insert({
+        match_id:matchId,numero_tour:(turnNum+1),
+        soumis_j1:false,soumis_j2:false,statut:'en_cours',classique_phase:'j1_turn'
+      });
+    }else{
+      // Passer la main à l'adversaire
       await sb.from('tournoi_tours').update({classique_phase:nextPhase}).eq('id',tour.id);
     }
   }
