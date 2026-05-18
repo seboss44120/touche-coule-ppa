@@ -572,10 +572,10 @@ function setupRealtime() {
       })
       .subscribe();
 
-    // Matchs — mise à jour temps réel (statut, score, votes revanche)
+    // Matchs — mise à jour temps réel (statut, score, votes revanche, création revanche)
     sbT.channel('admin-tournoi-matchs')
       .on('postgres_changes', {
-        event:'UPDATE', schema:'public', table:'tournoi_matchs',
+        event:'*', schema:'public', table:'tournoi_matchs',
         filter:`tournoi_id=eq.${TOURNOI.id}`
       }, async () => {
         updateHeaderStatus();
@@ -2653,3 +2653,4 @@ checkAuthAndInit();
 </script>
 </body>
 </html>
+
