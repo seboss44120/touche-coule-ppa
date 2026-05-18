@@ -1808,12 +1808,12 @@ async function resoudreCoups_op_speciales(matchId,tour,role){
   }
 
   // Kamikaze — tour d'activation : compter les touches, stocker bonus pour tour suivant
-  if(kState?.tracking){
+  if(ops[myOpsKey]?.kamikaze_tracking){
     const hits=res.history.filter(t=>t.result==='hit'||t.result==='sunk').length;
     _kamikazeState[matchId]={};
     if(hits>0){
       const opsNow=_opState[matchId]||{};
-      const newOps={...opsNow,[myOpsKey]:{...(opsNow[myOpsKey]||{}),kamikaze_bonus_shots:hits}};
+      const newOps={...opsNow,[myOpsKey]:{...(opsNow[myOpsKey]||{}),kamikaze_bonus_shots:hits,kamikaze_tracking:false}};
       _opState[matchId]=newOps;
       await sb.from('tournoi_matchs').update({op_state:newOps}).eq('id',matchId);
       _enqueueAnim(()=>buildTacScreen({
@@ -1827,12 +1827,17 @@ async function resoudreCoups_op_speciales(matchId,tour,role){
       }),5000);
       showToastPhase(`💥 KAMIKAZE : ${hits} touché${hits>1?'s':''} — +${hits} tir${hits>1?'s':''} bonus au prochain tour !`,'var(--orange)');
     }else{
+      // Aucun touché → vider tracking
+      const opsNow=_opState[matchId]||{};
+      const newOps={...opsNow,[myOpsKey]:{...(opsNow[myOpsKey]||{}),kamikaze_tracking:false}};
+      _opState[matchId]=newOps;
+      await sb.from('tournoi_matchs').update({op_state:newOps}).eq('id',matchId);
       showToastPhase('💥 KAMIKAZE activé — aucun touché ce tour, pas de bonus.','var(--text3)');
     }
   }
 
   // Kamikaze — vider les bonus shots une fois consommés
-  if(!kState?.tracking&&kamikazeBonusShots>0){
+  if(!ops[myOpsKey]?.kamikaze_tracking&&kamikazeBonusShots>0){
     const opsNow=_opState[matchId]||{};
     const newOps={...opsNow,[myOpsKey]:{...(opsNow[myOpsKey]||{}),kamikaze_bonus_shots:0}};
     _opState[matchId]=newOps;
@@ -2416,7 +2421,7 @@ async function activerKamikaze(matchId){
   // en tirs bonus pour le tour SUIVANT (stockés dans op_state.kamikaze_bonus_shots)
   _kamikazeState[matchId]={tracking:true};
   const rk=role===1?'j1':'j2';
-  const newOps={...ops,[rk]:{...myOps,kamikaze_used:true},
+  const newOps={...ops,[rk]:{...myOps,kamikaze_used:true,kamikaze_tracking:true},
     log:[...(ops.log||[]),{tour:Date.now(),joueur:role,pouvoir:'kamikaze'}]};
   _opState[matchId]=newOps;
   await sb.from('tournoi_matchs').update({op_state:newOps}).eq('id',matchId);
@@ -2922,6 +2927,8 @@ async function checkProgressTournoi(){
   if(demiMatchs.length>0&&demiMatchs.every(m=>m.statut==='terminé')&&!finaleMatch){
     const{data:existF}=await sb.from('tournoi_matchs').select('id').eq('tournoi_id',tournoiId).eq('phase','finale');
     if(!existF?.length){
+      // Propager le mode de jeu depuis les demis
+      const modeJeuTournoi=demiMatchs[0]?.mode_jeu||pouleMatchs[0]?.mode_jeu||null;
       const w1=demiMatchs[0].vainqueur_id;
       const w2=demiMatchs[1]?.vainqueur_id||demiMatchs[0].vainqueur_id;
       if(!w1||!w2){
@@ -2930,7 +2937,8 @@ async function checkProgressTournoi(){
         return;
       }
       const{data:fm}=await sb.from('tournoi_matchs').insert({
-        tournoi_id:tournoiId,phase:'finale',joueur1_id:w1,joueur2_id:w2,statut:'placement'
+        tournoi_id:tournoiId,phase:'finale',joueur1_id:w1,joueur2_id:w2,statut:'placement',
+        mode_jeu:modeJeuTournoi
       }).select().single();
       if(fm){
         await sb.from('tournoi_grilles').insert([
@@ -2947,6 +2955,9 @@ async function checkProgressTournoi(){
   if(pouleMatchs.length>0&&pouleMatchs.every(m=>m.statut==='terminé')&&demiMatchs.length===0){
     const{data:existD}=await sb.from('tournoi_matchs').select('id').eq('tournoi_id',tournoiId).in('phase',['demi','finale']);
     if(existD?.length)return; // déjà généré
+
+    // Propager le mode de jeu depuis les matchs de poule
+    const modeJeuTournoi=pouleMatchs[0]?.mode_jeu||null;
 
     const{data:allJoueurs}=await sb.from('tournoi_joueurs').select('*').eq('tournoi_id',tournoiId);
     const pouleIds=[...new Set(allJoueurs.map(j=>j.poule_id).filter(Boolean))].sort();
@@ -2977,7 +2988,8 @@ async function checkProgressTournoi(){
       for(const[j1,j2] of pairings){
         if(!j1||!j2)continue;
         const{data:dm}=await sb.from('tournoi_matchs').insert({
-          tournoi_id:tournoiId,phase:'demi',joueur1_id:j1.id,joueur2_id:j2.id,statut:'placement'
+          tournoi_id:tournoiId,phase:'demi',joueur1_id:j1.id,joueur2_id:j2.id,statut:'placement',
+          mode_jeu:modeJeuTournoi
         }).select().single();
         if(dm){
           await sb.from('tournoi_grilles').insert([
@@ -3374,4 +3386,3 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </script>
 </body>
 </html>
-
