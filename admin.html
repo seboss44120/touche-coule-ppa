@@ -1610,6 +1610,7 @@ function renderTournoi() {
           <div style="display:flex;flex-direction:column;gap:6px">
             <button class="btn btn-danger btn-sm" style="width:100%" onclick="adminAnnulerTournoi()">🗑️ SUPPRIMER LE TOURNOI</button>
             <button class="btn btn-sm" style="width:100%;background:rgba(139,0,0,.2);border:1px solid #8b0000;color:#ff6666" onclick="adminPurgerBase()">⚠️ PURGE (garde profils)</button>
+            <button class="btn btn-sm" style="width:100%;background:rgba(120,60,0,.3);border:1px solid #cc6600;color:#ffaa44;font-weight:700" onclick="adminPurgeEtRazStats()">🔄 PURGE + RAZ stats (garde profils)</button>
             <button class="btn btn-sm" style="width:100%;background:rgba(80,0,0,.35);border:1px solid #cc0000;color:#ff3333;font-weight:700" onclick="adminFullReset()">☠️ RESET TOTAL</button>
           </div>
         </div>
@@ -1728,6 +1729,7 @@ function renderTournoi() {
             <button class="btn btn-sm" style="width:100%;background:rgba(14,165,233,.15);border:1px solid var(--cyan);color:var(--cyan)" onclick="adminRegenererMatchs()">🔄 REGÉNÉRER LES MATCHS</button>
             <button class="btn btn-danger btn-sm" style="width:100%" onclick="adminAnnulerTournoi()">🗑️ SUPPRIMER LE TOURNOI</button>
             <button class="btn btn-sm" style="width:100%;background:rgba(139,0,0,.2);border:1px solid #8b0000;color:#ff6666" onclick="adminPurgerBase()">⚠️ PURGE (garde profils)</button>
+            <button class="btn btn-sm" style="width:100%;background:rgba(120,60,0,.3);border:1px solid #cc6600;color:#ffaa44;font-weight:700" onclick="adminPurgeEtRazStats()">🔄 PURGE + RAZ stats (garde profils)</button>
             <button class="btn btn-sm" style="width:100%;background:rgba(80,0,0,.35);border:1px solid #cc0000;color:#ff3333;font-weight:700" onclick="adminFullReset()">☠️ RESET TOTAL</button>
           </div>
         </div>
@@ -2358,6 +2360,30 @@ async function adminPurgerBase(){
   }catch(e){alert('Erreur purge : '+e.message);}
 }
 
+async function adminPurgeEtRazStats(){
+  if(!confirm('🔄 PURGE + RAZ STATS\n\nSupprime :\n• Tous les tournois et matchs\n• Toutes les stats (victoires, défaites, récompenses, grades…)\n\nConserve :\n• Les profils joueurs et leurs liens permanents\n\nCette action est IRRÉVERSIBLE. Continuer ?'))return;
+  if(!confirm('Êtes-vous VRAIMENT sûr ? Toutes les stats et récompenses seront perdues.'))return;
+  try{
+    const{error:e1}=await sbT.rpc('purge_tournoi_complet');
+    if(e1)throw e1;
+    const{error:e2}=await sbT.from('joueur_profils').update({
+      victoires:0, defaites:0, egalites:0, matchs_joues:0,
+      serie_en_cours:0, meilleure_serie:0,
+      bateaux_detruits:0, bateaux_perdus:0,
+      premier_tir_touches:0, coule_premier_tour:0,
+      recompenses:[], recompenses_affichees:[],
+      grade_cache:'Matelot',
+      updated_at:new Date().toISOString()
+    }).gte('created_at','2000-01-01');
+    if(e2)throw e2;
+    TOURNOI=null;TOURNOI_JOUEURS=[];PARTIE=null;ALL_EQUIPES=[];ALL_GRILLES=[];
+    currentTab='config';
+    buildNav();
+    renderTab('config');
+    alert('✓ Base purgée et stats remises à zéro. Les profils et liens permanents sont conservés.');
+  }catch(e){alert('Erreur purge + RAZ stats : '+e.message);}
+}
+
 /* ════════════════════════════════════════════════════════
    GESTION JOUEURS TOURNOI (phase inscription)
 ════════════════════════════════════════════════════════ */
@@ -2653,4 +2679,3 @@ checkAuthAndInit();
 </script>
 </body>
 </html>
-
