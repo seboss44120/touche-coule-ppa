@@ -62,13 +62,13 @@ select option{background:var(--bg2)}
 .gc-header{display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3)}
 .gc{width:28px;height:28px;border-radius:3px;background:rgba(0,50,100,.3);border:1px solid rgba(26,47,74,.8);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.7rem;transition:all .15s}
 .gc:hover{border-color:var(--cyan);background:rgba(0,100,180,.3)}
-.gc.placed-PA{background:rgba(240,192,64,.22);border-color:#f0c040}
+.gc.placed-PA{background:rgba(255,221,0,.22);border-color:#ffdd00}
 .gc.placed-CU{background:rgba(0,212,255,.2);border-color:#00d4ff}
 .gc.placed-CR{background:rgba(0,255,140,.18);border-color:#00ff8c}
 .gc.placed-SM{background:rgba(255,120,200,.18);border-color:#ff78c8}
-.gc.placed-TP{background:rgba(255,136,68,.2);border-color:#ff8844}
+.gc.placed-TP{background:rgba(255,68,204,.2);border-color:#ff44cc}
 .gc.placed-bonus{background:rgba(204,136,255,.2);border-color:#cc88ff}
-.gc.placed-malus{background:rgba(255,68,85,.2);border-color:#ff4455}
+.gc.placed-malus{background:rgba(221,0,102,.2);border-color:#dd0066}
 .gc.hit{background:rgba(255,100,30,.3);border-color:var(--orange)}
 .gc.miss{background:rgba(0,100,200,.15);border-color:rgba(0,100,200,.3)}
 .gc.sunk{background:rgba(255,68,85,.35);border-color:var(--red)}
@@ -76,7 +76,7 @@ select option{background:var(--bg2)}
 .gc.sv-hit{background:rgba(255,100,30,.3);border-color:var(--orange)}
 .gc.sv-sunk{background:rgba(255,68,85,.4);border-color:var(--red)}
 .gc.sv-bonus{background:rgba(204,136,255,.3);border-color:var(--purple)}
-.gc.sv-malus{background:rgba(255,68,85,.2);border-color:var(--red)}
+.gc.sv-malus{background:rgba(221,0,102,.2);border-color:#dd0066}
 .gc.sel-shot{background:rgba(245,200,66,.25);border-color:var(--gold);box-shadow:0 0 6px rgba(245,200,66,.4)}
 .gc.hov-valid{background:rgba(0,212,255,.2);border-color:var(--cyan)}
 .gc.hov-invalid{background:rgba(255,68,85,.2);border-color:var(--red)}
@@ -360,11 +360,11 @@ const COLS      = ['A','B','C','D','E','F','G','H','I','J'];
 const ROWS      = [1,2,3,4,5,6,7,8,9,10];
 const SHIP_KEYS = ['PA','CU','CR','SM','TP'];
 const SHIPS = {
-  PA:{name:'Porte-avions',icon:'✈️',size:5,color:'#f0c040',points:5},
+  PA:{name:'Porte-avions',icon:'✈️',size:5,color:'#ffdd00',points:5},
   CU:{name:'Cuirassé',    icon:'⚔️',size:4,color:'#00d4ff',points:4},
   CR:{name:'Croiseur',    icon:'🚢',size:3,color:'#00ff8c',points:3},
   SM:{name:'Sous-marin',  icon:'🤿',size:3,color:'#ff78c8',points:3},
-  TP:{name:'Torpilleur',  icon:'🚤',size:2,color:'#ff8844',points:2},
+  TP:{name:'Torpilleur',  icon:'🚤',size:2,color:'#ff44cc',points:2},
 };
 const NUM_OPP = {1:2,2:1,3:4,4:3,5:6,6:5};
 
