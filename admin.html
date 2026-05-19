@@ -1824,7 +1824,6 @@ function tirerPoules(joueurs) {
   const poules=[];let idx=0;
   for(const taille of tailles){
     const groupe=mel.slice(idx,idx+taille).map(j=>({...j,bye:false}));
-    if(taille===2&&n===5){groupe[Math.floor(Math.random()*2)].bye=true;}
     poules.push(groupe);idx+=taille;
   }
   return poules;
@@ -1858,8 +1857,7 @@ async function adminLancerTournoi() {
       for(const j of groupe){
         await sbT.from('tournoi_joueurs').update({poule_id:pi+1,bye:j.bye||false}).eq('id',j.id);
       }
-      const reels=groupe.filter(j=>!j.bye);
-      for(const [j1,j2] of roundRobin(reels)){
+      for(const [j1,j2] of roundRobin(groupe)){
         const {data:m}=await sbT.from('tournoi_matchs').insert({
           tournoi_id:TOURNOI.id,phase:'poule',poule_id:pi+1,
           joueur1_id:j1.id,joueur2_id:j2.id,statut:'placement',

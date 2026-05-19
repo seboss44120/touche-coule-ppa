@@ -2887,7 +2887,7 @@ async function setDrapeau(code){
 /* ══ BRACKET — GÉNÉRATION PHASES FINALES ══ */
 
 async function calcStandingsPoule(pouleId,allMatchs,allJoueurs){
-  const joueurs=allJoueurs.filter(j=>j.poule_id===pouleId&&!j.bye);
+  const joueurs=allJoueurs.filter(j=>j.poule_id===pouleId);
   const matchs=allMatchs.filter(m=>m.poule_id===pouleId&&m.statut==='terminé');
   return joueurs.map(j=>{
     let pts=0,bonusNet=0;
