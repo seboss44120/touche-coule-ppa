@@ -1,24 +1,38 @@
 {
+  "id": "touche-coule-admin",
   "name": "Touché Coulé — Admin",
   "short_name": "TC Admin",
   "description": "Interface d'administration du tournoi Touché Coulé",
   "start_url": "./admin.html",
+  "scope": "./admin.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#060e04",
   "theme_color": "#f5c842",
   "icons": [
     {
-      "src": "./icon-admin.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "./icon-admin-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "./icon-admin-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-admin-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "./icon-admin.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "maskable"
+      "purpose": "any"
     }
   ]
 }

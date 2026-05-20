@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Générer les icônes PNG</title>
+<style>
+  body{background:#04090f;color:#d4e8ff;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:20px;padding:40px}
+  h1{color:#00e5ff;font-size:1.4rem;text-align:center}
+  p{color:#7aabcc;text-align:center;max-width:480px;line-height:1.6}
+  .status{font-size:1.1rem;margin-top:10px}
+  .ok{color:#00e878} .err{color:#ff4455}
+  button{background:#00c4e0;border:none;color:#fff;padding:12px 28px;border-radius:10px;font-size:1rem;cursor:pointer;margin-top:10px}
+</style>
+</head>
+<body>
+<h1>⚙️ Génération des icônes PNG</h1>
+<p>Cette page génère les 4 fichiers PNG nécessaires aux manifests PWA.<br>
+Les téléchargements démarrent automatiquement dans quelques secondes.</p>
+<div id="status" class="status">Chargement en cours…</div>
+<button onclick="genAll()">↺ Relancer</button>
+<canvas id="c" style="display:none"></canvas>
+
+<script>
+const icons = [
+  { svg: './icon-admin.svg',  sizes: [192, 512], prefix: 'icon-admin'  },
+  { svg: './icon-joueur.svg', sizes: [192, 512], prefix: 'icon-joueur' }
+];
+
+function svgToPng(svgUrl, size){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const c = document.getElementById('c');
+      c.width = size; c.height = size;
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0,0,size,size);
+      ctx.drawImage(img,0,0,size,size);
+      resolve(c.toDataURL('image/png'));
+    };
+    img.onerror = () => reject('Impossible de charger ' + svgUrl);
+    img.src = svgUrl + '?t=' + Date.now();
+  });
+}
+
+function download(dataUrl, filename){
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+async function genAll(){
+  const st = document.getElementById('status');
+  st.className = 'status';
+  st.textContent = 'Génération en cours…';
+  let count = 0;
+  try {
+    for(const icon of icons){
+      for(const size of icon.sizes){
+        st.textContent = `Génération ${icon.prefix}-${size}.png…`;
+        const png = await svgToPng(icon.svg, size);
+        download(png, `${icon.prefix}-${size}.png`);
+        count++;
+        await new Promise(r => setTimeout(r, 600)); // petit délai entre chaque DL
+      }
+    }
+    st.className = 'status ok';
+    st.innerHTML = `✓ ${count} fichiers téléchargés !<br><small style="color:#7aabcc">Vérifie ton dossier Téléchargements, puis déplace-les dans le dossier "bataille navale".</small>`;
+  } catch(e) {
+    st.className = 'status err';
+    st.textContent = '✗ Erreur : ' + e;
+  }
+}
+
+window.addEventListener('load', () => setTimeout(genAll, 800));
+</script>
+</body>
+</html>
