@@ -1,10 +1,10 @@
 {
   "id": "touche-coule-joueur",
-  "name": "Touché Coulé — Capitaine",
+  "name": "Touché Coulé — Joueur",
   "short_name": "TC Joueur",
   "description": "Interface joueur du tournoi Touché Coulé",
-  "start_url": "./capitaine.html",
-  "scope": "./capitaine.html",
+  "start_url": "./tournoi-jeu.html",
+  "scope": "./tournoi-jeu.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#020810",

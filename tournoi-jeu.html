@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>Touché Coulé — Tournoi</title>
+<!-- PWA -->
+<link rel="manifest" href="./manifest-joueur.json">
+<link rel="apple-touch-icon" href="./icon-joueur.svg">
+<meta name="theme-color" content="#00e5ff">
+<!-- /PWA -->
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
@@ -644,8 +649,16 @@ function showError(msg){
 async function init(){
   try{
     const params=new URLSearchParams(location.search);
-    const permToken=params.get('p');
+    let permToken=params.get('p');
     const slotToken=params.get('token');
+
+    // Persistence PWA : sauvegarde le token au 1er accès, le relit si l'app est lancée sans URL
+    if(permToken){
+      try{localStorage.setItem('tc_joueur_token',permToken);}catch(e){}
+    }else if(!slotToken){
+      const saved=localStorage.getItem('tc_joueur_token');
+      if(saved){permToken=saved;history.replaceState(null,'',location.pathname+'?p='+saved);}
+    }
 
     if(permToken){
       // ── Lien permanent joueur (nouveau système) ──
@@ -3387,5 +3400,93 @@ document.addEventListener('DOMContentLoaded', ()=>{
         .catch(e=>{ clearTimeout(loadTimeout); showError('Erreur : '+e.message); });
 });
 </script>
+
+<!-- ═══════════════ PWA INSTALL BANNER ═══════════════ -->
+<div id="pwa-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99999;
+  background:linear-gradient(135deg,#0a1628,#0d2040);
+  border-top:1px solid #00e5ff44;padding:14px 16px 18px;
+  box-shadow:0 -4px 24px rgba(0,229,255,.15);
+  font-family:'Rajdhani',sans-serif;color:#d4e8ff;">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:480px;margin:0 auto;">
+    <img src="./icon-joueur.svg" width="44" height="44" style="border-radius:10px;flex-shrink:0" alt="">
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:700;font-size:1rem;color:#00e5ff">Ajouter à l'écran d'accueil</div>
+      <div id="pwa-sub" style="font-size:.82rem;color:#7aabcc;margin-top:2px">Lance ton interface de jeu en un tap</div>
+    </div>
+    <button id="pwa-install-btn" onclick="pwaTriggerInstall()" style="display:none;
+      background:linear-gradient(135deg,#00c4e0,#0088bb);
+      border:none;border-radius:10px;color:#fff;font-weight:700;
+      padding:9px 16px;font-size:.9rem;cursor:pointer;white-space:nowrap">Installer</button>
+    <button onclick="pwaBannerClose()" style="
+      background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+      border-radius:8px;color:#7aabcc;padding:6px 10px;cursor:pointer;font-size:.85rem">✕</button>
+  </div>
+  <div id="pwa-android-msg" style="display:none;margin-top:10px;padding:10px 12px;
+    background:rgba(0,229,255,.07);border-radius:10px;font-size:.85rem;
+    color:#a0c4e0;text-align:center;max-width:480px;margin-left:auto;margin-right:auto;">
+    Appuie sur <strong style="color:#00e5ff">⋮</strong> puis
+    <strong style="color:#00e5ff">« Ajouter à l'écran d'accueil »</strong>
+  </div>
+  <div id="pwa-inapp-msg" style="display:none;margin-top:10px;padding:10px 12px;
+    background:rgba(255,200,0,.07);border-radius:10px;font-size:.85rem;
+    color:#f5d87a;text-align:center;max-width:480px;margin-left:auto;margin-right:auto;">
+    Ouvre ce lien dans <strong>Chrome</strong> pour pouvoir l'ajouter à ton écran d'accueil
+  </div>
+</div>
+
+<script>
+(function(){
+  if(window.matchMedia('(display-mode: standalone)').matches) return;
+  try{if(sessionStorage.getItem('pwa-banner-closed')) return;}catch(e){}
+
+  const banner=document.getElementById('pwa-banner');
+  const installBtn=document.getElementById('pwa-install-btn');
+  const androidMsg=document.getElementById('pwa-android-msg');
+  const inapMsg=document.getElementById('pwa-inapp-msg');
+
+  const ua=navigator.userAgent;
+  const isInApp=/FBAN|FBAV|FB_IAB|Instagram|Twitter|Line|WeChat|Snapchat|TikTok|LinkedInApp|GSA/.test(ua);
+  const isAndroid=/Android/.test(ua);
+  let deferredPrompt=null;
+
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault();
+    deferredPrompt=e;
+    installBtn.style.display='block';
+    banner.style.display='block';
+  });
+
+  if(isInApp){
+    inapMsg.style.display='block';
+    banner.style.display='block';
+  } else if(isAndroid && !deferredPrompt){
+    // Android Chrome sans prompt disponible → guide manuel
+    window.addEventListener('load',function(){
+      setTimeout(function(){
+        if(!deferredPrompt){
+          androidMsg.style.display='block';
+          banner.style.display='block';
+        }
+      },2000);
+    });
+  }
+
+  window.pwaTriggerInstall=function(){
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(r){
+      if(r.outcome==='accepted') pwaBannerClose();
+      deferredPrompt=null;
+    });
+  };
+
+  window.pwaBannerClose=function(){
+    banner.style.display='none';
+    try{sessionStorage.setItem('pwa-banner-closed','1');}catch(e){}
+  };
+})();
+</script>
+<!-- ═══════════════ /PWA INSTALL BANNER ═══════════════ -->
+
 </body>
 </html>
