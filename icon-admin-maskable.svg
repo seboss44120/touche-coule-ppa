@@ -1,0 +1,45 @@
+<svg width="512" height="512" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a2a18"/>
+      <stop offset="100%" stop-color="#060e04"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f5c842" stop-opacity=".3"/>
+      <stop offset="100%" stop-color="#f5c842" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="f">
+      <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#f5c842" flood-opacity=".6"/>
+    </filter>
+  </defs>
+  <!-- Fond plein carré — pas de transparence pour maskable -->
+  <rect width="192" height="192" fill="url(#bg)"/>
+  <!-- Halo central -->
+  <circle cx="96" cy="96" r="55" fill="url(#glow)"/>
+  <!-- Cercles déco -->
+  <circle cx="96" cy="96" r="70" fill="none" stroke="#f5c842" stroke-width=".6" stroke-opacity=".15"/>
+  <!-- Gouvernail — légèrement réduit pour tenir dans la safe zone (80%) -->
+  <g filter="url(#f)" transform="translate(96,96) scale(0.82)">
+    <line x1="0" y1="-26" x2="0" y2="-56" stroke="#f5c842" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="0" cy="-59" rx="4" ry="6" fill="#f5c842"/>
+    <line x1="18.4" y1="-18.4" x2="39.6" y2="-39.6" stroke="#f5c842" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="43.3" cy="-43.3" rx="4" ry="6" fill="#f5c842" transform="rotate(45 43.3 -43.3)"/>
+    <line x1="26" y1="0" x2="56" y2="0" stroke="#f5c842" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="59" cy="0" rx="4" ry="6" fill="#f5c842" transform="rotate(90 59 0)"/>
+    <line x1="18.4" y1="18.4" x2="39.6" y2="39.6" stroke="#f5c842" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="43.3" cy="43.3" rx="4" ry="6" fill="#f5c842" transform="rotate(135 43.3 43.3)"/>
+    <line x1="0" y1="26" x2="0" y2="56" stroke="#f5c842" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="0" cy="59" rx="4" ry="6" fill="#f5c842"/>
+    <line x1="-18.4" y1="18.4" x2="-39.6" y2="39.6" stroke="#f5c842" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="-43.3" cy="43.3" rx="4" ry="6" fill="#f5c842" transform="rotate(-135 -43.3 43.3)"/>
+    <line x1="-26" y1="0" x2="-56" y2="0" stroke="#f5c842" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="-59" cy="0" rx="4" ry="6" fill="#f5c842" transform="rotate(-90 -59 0)"/>
+    <line x1="-18.4" y1="-18.4" x2="-39.6" y2="-39.6" stroke="#f5c842" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="-43.3" cy="-43.3" rx="4" ry="6" fill="#f5c842" transform="rotate(-45 -43.3 -43.3)"/>
+    <circle cx="0" cy="0" r="62" fill="none" stroke="#f5c842" stroke-width="5"/>
+    <circle cx="0" cy="0" r="22" fill="#0d1a0b" stroke="#f5c842" stroke-width="4"/>
+    <circle cx="0" cy="0" r="10" fill="#f5c842"/>
+    <circle cx="0" cy="0" r="5" fill="#0d1a0b"/>
+  </g>
+  <text x="96" y="174" text-anchor="middle" font-size="13" fill="#f5c842" font-family="serif">★ ★ ★</text>
+</svg>

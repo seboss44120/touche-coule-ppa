@@ -1,0 +1,57 @@
+<svg width="512" height="512" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0a1a2e"/>
+      <stop offset="100%" stop-color="#020810"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00e5ff" stop-opacity=".25"/>
+      <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="exp" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ff4400" stop-opacity=".9"/>
+      <stop offset="60%" stop-color="#ff8800" stop-opacity=".4"/>
+      <stop offset="100%" stop-color="#ff4400" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="f">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#00e5ff" flood-opacity=".7"/>
+    </filter>
+  </defs>
+  <!-- Fond plein carré — pas de transparence pour maskable -->
+  <rect width="192" height="192" fill="url(#bg)"/>
+  <!-- Grille légère -->
+  <g stroke="#1a3a5c" stroke-width=".5" stroke-opacity=".35">
+    <line x1="48" y1="0" x2="48" y2="192"/>
+    <line x1="96" y1="0" x2="96" y2="192"/>
+    <line x1="144" y1="0" x2="144" y2="192"/>
+    <line x1="0" y1="48" x2="192" y2="48"/>
+    <line x1="0" y1="96" x2="192" y2="96"/>
+    <line x1="0" y1="144" x2="192" y2="144"/>
+  </g>
+  <!-- Halo cyan -->
+  <circle cx="96" cy="96" r="52" fill="url(#glow)"/>
+  <!-- Explosion -->
+  <circle cx="96" cy="96" r="28" fill="url(#exp)"/>
+  <!-- Ondes de choc -->
+  <circle cx="96" cy="96" r="40" fill="none" stroke="#ff6600" stroke-width="1.5" stroke-opacity=".55"/>
+  <circle cx="96" cy="96" r="54" fill="none" stroke="#ff8800" stroke-width="1" stroke-opacity=".3"/>
+  <!-- Réticule — réduit à ~80% pour safe zone -->
+  <g filter="url(#f)" transform="translate(96,96) scale(0.82)">
+    <line x1="0" y1="-84" x2="0" y2="-28" stroke="#00e5ff" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="0" y1="28" x2="0" y2="84" stroke="#00e5ff" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="-84" y1="0" x2="-28" y2="0" stroke="#00e5ff" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="28" y1="0" x2="84" y2="0" stroke="#00e5ff" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="0" cy="0" r="24" fill="none" stroke="#00e5ff" stroke-width="2.5"/>
+    <line x1="0" y1="-26" x2="0" y2="-21" stroke="#00e5ff" stroke-width="2"/>
+    <line x1="0" y1="21" x2="0" y2="26" stroke="#00e5ff" stroke-width="2"/>
+    <line x1="-26" y1="0" x2="-21" y2="0" stroke="#00e5ff" stroke-width="2"/>
+    <line x1="21" y1="0" x2="26" y2="0" stroke="#00e5ff" stroke-width="2"/>
+    <!-- Coins diagonaux -->
+    <line x1="-72" y1="-72" x2="-58" y2="-58" stroke="#00e5ff" stroke-width="1.5" stroke-opacity=".5"/>
+    <line x1="72" y1="-72" x2="58" y2="-58" stroke="#00e5ff" stroke-width="1.5" stroke-opacity=".5"/>
+    <line x1="-72" y1="72" x2="-58" y2="58" stroke="#00e5ff" stroke-width="1.5" stroke-opacity=".5"/>
+    <line x1="72" y1="72" x2="58" y2="58" stroke="#00e5ff" stroke-width="1.5" stroke-opacity=".5"/>
+    <!-- Point central -->
+    <circle cx="0" cy="0" r="4" fill="#00e5ff"/>
+  </g>
+</svg>
