@@ -2168,6 +2168,9 @@ function showUnlockToast(msg,color){
 
 /* ══ VOTE REVANCHE / BELLE ══ */
 function renderVoteRevanche(match, role){
+  // Pas de revanche en phases éliminatoires (demi / finale)
+  if(match.phase==='demi'||match.phase==='finale') return '';
+
   const partieNum=match.partie_numero||1;
 
   // Après belle (partie 3) — série définitivement terminée
