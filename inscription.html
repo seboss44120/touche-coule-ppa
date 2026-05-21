@@ -920,15 +920,13 @@ function buildTournoiCard(t){
   let slotsTextClass = places===0 ? 'slots-text complet' : 'slots-text';
 
   // ── Liste des inscrits ──
+  // Note : inscriptions_planifiees ne stocke pas avatar/flag/grade — affichage minimaliste
   let inscritsList = '';
   for(const ins of inscrits){
-    const grade = getGrade(0); // on n'a pas les victoires ici, affiché minimaliste
     inscritsList += `
       <div class="inscrit-row">
-        <span class="inscrit-avatar">${ins.pseudo_avatar||'⚓'}</span>
+        <span class="inscrit-avatar">⚓</span>
         <span class="inscrit-pseudo">${escHtml(ins.pseudo)}</span>
-        ${ins.pseudo_flag ? `<span class="inscrit-flag">${renderFlag(ins.pseudo_flag)}</span>` : ''}
-        <span class="inscrit-grade">${ins.pseudo_grade||''}</span>
       </div>`;
   }
   if(inscrits.length===0) inscritsList = '<div style="font-size:.78rem;color:var(--text3);padding:4px 0">Aucun inscrit pour l\'instant</div>';
@@ -1601,19 +1599,25 @@ async function confirmerDesistement(){
   btn.textContent = '…';
 
   try {
+    // 0. Récupère le statut original AVANT de modifier (update retourne le nouveau statut)
+    const {data: origData} = await sb
+      .from('inscriptions_planifiees')
+      .select('statut, tournoi_planifie_id')
+      .eq('id', desistPendingId)
+      .single();
+
+    const wasInscrit        = origData?.statut === 'inscrit';
+    const tournoiPlanifieId = origData?.tournoi_planifie_id;
+
     // 1. Marque l'inscription comme désistée
-    const {data: insData, error: errDesist} = await sb
+    const {error: errDesist} = await sb
       .from('inscriptions_planifiees')
       .update({statut:'desiste'})
-      .eq('id', desistPendingId)
-      .select('tournoi_planifie_id')
-      .single();
+      .eq('id', desistPendingId);
     if(errDesist) throw errDesist;
 
-    const tournoiPlanifieId = insData?.tournoi_planifie_id;
-
-    // 2. Promeut le premier de la waitlist si applicable
-    if(tournoiPlanifieId){
+    // 2. Promeut le premier de la waitlist UNIQUEMENT si un slot inscrit est libéré
+    if(wasInscrit && tournoiPlanifieId){
       const {data: wlFirst} = await sb
         .from('inscriptions_planifiees')
         .select('id')

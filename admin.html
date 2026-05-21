@@ -3076,12 +3076,21 @@ async function adminOuvrirInscriptions(id) {
 async function adminRetirerInscription(inscriptionId, pseudo, tournoiPlanifId) {
   if (!confirm(`Retirer "${pseudo}" de ce tournoi ?`)) return;
   try {
+    // Récupère le statut original avant suppression
+    const inscRef = INSCRIPTIONS_PLANIF.find(i => i.id === inscriptionId);
+    const wasInscrit = inscRef?.statut === 'inscrit';
+
     const { error } = await sbT.from('inscriptions_planifiees').delete().eq('id', inscriptionId);
     if (error) throw error;
 
     INSCRIPTIONS_PLANIF = INSCRIPTIONS_PLANIF.filter(i => i.id !== inscriptionId);
 
-    // Promouvoir le premier de la liste d'attente si le slot libéré était inscrit
+    // Promouvoir le premier de la liste d'attente UNIQUEMENT si un slot inscrit est libéré
+    if (!wasInscrit) {
+      renderPlanif();
+      return;
+    }
+
     const waitlist = INSCRIPTIONS_PLANIF
       .filter(i => i.tournoi_planifie_id === tournoiPlanifId && i.statut === 'waitlist')
       .sort((a,b) => (a.position_waitlist||99) - (b.position_waitlist||99));
@@ -3149,11 +3158,9 @@ async function adminLancerTournoiPlanifie(planifId) {
       .update({ statut: 'lance', tournoi_id: newTournoi.id }).eq('id', planifId).select().single();
     if (errP) throw errP;
 
-    // 4. Mettre à jour le state local
+    // 4. Mettre à jour le state local (sera rechargé proprement par loadAllData)
     const idx = TOURNOIS_PLANIFIES.findIndex(t => t.id === planifId);
     if (idx >= 0) TOURNOIS_PLANIFIES[idx] = tpUpd;
-    TOURNOI         = newTournoi;
-    TOURNOI_JOUEURS = joueurs.map((j, i_) => ({ ...j, id: null, created_at: new Date().toISOString() }));
 
     // 5. Recharger proprement et basculer sur l'onglet Tournoi
     await loadAllData();
