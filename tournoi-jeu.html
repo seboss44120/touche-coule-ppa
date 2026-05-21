@@ -9,6 +9,7 @@
 <link rel="apple-touch-icon" href="./icon-joueur.svg">
 <meta name="theme-color" content="#00e5ff">
 <!-- /PWA -->
+<script src="./notifications.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
@@ -729,6 +730,7 @@ async function init(){
   // Charger les profils avatar/drapeau APRÈS avoir POULE_JOUEURS
   await chargerProfilsJoueurs();
   buildNav();abonnerRealtime();
+  if(window.TCNotify) TCNotify.init();
 
   // Auto-refresh toutes les 5 minutes (resync données sans rechargement brutal)
   setInterval(async()=>{
