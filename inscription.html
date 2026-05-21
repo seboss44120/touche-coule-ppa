@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Touché Coulé — Inscription aux tournois</title>
+<meta name="description" content="Inscris-toi aux tournois Touché Coulé et rejoins la bataille navale !">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   VARIABLES & RESET
+═══════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#080e1a;--bg2:#0d1624;--bg3:#111e30;
+  --text:#d4e8ff;--text2:#7aabcc;--text3:#3f6080;
+  --gold:#f5c842;--cyan:#00d4ff;--green:#00e878;
+  --red:#ff4455;--orange:#ff8844;--purple:#cc88ff;
+  --border:#1a2f4a;--border2:#234;--card:#0f1c2e;
+  --card2:#0c1827;
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Rajdhani',sans-serif;
+  min-height:100vh;
+  font-size:15px;
+  overflow-x:hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BACKGROUND GRID (ambiance sonar)
+═══════════════════════════════════════════════════════════════ */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(0,212,255,.03) 40px,rgba(0,212,255,.03) 41px),
+    repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(0,212,255,.03) 40px,rgba(0,212,255,.03) 41px);
+  pointer-events:none;z-index:0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════════════════════════ */
+.app-header{
+  background:linear-gradient(135deg,#040b14,#0a1628,#061020);
+  border-bottom:1px solid var(--border);
+  padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:200;
+}
+.hdr-left{display:flex;flex-direction:column;gap:2px}
+.hdr-title{
+  font-family:'Orbitron',monospace;font-size:1.1rem;
+  color:var(--gold);letter-spacing:3px;line-height:1;
+}
+.hdr-sub{font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text2);letter-spacing:2px}
+.hdr-anchor{font-size:1.4rem}
+
+/* ═══════════════════════════════════════════════════════════════
+   BANDEAU JOUEUR CONNECTE
+═══════════════════════════════════════════════════════════════ */
+#player-banner{
+  display:none;
+  background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(0,232,120,.05));
+  border-bottom:1px solid var(--cyan);
+  padding:12px 16px;
+  position:relative;z-index:1;
+}
+.pb-greeting{font-family:'Orbitron',monospace;font-size:.6rem;color:var(--text2);letter-spacing:2px;margin-bottom:6px}
+.pb-identity{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.pb-avatar{font-size:1.6rem}
+.pb-name{font-family:'Orbitron',monospace;font-size:.9rem;color:var(--cyan);font-weight:700;letter-spacing:1px}
+.pb-grade{font-size:.8rem;color:var(--text2)}
+.pb-link-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.pb-link{
+  font-family:'Orbitron',monospace;font-size:.5rem;
+  background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);
+  color:var(--cyan);padding:4px 8px;border-radius:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;
+}
+.btn-copy-link{
+  font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.7rem;
+  background:rgba(0,212,255,.15);border:1px solid var(--cyan);color:var(--cyan);
+  padding:4px 10px;border-radius:4px;cursor:pointer;letter-spacing:.5px;
+  transition:all .2s;white-space:nowrap;
+}
+.btn-copy-link:hover{background:rgba(0,212,255,.25)}
+.pb-inscriptions{display:flex;flex-direction:column;gap:6px}
+.pb-insc-card{
+  background:rgba(0,232,120,.06);border:1px solid rgba(0,232,120,.25);
+  border-radius:6px;padding:8px 12px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  flex-wrap:wrap;
+}
+.pb-insc-title{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--green);letter-spacing:1px}
+.pb-insc-status{font-size:.75rem;color:var(--text2)}
+.btn-desist{
+  font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.7rem;
+  background:rgba(255,68,85,.12);border:1px solid var(--red);color:var(--red);
+  padding:3px 8px;border-radius:4px;cursor:pointer;letter-spacing:.5px;
+  transition:all .2s;white-space:nowrap;
+}
+.btn-desist:hover{background:rgba(255,68,85,.25)}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTENU PRINCIPAL
+═══════════════════════════════════════════════════════════════ */
+main{padding:16px;max-width:700px;margin:0 auto;position:relative;z-index:1}
+.section-title{
+  font-family:'Orbitron',monospace;font-size:.65rem;
+  color:var(--text2);letter-spacing:3px;text-transform:uppercase;
+  margin-bottom:14px;display:flex;align-items:center;gap:10px;
+}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ═══════════════════════════════════════════════════════════════
+   LISTE DES TOURNOIS
+═══════════════════════════════════════════════════════════════ */
+#tournois-list{
+  display:flex;flex-direction:column;gap:14px;
+  max-height:calc(4 * 280px);overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:var(--border2) transparent;
+  padding-right:2px;
+}
+#tournois-list::-webkit-scrollbar{width:4px}
+#tournois-list::-webkit-scrollbar-track{background:transparent}
+#tournois-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+.tournoi-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+  transition:border-color .2s;
+}
+.tournoi-card:hover{border-color:var(--border2)}
+.tournoi-card.statut-ouvert{border-top:2px solid var(--green)}
+.tournoi-card.statut-complet{border-top:2px solid var(--red)}
+.tournoi-card.statut-ferme{border-top:2px solid var(--text3)}
+.tournoi-card.statut-lance{border-top:2px solid var(--cyan)}
+
+/* ── En-tête de la carte tournoi ── */
+.tc-header{padding:12px 14px 10px;display:flex;align-items:flex-start;gap:10px;justify-content:space-between;flex-wrap:wrap}
+.tc-header-left{flex:1;min-width:0}
+.tc-title-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+.tc-mode-icon{font-size:1.3rem}
+.tc-title{font-family:'Orbitron',monospace;font-size:.78rem;color:var(--text);font-weight:700;letter-spacing:1px}
+.tc-badge{
+  font-family:'Orbitron',monospace;font-size:.42rem;letter-spacing:1px;
+  padding:2px 7px;border-radius:8px;font-weight:700;white-space:nowrap;
+}
+.badge-ouvert{background:rgba(0,232,120,.15);border:1px solid var(--green);color:var(--green)}
+.badge-complet{background:rgba(255,68,85,.15);border:1px solid var(--red);color:var(--red)}
+.badge-ferme{background:rgba(63,96,128,.2);border:1px solid var(--text3);color:var(--text3)}
+.badge-lance{background:rgba(0,212,255,.15);border:1px solid var(--cyan);color:var(--cyan)}
+
+/* ── Compte à rebours ── */
+.tc-countdown{
+  font-family:'Orbitron',monospace;font-size:.65rem;
+  color:var(--gold);letter-spacing:2px;margin-bottom:4px;
+}
+.tc-countdown.en-cours{color:var(--green);animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.tc-date{font-size:.8rem;color:var(--text2);margin-bottom:4px}
+
+/* ── Mode description (expandable) ── */
+.tc-mode-row{display:flex;align-items:center;gap:6px;cursor:pointer;margin-bottom:6px}
+.tc-mode-label{font-size:.8rem;color:var(--text2)}
+.tc-mode-expand{font-size:.7rem;color:var(--text3)}
+.tc-mode-desc{
+  font-size:.78rem;color:var(--text3);line-height:1.5;
+  max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;
+  border-left:2px solid var(--border2);padding-left:0;margin-bottom:0;
+}
+.tc-mode-desc.open{max-height:60px;padding-left:8px;margin-bottom:6px}
+
+/* ── Deadline inscription ── */
+.tc-deadline{font-size:.78rem;margin-bottom:8px}
+.deadline-ok{color:var(--orange)}
+.deadline-close{color:var(--red)}
+.deadline-past{color:var(--text3)}
+
+/* ── Corps de la carte ── */
+.tc-body{padding:0 14px 12px}
+
+/* ── Barre de slots ── */
+.tc-slots{margin-bottom:8px}
+.slots-bar{display:flex;gap:3px;margin-bottom:4px;flex-wrap:wrap}
+.slot-block{
+  width:14px;height:14px;border-radius:2px;
+  background:rgba(0,232,120,.3);border:1px solid var(--green);
+}
+.slot-block.empty{background:rgba(26,47,74,.4);border-color:var(--border)}
+.slots-text{font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text2);letter-spacing:1px}
+.slots-text .slots-count{color:var(--text);font-weight:700}
+.slots-text.complet{color:var(--red)}
+
+/* ── Liste des inscrits ── */
+.tc-inscrits{margin-bottom:8px}
+.inscrits-label{font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text3);letter-spacing:2px;margin-bottom:6px}
+.inscrits-list{display:flex;flex-direction:column;gap:4px}
+.inscrit-row{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 8px;background:var(--bg3);border-radius:4px;
+  font-size:.82rem;
+}
+.inscrit-avatar{font-size:1rem}
+.inscrit-pseudo{color:var(--text);font-weight:600}
+.inscrit-grade{font-size:.68rem;color:var(--text3)}
+.inscrit-flag{display:inline-block;font-size:.85rem;vertical-align:middle}
+.waitlist-info{
+  font-family:'Orbitron',monospace;font-size:.5rem;
+  color:var(--orange);letter-spacing:1px;margin-top:4px;padding:4px 8px;
+  background:rgba(255,136,68,.08);border-radius:4px;border:1px solid rgba(255,136,68,.2);
+}
+
+/* ── CTA bouton ── */
+.tc-cta{padding:0 14px 14px}
+.btn-cta{
+  width:100%;font-family:'Orbitron',monospace;font-weight:700;
+  font-size:.65rem;padding:12px;border-radius:7px;border:none;
+  cursor:pointer;letter-spacing:2px;text-transform:uppercase;
+  transition:all .2s;
+}
+.btn-cta-ouvert{background:var(--green);color:#001a0d}
+.btn-cta-ouvert:hover{background:#00ff8c;box-shadow:0 0 16px rgba(0,232,120,.35)}
+.btn-cta-waitlist{background:rgba(255,136,68,.15);border:1px solid var(--orange);color:var(--orange)}
+.btn-cta-waitlist:hover{background:rgba(255,136,68,.25)}
+.btn-cta-disabled{background:var(--bg3);border:1px solid var(--border);color:var(--text3);cursor:default}
+
+/* ═══════════════════════════════════════════════════════════════
+   ETAT VIDE / CHARGEMENT
+═══════════════════════════════════════════════════════════════ */
+.empty-state{
+  text-align:center;padding:40px 20px;
+  font-family:'Orbitron',monospace;font-size:.65rem;
+  color:var(--text3);letter-spacing:2px;
+}
+.empty-state .big-icon{font-size:3rem;display:block;margin-bottom:12px;opacity:.4}
+.skeleton-card{
+  height:180px;border-radius:var(--radius);
+  background:linear-gradient(90deg,var(--card) 25%,var(--bg3) 50%,var(--card) 75%);
+  background-size:200% 100%;animation:shimmer 1.5s infinite;
+  border:1px solid var(--border);margin-bottom:14px;
+}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ═══════════════════════════════════════════════════════════════
+   MODAL (slide-up depuis le bas)
+═══════════════════════════════════════════════════════════════ */
+#modal-overlay{
+  position:fixed;inset:0;background:rgba(4,11,20,.85);z-index:500;
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+#modal-overlay.open{opacity:1;pointer-events:all}
+#modal{
+  width:100%;max-width:600px;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:14px 14px 0 0;
+  max-height:92vh;overflow-y:auto;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,0,.67,0);
+  scrollbar-width:thin;scrollbar-color:var(--border2) transparent;
+}
+#modal-overlay.open #modal{transform:translateY(0)}
+.modal-handle{
+  width:36px;height:4px;background:var(--border2);border-radius:2px;
+  margin:10px auto 0;
+}
+.modal-header{
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-title{font-family:'Orbitron',monospace;font-size:.72rem;color:var(--gold);letter-spacing:2px}
+.modal-close{
+  background:none;border:none;color:var(--text3);font-size:1.3rem;
+  cursor:pointer;padding:2px 6px;border-radius:4px;transition:color .2s;
+  line-height:1;
+}
+.modal-close:hover{color:var(--text)}
+.modal-tournoi-info{
+  padding:12px 18px;background:var(--bg3);border-bottom:1px solid var(--border);
+}
+.mti-title{font-family:'Orbitron',monospace;font-size:.68rem;color:var(--cyan);letter-spacing:1px}
+.mti-sub{font-size:.8rem;color:var(--text2);margin-top:3px}
+
+/* ── Onglets ── */
+.modal-tabs{
+  display:flex;border-bottom:1px solid var(--border);
+  padding:0 18px;
+}
+.modal-tab{
+  font-family:'Orbitron',monospace;font-size:.52rem;
+  color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;
+  padding:10px 14px;cursor:pointer;letter-spacing:1px;
+  transition:all .2s;
+}
+.modal-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.modal-tab:hover:not(.active){color:var(--text2)}
+.modal-body{padding:18px}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* ── Formulaire modal ── */
+.form-group{margin-bottom:14px}
+.form-label{
+  display:block;font-family:'Orbitron',monospace;font-size:.5rem;
+  color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;
+}
+.form-input{
+  width:100%;background:var(--bg);border:1px solid var(--border);
+  border-radius:6px;padding:10px 12px;color:var(--text);
+  font-family:'Rajdhani',sans-serif;font-size:.95rem;
+  outline:none;transition:border-color .2s;-webkit-appearance:none;
+}
+.form-input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,212,255,.1)}
+.form-input.valid{border-color:var(--green)}
+.form-input.error{border-color:var(--red)}
+.form-hint{font-size:.72rem;color:var(--text3);margin-top:4px;min-height:16px}
+.form-hint.ok{color:var(--green)}
+.form-hint.err{color:var(--red)}
+.form-hint.warn{color:var(--orange)}
+
+/* ── Card joueur trouvé ── */
+.player-found-card{
+  background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.25);
+  border-radius:8px;padding:12px;margin-bottom:12px;
+  display:none;
+}
+.pfc-row{display:flex;align-items:center;gap:12px}
+.pfc-avatar{font-size:1.8rem}
+.pfc-info{flex:1}
+.pfc-name{font-family:'Orbitron',monospace;font-size:.72rem;color:var(--cyan);letter-spacing:1px}
+.pfc-grade{font-size:.78rem;color:var(--text2);margin-top:2px}
+.pfc-victories{font-family:'Orbitron',monospace;font-size:.6rem;color:var(--gold);margin-top:2px}
+
+/* ── Sélecteur avatar ── */
+.avatar-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));
+  gap:6px;margin-top:6px;max-height:150px;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:var(--border2) transparent;
+}
+.avatar-opt{
+  font-size:1.3rem;text-align:center;padding:5px;border-radius:5px;
+  cursor:pointer;border:2px solid transparent;transition:all .15s;
+  background:var(--bg3);
+}
+.avatar-opt:hover{border-color:var(--border2);background:var(--card)}
+.avatar-opt.selected{border-color:var(--gold);background:rgba(245,200,66,.12)}
+
+/* ── Sélecteur drapeau ── */
+.flag-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));
+  gap:6px;margin-top:6px;max-height:130px;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:var(--border2) transparent;
+}
+.flag-opt{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:5px 4px;border-radius:5px;cursor:pointer;
+  border:2px solid transparent;transition:all .15s;background:var(--bg3);
+}
+.flag-opt:hover{border-color:var(--border2);background:var(--card)}
+.flag-opt.selected{border-color:var(--cyan);background:rgba(0,212,255,.1)}
+.flag-opt .f-icon{font-size:1.2rem;line-height:1}
+.flag-opt .f-lbl{font-size:.45rem;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:44px;text-align:center}
+
+/* ── Boutons modal ── */
+.btn-modal-primary{
+  width:100%;font-family:'Orbitron',monospace;font-weight:700;
+  font-size:.6rem;padding:13px;border-radius:7px;border:none;
+  cursor:pointer;letter-spacing:2px;text-transform:uppercase;
+  background:var(--gold);color:#000;transition:all .2s;
+}
+.btn-modal-primary:hover:not(:disabled){background:#e0b430;box-shadow:0 0 14px rgba(245,200,66,.3)}
+.btn-modal-primary:disabled{background:var(--bg3);color:var(--text3);cursor:default}
+
+.btn-modal-warn{
+  width:100%;font-family:'Orbitron',monospace;font-weight:700;
+  font-size:.6rem;padding:13px;border-radius:7px;
+  background:rgba(255,136,68,.15);border:1px solid var(--orange);color:var(--orange);
+  cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:all .2s;
+}
+.btn-modal-warn:hover:not(:disabled){background:rgba(255,136,68,.25)}
+.btn-modal-warn:disabled{opacity:.4;cursor:default}
+
+/* ── Alerte inscription existante ── */
+.insc-warning{
+  background:rgba(255,136,68,.08);border:1px solid rgba(255,136,68,.3);
+  border-radius:6px;padding:10px 12px;margin-bottom:12px;
+  font-size:.82rem;color:var(--orange);line-height:1.5;display:none;
+}
+.insc-warning a{color:var(--gold);text-decoration:underline;cursor:pointer}
+
+/* ═══════════════════════════════════════════════════════════════
+   ECRAN DE CONFIRMATION (dans le modal)
+═══════════════════════════════════════════════════════════════ */
+#confirm-screen{display:none;text-align:center;padding:10px 0 20px}
+.confirm-icon{font-size:3rem;display:block;margin-bottom:8px}
+.confirm-title{font-family:'Orbitron',monospace;font-size:.9rem;color:var(--green);letter-spacing:2px;margin-bottom:6px}
+.confirm-sub{font-size:.85rem;color:var(--text2);margin-bottom:18px;line-height:1.5}
+.confirm-link-box{
+  background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  padding:14px;margin-bottom:14px;
+}
+.confirm-link-label{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text3);letter-spacing:2px;margin-bottom:6px}
+.confirm-link-url{
+  font-family:'Orbitron',monospace;font-size:.52rem;
+  color:var(--cyan);word-break:break-all;margin-bottom:8px;line-height:1.6;
+}
+.confirm-reminder{
+  font-size:.75rem;color:var(--gold);
+  background:rgba(245,200,66,.06);border:1px solid rgba(245,200,66,.2);
+  border-radius:6px;padding:8px 12px;margin-bottom:16px;
+}
+.btn-confirm-copy{
+  font-family:'Orbitron',monospace;font-size:.55rem;
+  background:rgba(0,212,255,.15);border:1px solid var(--cyan);color:var(--cyan);
+  padding:8px 16px;border-radius:6px;cursor:pointer;letter-spacing:1px;
+  transition:all .2s;margin-bottom:8px;
+}
+.btn-confirm-copy:hover{background:rgba(0,212,255,.25)}
+.btn-confirm-close{
+  font-family:'Orbitron',monospace;font-size:.52rem;
+  background:none;border:1px solid var(--border);color:var(--text3);
+  padding:7px 14px;border-radius:6px;cursor:pointer;letter-spacing:1px;
+  transition:all .2s;
+}
+.btn-confirm-close:hover{border-color:var(--text2);color:var(--text2)}
+
+/* ═══════════════════════════════════════════════════════════════
+   TOAST NOTIFICATIONS
+═══════════════════════════════════════════════════════════════ */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  z-index:1000;display:flex;flex-direction:column;gap:6px;
+  align-items:center;pointer-events:none;
+}
+.toast-item{
+  background:var(--card);border-radius:8px;padding:10px 18px;
+  font-family:'Orbitron',monospace;font-size:.55rem;letter-spacing:1px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
+  animation:toastIn .3s ease,toastOut .3s ease 2.7s forwards;
+  pointer-events:all;white-space:nowrap;
+}
+.toast-item.success{border:1px solid var(--green);color:var(--green)}
+.toast-item.error{border:1px solid var(--red);color:var(--red)}
+.toast-item.info{border:1px solid var(--cyan);color:var(--cyan)}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateY(12px)}}
+
+/* ═══════════════════════════════════════════════════════════════
+   DIALOG DE CONFIRMATION DESISTEMENT
+═══════════════════════════════════════════════════════════════ */
+#confirm-dialog{
+  position:fixed;inset:0;background:rgba(4,11,20,.9);z-index:600;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+#confirm-dialog.open{opacity:1;pointer-events:all}
+.dialog-box{
+  background:var(--bg2);border:1px solid var(--red);border-radius:10px;
+  padding:24px;max-width:320px;width:100%;text-align:center;
+}
+.dialog-title{font-family:'Orbitron',monospace;font-size:.75rem;color:var(--red);letter-spacing:2px;margin-bottom:10px}
+.dialog-text{font-size:.85rem;color:var(--text2);margin-bottom:18px;line-height:1.5}
+.dialog-btns{display:flex;gap:10px;justify-content:center}
+.btn-dialog-cancel{
+  font-family:'Orbitron',monospace;font-size:.52rem;
+  background:none;border:1px solid var(--border);color:var(--text3);
+  padding:8px 16px;border-radius:6px;cursor:pointer;
+  transition:all .2s;
+}
+.btn-dialog-cancel:hover{border-color:var(--text2);color:var(--text2)}
+.btn-dialog-confirm{
+  font-family:'Orbitron',monospace;font-size:.52rem;
+  background:rgba(255,68,85,.15);border:1px solid var(--red);color:var(--red);
+  padding:8px 16px;border-radius:6px;cursor:pointer;
+  transition:all .2s;
+}
+.btn-dialog-confirm:hover{background:rgba(255,68,85,.3)}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════════ */
+@media(max-width:400px){
+  .tc-title{font-size:.65rem}
+  .modal-tab{font-size:.45rem;padding:8px 10px}
+  .avatar-grid{grid-template-columns:repeat(auto-fill,minmax(32px,1fr))}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════════════ -->
+<header class="app-header">
+  <div class="hdr-left">
+    <div class="hdr-title">TOUCHÉ COULÉ</div>
+    <div class="hdr-sub">INSCRIPTIONS AUX TOURNOIS</div>
+  </div>
+  <div class="hdr-anchor">⚓</div>
+</header>
+
+<!-- ══════════════════════════════════════════════════
+     BANDEAU JOUEUR CONNECTÉ (visible si ?p=TOKEN)
+══════════════════════════════════════════════════ -->
+<div id="player-banner">
+  <div class="pb-greeting">BIENVENUE, COMMANDANT</div>
+  <div class="pb-identity">
+    <span class="pb-avatar" id="pb-avatar"></span>
+    <div>
+      <div class="pb-name" id="pb-name"></div>
+      <div class="pb-grade" id="pb-grade"></div>
+    </div>
+    <span id="pb-flag"></span>
+  </div>
+  <div class="pb-link-row">
+    <span class="pb-link" id="pb-link"></span>
+    <button class="btn-copy-link" onclick="copyPlayerLink()">Copier le lien</button>
+  </div>
+  <div class="pb-inscriptions" id="pb-inscriptions"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     CONTENU PRINCIPAL
+══════════════════════════════════════════════════ -->
+<main>
+  <div class="section-title">Tournois disponibles</div>
+  <div id="tournois-list">
+    <!-- Squelettes de chargement -->
+    <div class="skeleton-card" id="skel-1"></div>
+    <div class="skeleton-card" id="skel-2"></div>
+  </div>
+</main>
+
+<!-- ══════════════════════════════════════════════════
+     MODAL INSCRIPTION (slide-up)
+══════════════════════════════════════════════════ -->
+<div id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div id="modal">
+    <div class="modal-handle"></div>
+
+    <!-- En-tête modal -->
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">S'inscrire au tournoi</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <!-- Info tournoi sélectionné -->
+    <div class="modal-tournoi-info">
+      <div class="mti-title" id="modal-tournoi-nom"></div>
+      <div class="mti-sub" id="modal-tournoi-date"></div>
+    </div>
+
+    <!-- Corps du modal (onglets ou confirmation) -->
+    <div id="modal-form-wrapper">
+
+      <!-- Onglets -->
+      <div class="modal-tabs">
+        <button class="modal-tab active" onclick="switchTab('existant')">Joueur existant</button>
+        <button class="modal-tab" onclick="switchTab('nouveau')">Nouveau joueur</button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- ── Onglet joueur existant ── -->
+        <div class="tab-pane active" id="tab-existant">
+
+          <!-- Champ pseudo avec recherche live -->
+          <div class="form-group">
+            <label class="form-label" for="inp-pseudo-exist">Votre pseudo</label>
+            <input type="text" id="inp-pseudo-exist" class="form-input" placeholder="Tapez votre pseudo…" autocomplete="off">
+            <div class="form-hint" id="hint-pseudo-exist"></div>
+          </div>
+
+          <!-- Card joueur trouvé -->
+          <div class="player-found-card" id="player-found-card">
+            <div class="pfc-row">
+              <span class="pfc-avatar" id="pfc-avatar"></span>
+              <div class="pfc-info">
+                <div class="pfc-name" id="pfc-name"></div>
+                <div class="pfc-grade" id="pfc-grade"></div>
+                <div class="pfc-victories" id="pfc-victories"></div>
+              </div>
+              <span id="pfc-flag"></span>
+            </div>
+          </div>
+
+          <!-- Alerte inscription déjà existante -->
+          <div class="insc-warning" id="insc-warning-exist"></div>
+
+          <!-- Email optionnel -->
+          <div class="form-group">
+            <label class="form-label" for="inp-email-exist">Email (optionnel)</label>
+            <input type="email" id="inp-email-exist" class="form-input" placeholder="pour te prévenir du début">
+          </div>
+
+          <!-- Bouton CTA -->
+          <button class="btn-modal-primary" id="btn-inscrire-exist" disabled onclick="inscrireJoueurExistant()">
+            S'inscrire
+          </button>
+        </div>
+
+        <!-- ── Onglet nouveau joueur ── -->
+        <div class="tab-pane" id="tab-nouveau">
+
+          <!-- Pseudo (vérif unicité) -->
+          <div class="form-group">
+            <label class="form-label" for="inp-pseudo-new">Choisissez un pseudo</label>
+            <input type="text" id="inp-pseudo-new" class="form-input" placeholder="Votre nom de commandant…" autocomplete="off">
+            <div class="form-hint" id="hint-pseudo-new"></div>
+          </div>
+
+          <!-- Sélecteur avatar -->
+          <div class="form-group">
+            <label class="form-label">Avatar</label>
+            <div class="avatar-grid" id="avatar-grid"></div>
+            <div class="form-hint" id="hint-avatar">Choisissez un avatar</div>
+          </div>
+
+          <!-- Sélecteur drapeau -->
+          <div class="form-group">
+            <label class="form-label">Drapeau</label>
+            <div class="flag-grid" id="flag-grid"></div>
+            <div class="form-hint" id="hint-flag">Choisissez votre drapeau</div>
+          </div>
+
+          <!-- Email optionnel -->
+          <div class="form-group">
+            <label class="form-label" for="inp-email-new">Email (optionnel)</label>
+            <input type="email" id="inp-email-new" class="form-input" placeholder="pour te prévenir du début">
+          </div>
+
+          <!-- Alerte inscription existante -->
+          <div class="insc-warning" id="insc-warning-new"></div>
+
+          <!-- Bouton CTA -->
+          <button class="btn-modal-primary" id="btn-inscrire-new" disabled onclick="creerEtInscrire()">
+            Créer mon profil et m'inscrire
+          </button>
+        </div>
+
+      </div><!-- /modal-body -->
+    </div><!-- /modal-form-wrapper -->
+
+    <!-- ── Écran de confirmation post-inscription ── -->
+    <div id="confirm-screen" class="modal-body">
+      <span class="confirm-icon" id="confirm-icon"></span>
+      <div class="confirm-title" id="confirm-title"></div>
+      <div class="confirm-sub" id="confirm-sub"></div>
+      <div class="confirm-link-box">
+        <div class="confirm-link-label">TON LIEN PERMANENT</div>
+        <div class="confirm-link-url" id="confirm-link-url"></div>
+        <button class="btn-confirm-copy" onclick="copyConfirmLink()">Copier le lien</button>
+      </div>
+      <div class="confirm-reminder">
+        ⚓ Sauvegarde ce lien — c'est ton accès permanent au jeu !
+      </div>
+      <br>
+      <button class="btn-confirm-close" onclick="closeModal()">Fermer</button>
+    </div>
+
+  </div><!-- /modal -->
+</div><!-- /modal-overlay -->
+
+<!-- ══════════════════════════════════════════════════
+     DIALOG DÉSISTEMENT
+══════════════════════════════════════════════════ -->
+<div id="confirm-dialog">
+  <div class="dialog-box">
+    <div class="dialog-title">Confirmer le désistement ?</div>
+    <div class="dialog-text" id="dialog-desist-text"></div>
+    <div class="dialog-btns">
+      <button class="btn-dialog-cancel" onclick="closeDesistDialog()">Annuler</button>
+      <button class="btn-dialog-confirm" onclick="confirmerDesistement()">Se désister</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TOAST
+══════════════════════════════════════════════════ -->
+<div id="toast"></div>
+
+
+<!-- ══════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════════
+   CONFIG SUPABASE
+═══════════════════════════════════════════════════════════════ */
+const SUPABASE_URL = 'https://pwtqeyiynrtiprjgqzuw.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3dHFleWl5bnJ0aXByamdxenV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDM0MzMsImV4cCI6MjA4OTc3OTMzM30.acIEmilzlTCScWoKoyAX5rq1EwBWMzSQAmXQBPbX3Yw';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const PLAYER_BASE_URL = 'https://seboss44120.github.io/touche-coule-ppa/tournoi-jeu.html';
+
+/* ═══════════════════════════════════════════════════════════════
+   CONSTANTES JEUX (identiques à tournoi-jeu.html)
+═══════════════════════════════════════════════════════════════ */
+const GRADES=[
+  {label:'Matelot',min:0},{label:'Matelot 1ère classe',min:5},
+  {label:'Matelot 2nde classe',min:10},{label:'Quartier-maître 1ère classe',min:15},
+  {label:'Second maître',min:20},{label:'Maître',min:25},
+  {label:'Premier maître',min:35},{label:'Maître principal',min:45},
+  {label:'Major',min:55},{label:'Aspirant',min:65},
+  {label:'Enseigne de vaisseau',min:80},{label:'Lieutenant de vaisseau',min:95},
+  {label:'Capitaine de corvette',min:110},{label:'Capitaine de frégate',min:125},
+  {label:'Capitaine de vaisseau',min:140},{label:'Commodore',min:155},
+  {label:'Contre-amiral',min:170},{label:'Vice-amiral',min:185},
+  {label:"Vice-amiral d'escadre",min:200},{label:'Amiral',min:215},
+];
+const AVATARS=['⚓','🚢','🛳️','⛵','🚤','🛥️','⛴️','🦈','🐙','🦑','🐋','🐬','🦅','🦁','🐯','🦊','🐺','🦝','🦖','👑','💀','🔥','⚡','🌊','🏴‍☠️','🦄'];
+const DRAPEAUX=[
+  {code:'fr',flag:'🇫🇷',label:'France'},{code:'gb',flag:'🇬🇧',label:'Royaume-Uni'},
+  {code:'de',flag:'🇩🇪',label:'Allemagne'},{code:'es',flag:'🇪🇸',label:'Espagne'},
+  {code:'it',flag:'🇮🇹',label:'Italie'},{code:'pt',flag:'🇵🇹',label:'Portugal'},
+  {code:'be',flag:'🇧🇪',label:'Belgique'},{code:'nl',flag:'🇳🇱',label:'Pays-Bas'},
+  {code:'ch',flag:'🇨🇭',label:'Suisse'},{code:'us',flag:'🇺🇸',label:'États-Unis'},
+  {code:'ca',flag:'🇨🇦',label:'Canada'},{code:'au',flag:'🇦🇺',label:'Australie'},
+  {code:'jp',flag:'🇯🇵',label:'Japon'},{code:'br',flag:'🇧🇷',label:'Brésil'},
+  {code:'mx',flag:'🇲🇽',label:'Mexique'},{code:'ma',flag:'🇲🇦',label:'Maroc'},
+  {code:'dz',flag:'🇩🇿',label:'Algérie'},{code:'sn',flag:'🇸🇳',label:'Sénégal'},
+  {code:'pirate',flag:'🏴‍☠️',label:'Pirate'},{code:'rainbow',flag:'🏳️‍🌈',label:'Arc-en-ciel'},
+  {code:'white',flag:'🏳️',label:'Neutre'},{code:'black',flag:'🏴',label:'Anarchiste'},
+  {code:'crossed',flag:'🎌',label:'Croisés'},{code:'eu',flag:'🇪🇺',label:'Europe'},
+];
+const FLAG_SPECIAL={pirate:'🏴‍☠️',rainbow:'🏳️‍🌈',white:'🏳️',black:'🏴',crossed:'🎌'};
+const MODE_INFO={
+  classique:     {icon:'⚓',label:'Classique',      desc:'Tours alternés — chacun tire à son tour. Stratégie et patience.'},
+  rush:          {icon:'⚡',label:'Rush',           desc:'Tirs simultanés — tout le monde tire en même temps. Rapide et intense.'},
+  mort_subite:   {icon:'💀',label:'Mort Subite',    desc:'Le premier navire coulé arrête la partie. Un seul tir peut tout changer.'},
+  petite_victime:{icon:'🎯',label:'Petite Victime', desc:'Variante Mort Subite : le plus petit navire touché déclenche la fin.'},
+  op_speciales:  {icon:'🔭',label:'Opérations Spéciales', desc:'Pouvoirs : Sonar, Espion, Kamikaze. Tactique avancée.'},
+};
+
+/** Calcule le grade d'un joueur selon ses victoires */
+function getGrade(v){
+  let g=GRADES[0];
+  for(const gr of GRADES){if(v>=gr.min)g=gr;else break;}
+  return g.label;
+}
+
+/** Renvoie le HTML du drapeau (emoji ou fi flag-icon) */
+function renderFlag(code){
+  if(FLAG_SPECIAL[code]) return FLAG_SPECIAL[code];
+  return `<span class="fi fi-${code||'fr'}" style="font-size:1.1em;vertical-align:middle;display:inline-block"></span>`;
+}
+
+/** Construit l'URL permanente joueur */
+function playerUrl(token){ return `${PLAYER_BASE_URL}?p=${token}`; }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   ÉTAT GLOBAL
+═══════════════════════════════════════════════════════════════ */
+let currentPlayer = null;       // joueur_profils connecté via ?p=token
+let tournoisData  = [];         // liste des tournois chargés
+let selectedTournoi = null;     // tournoi en cours d'inscription
+let foundPlayer = null;         // joueur trouvé lors de la recherche (onglet existant)
+let selectedAvatar = null;      // avatar sélectionné (onglet nouveau)
+let selectedFlag   = null;      // drapeau sélectionné (onglet nouveau)
+let desistPendingId = null;     // id inscription à désister
+let desistPendingTournoiId = null;
+let confirmLinkToCopy = '';     // lien à copier sur l'écran de confirmation
+let pseudoExistDebounce = null;
+let pseudoNewDebounce   = null;
+
+
+/* ═══════════════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════════════ */
+function showToast(msg, type='info', duration=3000){
+  const t = document.getElementById('toast');
+  const item = document.createElement('div');
+  item.className = `toast-item ${type}`;
+  item.textContent = msg;
+  t.appendChild(item);
+  setTimeout(() => item.remove(), duration);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   FORMATAGE DES DATES ET COMPTES À REBOURS
+═══════════════════════════════════════════════════════════════ */
+/**
+ * Formate un objet Date en chaîne lisible : "lundi 12 mai à 20h00"
+ */
+function formatDateLisible(d){
+  const jours=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  const mois=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  return `${jours[d.getDay()]} ${d.getDate()} ${mois[d.getMonth()]} à ${String(d.getHours()).padStart(2,'0')}h${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+/**
+ * Calcule et formate le compte à rebours jusqu'à une date
+ * @returns {string} texte HTML et flag statut
+ */
+function formatCountdown(target){
+  const now = Date.now();
+  const diff = new Date(target).getTime() - now;
+  if(diff <= 0) return {text:'EN COURS', enCours:true};
+  const d = Math.floor(diff/86400000);
+  const h = Math.floor((diff%86400000)/3600000);
+  const m = Math.floor((diff%3600000)/60000);
+  const targetDate = new Date(target);
+  if(d===0 && h===0 && m<60){
+    return {text:`Aujourd'hui à ${String(targetDate.getHours()).padStart(2,'0')}h${String(targetDate.getMinutes()).padStart(2,'0')}`, enCours:false};
+  }
+  if(d===0){
+    return {text:`Dans ${h}h ${String(m).padStart(2,'0')}min`, enCours:false};
+  }
+  return {text:`Dans ${d}j ${h}h ${String(m).padStart(2,'0')}min`, enCours:false};
+}
+
+/**
+ * Formate la deadline d'inscription
+ */
+function formatDeadline(deadlineStr){
+  if(!deadlineStr) return {html:'<span class="deadline-past">Pas de deadline</span>', past:false};
+  const now = Date.now();
+  const dl  = new Date(deadlineStr);
+  const diff = dl.getTime() - now;
+  if(diff <= 0) return {html:'<span class="deadline-past">Closes</span>', past:true};
+  const h = Math.floor(diff/3600000);
+  const m = Math.floor((diff%3600000)/60000);
+  if(h < 24){
+    return {html:`<span class="deadline-close">Closes dans ${h}h ${String(m).padStart(2,'0')}min</span>`, past:false};
+  }
+  const d = `${String(dl.getDate()).padStart(2,'0')}/${String(dl.getMonth()+1).padStart(2,'0')} à ${String(dl.getHours()).padStart(2,'0')}:${String(dl.getMinutes()).padStart(2,'0')}`;
+  return {html:`<span class="deadline-ok">Closes le ${d}</span>`, past:false};
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   CHARGEMENT DES TOURNOIS
+═══════════════════════════════════════════════════════════════ */
+async function loadTournois(){
+  try {
+    // Récupère les tournois planifiés avec statut visible
+    const {data, error} = await sb
+      .from('tournois_planifies')
+      .select(`
+        *,
+        inscriptions_planifiees(id, profil_id, pseudo, statut, position_waitlist)
+      `)
+      .in('statut', ['ouvert','complet','ferme','lance'])
+      .order('date_tournoi', {ascending:true});
+
+    if(error) throw error;
+
+    // Retire les squelettes
+    document.getElementById('skel-1')?.remove();
+    document.getElementById('skel-2')?.remove();
+
+    tournoisData = data || [];
+
+    if(tournoisData.length === 0){
+      document.getElementById('tournois-list').innerHTML =
+        `<div class="empty-state">
+          <span class="big-icon">⚓</span>
+          Aucun tournoi planifié pour le moment.<br>Revenez bientôt, commandant.
+        </div>`;
+      return;
+    }
+
+    renderTournois();
+
+  } catch(e){
+    console.error('Erreur chargement tournois:', e);
+    document.getElementById('skel-1')?.remove();
+    document.getElementById('skel-2')?.remove();
+    document.getElementById('tournois-list').innerHTML =
+      `<div class="empty-state">
+        <span class="big-icon">💀</span>
+        Erreur de connexion. Rechargez la page.
+      </div>`;
+  }
+}
+
+/** Dessine toutes les cartes tournoi */
+function renderTournois(){
+  const list = document.getElementById('tournois-list');
+  list.innerHTML = '';
+  for(const t of tournoisData){
+    list.appendChild(buildTournoiCard(t));
+  }
+  // Lance les comptes à rebours en temps réel
+  startCountdownTimers();
+}
+
+/** Construit une carte tournoi DOM */
+function buildTournoiCard(t){
+  const inscrits = (t.inscriptions_planifiees || []).filter(i => i.statut === 'inscrit');
+  const waitlist  = (t.inscriptions_planifiees || []).filter(i => i.statut === 'waitlist');
+  const nbInscrits = inscrits.length;
+  const maxJoueurs = t.max_joueurs || 8;
+  const places     = Math.max(0, maxJoueurs - nbInscrits);
+
+  const mode    = MODE_INFO[t.mode_jeu] || {icon:'🎮', label: t.mode_jeu, desc:''};
+  const badge   = badgeStatut(t.statut);
+  const deadline = formatDeadline(t.date_fin_inscription);
+
+  // ── Barre de slots ──
+  let slotsBar = '';
+  for(let i=0;i<maxJoueurs;i++){
+    slotsBar += `<div class="slot-block${i>=nbInscrits?' empty':''}"></div>`;
+  }
+  let slotsText = places>0
+    ? `<span class="slots-count">${nbInscrits}/${maxJoueurs}</span> — ${places} place${places>1?'s':''} libre${places>1?'s':''}`
+    : `<span class="slots-count">${nbInscrits}/${maxJoueurs}</span>`;
+  let slotsTextClass = places===0 ? 'slots-text complet' : 'slots-text';
+
+  // ── Liste des inscrits ──
+  let inscritsList = '';
+  for(const ins of inscrits){
+    const grade = getGrade(0); // on n'a pas les victoires ici, affiché minimaliste
+    inscritsList += `
+      <div class="inscrit-row">
+        <span class="inscrit-avatar">${ins.pseudo_avatar||'⚓'}</span>
+        <span class="inscrit-pseudo">${escHtml(ins.pseudo)}</span>
+        ${ins.pseudo_flag ? `<span class="inscrit-flag">${renderFlag(ins.pseudo_flag)}</span>` : ''}
+        <span class="inscrit-grade">${ins.pseudo_grade||''}</span>
+      </div>`;
+  }
+  if(inscrits.length===0) inscritsList = '<div style="font-size:.78rem;color:var(--text3);padding:4px 0">Aucun inscrit pour l\'instant</div>';
+
+  // ── Bouton CTA ──
+  let ctaBtn = '';
+  const deadlinePast = deadline.past;
+  if(t.statut === 'lance'){
+    ctaBtn = `<button class="btn-cta btn-cta-disabled" disabled>En cours</button>`;
+  } else if(t.statut === 'ferme' || deadlinePast){
+    ctaBtn = `<button class="btn-cta btn-cta-disabled" disabled>Inscriptions closes</button>`;
+  } else if(places > 0){
+    ctaBtn = `<button class="btn-cta btn-cta-ouvert" onclick="openModal('${t.id}')">S'inscrire</button>`;
+  } else {
+    ctaBtn = `<button class="btn-cta btn-cta-waitlist" onclick="openModal('${t.id}')">Liste d'attente</button>`;
+  }
+
+  const div = document.createElement('div');
+  div.className = `tournoi-card statut-${t.statut}`;
+  div.dataset.tournoiId = t.id;
+  div.innerHTML = `
+    <div class="tc-header">
+      <div class="tc-header-left">
+        <div class="tc-title-row">
+          <span class="tc-mode-icon">${mode.icon}</span>
+          <span class="tc-title">${escHtml(t.titre)}</span>
+          <span class="tc-badge badge-${t.statut}">${badge}</span>
+        </div>
+        <div class="tc-countdown${isNaN(new Date(t.date_tournoi)) ? '' : ''}" data-target="${t.date_tournoi}">
+          Calcul…
+        </div>
+        <div class="tc-date">${isNaN(new Date(t.date_tournoi)) ? '' : formatDateLisible(new Date(t.date_tournoi))}</div>
+        <div class="tc-mode-row" onclick="toggleModeDesc(this)">
+          <span class="tc-mode-label">${mode.label}</span>
+          <span class="tc-mode-expand">▼</span>
+        </div>
+        <div class="tc-mode-desc">${escHtml(mode.desc)}</div>
+        <div class="tc-deadline">${deadline.html}</div>
+      </div>
+    </div>
+    <div class="tc-body">
+      <div class="tc-slots">
+        <div class="slots-bar">${slotsBar}</div>
+        <div class="${slotsTextClass}">${slotsText}${places===0?' — <strong>COMPLET</strong>':''}</div>
+      </div>
+      <div class="tc-inscrits">
+        <div class="inscrits-label">Inscrits</div>
+        <div class="inscrits-list">${inscritsList}</div>
+        ${waitlist.length>0?`<div class="waitlist-info">${waitlist.length} en liste d'attente</div>`:''}
+      </div>
+    </div>
+    <div class="tc-cta">${ctaBtn}</div>
+  `;
+  return div;
+}
+
+/** Affiche/masque la description du mode de jeu */
+function toggleModeDesc(row){
+  const desc = row.nextElementSibling;
+  const arrow = row.querySelector('.tc-mode-expand');
+  desc.classList.toggle('open');
+  arrow.textContent = desc.classList.contains('open') ? '▲' : '▼';
+}
+
+/** Génère le texte du badge statut */
+function badgeStatut(s){
+  const map={ouvert:'OUVERT',complet:'COMPLET',ferme:'FERMÉ',lance:'LANCÉ'};
+  return map[s]||s.toUpperCase();
+}
+
+/** Démarre les timers de compte à rebours pour toutes les cartes */
+function startCountdownTimers(){
+  function update(){
+    document.querySelectorAll('.tc-countdown[data-target]').forEach(el => {
+      const {text, enCours} = formatCountdown(el.dataset.target);
+      el.textContent = text;
+      el.classList.toggle('en-cours', enCours);
+    });
+  }
+  update();
+  setInterval(update, 30000); // mise à jour toutes les 30s
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   RÉALTIME — mise à jour live des inscriptions
+═══════════════════════════════════════════════════════════════ */
+function subscribeRealtime(){
+  sb.channel('inscriptions-live')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table:  'inscriptions_planifiees'
+    }, async () => {
+      // Recharge les données et re-render
+      await refreshTournoisData();
+    })
+    .subscribe();
+}
+
+/** Recharge les données tournois depuis Supabase et re-render */
+async function refreshTournoisData(){
+  try {
+    const {data, error} = await sb
+      .from('tournois_planifies')
+      .select(`*, inscriptions_planifiees(id, profil_id, pseudo, statut, position_waitlist)`)
+      .in('statut', ['ouvert','complet','ferme','lance'])
+      .order('date_tournoi', {ascending:true});
+    if(error) throw error;
+    tournoisData = data || [];
+    renderTournois();
+    // Si un joueur connecté → recharge son bandeau
+    if(currentPlayer) await loadPlayerInscriptions(currentPlayer.id);
+  } catch(e){
+    console.error('Erreur refresh:', e);
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   JOUEUR CONNECTÉ VIA ?p=TOKEN
+═══════════════════════════════════════════════════════════════ */
+async function initPlayerFromUrl(){
+  const params = new URLSearchParams(window.location.search);
+  const token  = params.get('p');
+  if(!token) return;
+
+  try {
+    const {data, error} = await sb
+      .from('joueur_profils')
+      .select('*')
+      .eq('token', token)
+      .single();
+    if(error || !data) return; // token invalide, pas d'erreur visible
+
+    currentPlayer = data;
+    showPlayerBanner(data);
+    await loadPlayerInscriptions(data.id);
+
+  } catch(e){
+    console.error('Erreur identification joueur:', e);
+  }
+}
+
+/** Affiche le bandeau joueur */
+function showPlayerBanner(p){
+  const banner = document.getElementById('player-banner');
+  banner.style.display = 'block';
+  document.getElementById('pb-avatar').textContent = p.avatar || '⚓';
+  document.getElementById('pb-name').textContent   = p.pseudo;
+  document.getElementById('pb-grade').textContent  = getGrade(p.victoires || 0);
+  document.getElementById('pb-flag').innerHTML     = renderFlag(p.drapeau);
+  const url = playerUrl(p.token);
+  document.getElementById('pb-link').textContent   = url;
+  document.getElementById('pb-link').title         = url;
+}
+
+/** Charge et affiche les inscriptions actives du joueur connecté */
+async function loadPlayerInscriptions(profilId){
+  try {
+    const {data, error} = await sb
+      .from('inscriptions_planifiees')
+      .select('*, tournois_planifies(id, titre, date_tournoi, statut)')
+      .eq('profil_id', profilId)
+      .in('statut', ['inscrit','waitlist']);
+    if(error) throw error;
+
+    const container = document.getElementById('pb-inscriptions');
+    container.innerHTML = '';
+    if(!data || data.length === 0){
+      container.innerHTML = '<div style="font-size:.78rem;color:var(--text3)">Aucune inscription active.</div>';
+      return;
+    }
+    for(const ins of data){
+      const t = ins.tournois_planifies;
+      const statusLabel = ins.statut === 'waitlist' ? 'Liste d\'attente' : 'Inscrit';
+      const div = document.createElement('div');
+      div.className = 'pb-insc-card';
+      div.innerHTML = `
+        <div>
+          <div class="pb-insc-title">${escHtml(t?.titre||'Tournoi')}</div>
+          <div class="pb-insc-status">${statusLabel} · ${t ? formatDateLisible(new Date(t.date_tournoi)) : ''}</div>
+        </div>
+        <button class="btn-desist" onclick="promptDesistement('${ins.id}','${escHtml(t?.titre||'')}')">
+          Me désister
+        </button>`;
+      container.appendChild(div);
+    }
+  } catch(e){
+    console.error('Erreur inscriptions joueur:', e);
+  }
+}
+
+/** Copie le lien du joueur connecté */
+function copyPlayerLink(){
+  if(!currentPlayer) return;
+  const url = playerUrl(currentPlayer.token);
+  navigator.clipboard.writeText(url)
+    .then(()=> showToast('Lien copié !','success'))
+    .catch(()=> showToast('Impossible de copier','error'));
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   MODAL INSCRIPTION — OUVERTURE / FERMETURE
+═══════════════════════════════════════════════════════════════ */
+function openModal(tournoiId){
+  const t = tournoisData.find(x => x.id === tournoiId || x.id === Number(tournoiId));
+  if(!t) return;
+  selectedTournoi = t;
+
+  // Réinitialise le modal
+  resetModal();
+
+  // Remplit les infos tournoi
+  document.getElementById('modal-tournoi-nom').textContent  = t.titre;
+  document.getElementById('modal-tournoi-date').textContent = formatDateLisible(new Date(t.date_tournoi));
+
+  const inscrits  = (t.inscriptions_planifiees||[]).filter(i=>i.statut==='inscrit').length;
+  const places    = Math.max(0,(t.max_joueurs||8)-inscrits);
+  const isWaitlist = places === 0;
+
+  // Adapte le titre modal et le CTA selon disponibilité
+  document.getElementById('modal-title').textContent = isWaitlist ? 'Rejoindre la liste d\'attente' : 'S\'inscrire au tournoi';
+  document.getElementById('btn-inscrire-exist').textContent = isWaitlist ? 'Rejoindre la liste d\'attente' : 'S\'inscrire';
+  document.getElementById('btn-inscrire-new').textContent   = isWaitlist ? 'Créer mon profil et rejoindre la liste d\'attente' : 'Créer mon profil et m\'inscrire';
+
+  // Affiche le modal
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // Si joueur connecté : pré-remplir son pseudo
+  if(currentPlayer){
+    const inp = document.getElementById('inp-pseudo-exist');
+    inp.value = currentPlayer.pseudo;
+    inp.dispatchEvent(new Event('input'));
+  }
+}
+
+function closeModal(){
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  selectedTournoi = null;
+  foundPlayer     = null;
+}
+
+function handleOverlayClick(e){
+  if(e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+/** Remet le modal à l'état initial */
+function resetModal(){
+  // Onglets
+  switchTab('existant');
+  // Champs
+  document.getElementById('inp-pseudo-exist').value = '';
+  document.getElementById('inp-email-exist').value   = '';
+  document.getElementById('inp-pseudo-new').value    = '';
+  document.getElementById('inp-email-new').value     = '';
+  document.getElementById('hint-pseudo-exist').textContent = '';
+  document.getElementById('hint-pseudo-exist').className  = 'form-hint';
+  document.getElementById('hint-pseudo-new').textContent  = '';
+  document.getElementById('hint-pseudo-new').className    = 'form-hint';
+  document.getElementById('player-found-card').style.display = 'none';
+  document.getElementById('insc-warning-exist').style.display = 'none';
+  document.getElementById('insc-warning-new').style.display   = 'none';
+  document.getElementById('btn-inscrire-exist').disabled = true;
+  document.getElementById('btn-inscrire-new').disabled   = true;
+  document.getElementById('hint-avatar').textContent = 'Choisissez un avatar';
+  document.getElementById('hint-avatar').className   = 'form-hint';
+  document.getElementById('hint-flag').textContent   = 'Choisissez votre drapeau';
+  document.getElementById('hint-flag').className     = 'form-hint';
+  // Sélections avatar/flag
+  document.querySelectorAll('.avatar-opt.selected').forEach(e=>e.classList.remove('selected'));
+  document.querySelectorAll('.flag-opt.selected').forEach(e=>e.classList.remove('selected'));
+  selectedAvatar = null;
+  selectedFlag   = null;
+  foundPlayer    = null;
+  // Écran de confirmation
+  document.getElementById('confirm-screen').style.display    = 'none';
+  document.getElementById('modal-form-wrapper').style.display = 'block';
+}
+
+/** Bascule entre les onglets existant / nouveau */
+function switchTab(name){
+  document.querySelectorAll('.modal-tab').forEach((btn,i)=>{
+    const isTarget = (i===0 && name==='existant') || (i===1 && name==='nouveau');
+    btn.classList.toggle('active', isTarget);
+  });
+  document.getElementById('tab-existant').classList.toggle('active', name==='existant');
+  document.getElementById('tab-nouveau').classList.toggle('active', name==='nouveau');
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   RECHERCHE LIVE DE PSEUDO (onglet existant)
+═══════════════════════════════════════════════════════════════ */
+document.getElementById('inp-pseudo-exist').addEventListener('input', function(){
+  clearTimeout(pseudoExistDebounce);
+  const val = this.value.trim();
+  if(val.length < 2){
+    document.getElementById('player-found-card').style.display = 'none';
+    document.getElementById('hint-pseudo-exist').textContent = '';
+    document.getElementById('btn-inscrire-exist').disabled = true;
+    document.getElementById('insc-warning-exist').style.display = 'none';
+    foundPlayer = null;
+    return;
+  }
+  document.getElementById('hint-pseudo-exist').textContent = 'Recherche…';
+  pseudoExistDebounce = setTimeout(()=>searchPlayerByPseudo(val), 400);
+});
+
+async function searchPlayerByPseudo(pseudo){
+  try {
+    const {data, error} = await sb
+      .from('joueur_profils')
+      .select('*')
+      .ilike('pseudo', pseudo)
+      .limit(1)
+      .single();
+
+    if(error || !data){
+      document.getElementById('hint-pseudo-exist').textContent = 'Joueur introuvable';
+      document.getElementById('hint-pseudo-exist').className   = 'form-hint err';
+      document.getElementById('player-found-card').style.display = 'none';
+      document.getElementById('btn-inscrire-exist').disabled = true;
+      document.getElementById('insc-warning-exist').style.display = 'none';
+      foundPlayer = null;
+      return;
+    }
+
+    foundPlayer = data;
+    showFoundPlayerCard(data);
+    await checkExistingInscription(data.id, 'exist');
+
+  } catch(e){
+    console.error('Erreur recherche pseudo:', e);
+  }
+}
+
+/** Affiche la card du joueur trouvé */
+function showFoundPlayerCard(p){
+  document.getElementById('pfc-avatar').textContent = p.avatar || '⚓';
+  document.getElementById('pfc-name').textContent   = p.pseudo;
+  document.getElementById('pfc-grade').textContent  = getGrade(p.victoires||0);
+  document.getElementById('pfc-victories').textContent = `${p.victoires||0} victoire${(p.victoires||0)>1?'s':''}`;
+  document.getElementById('pfc-flag').innerHTML     = renderFlag(p.drapeau);
+  document.getElementById('player-found-card').style.display = 'block';
+  document.getElementById('hint-pseudo-exist').textContent = 'Joueur trouvé !';
+  document.getElementById('hint-pseudo-exist').className   = 'form-hint ok';
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   VÉRIFICATION INSCRIPTION EXISTANTE
+═══════════════════════════════════════════════════════════════ */
+/**
+ * Vérifie si le profil est déjà inscrit dans un tournoi quelconque.
+ * @param {string} profilId
+ * @param {'exist'|'new'} tab - quel onglet afficher le message
+ */
+async function checkExistingInscription(profilId, tab){
+  try {
+    const {data, error} = await sb
+      .from('inscriptions_planifiees')
+      .select('*, tournois_planifies(id, titre)')
+      .eq('profil_id', profilId)
+      .in('statut', ['inscrit','waitlist']);
+
+    const warningEl = document.getElementById(`insc-warning-${tab}`);
+    const btnEl     = document.getElementById(`btn-inscrire-${tab}`);
+
+    if(error) throw error;
+
+    if(!data || data.length === 0){
+      warningEl.style.display = 'none';
+      btnEl.disabled = false;
+      return true; // OK pour s'inscrire
+    }
+
+    // Vérifie si c'est dans CE tournoi
+    const insCeTournoi = data.find(i => i.tournoi_planifie_id === selectedTournoi?.id);
+    if(insCeTournoi){
+      const url = currentPlayer ? playerUrl(currentPlayer.token) : (foundPlayer ? playerUrl(foundPlayer.token) : '#');
+      warningEl.innerHTML = `Tu es déjà inscrit à ce tournoi (${insCeTournoi.statut==='waitlist'?'liste d\'attente':'inscrit'}).
+        <br><a onclick="promptDesistement('${insCeTournoi.id}','${escHtml(selectedTournoi?.titre||'')}')">Me désister de ce tournoi</a>`;
+      warningEl.style.display = 'block';
+      btnEl.disabled = true;
+      return false;
+    }
+
+    // Inscrit dans un autre tournoi
+    const autres = data.map(i => escHtml(i.tournois_planifies?.titre || 'un tournoi')).join(', ');
+    warningEl.innerHTML = `Déjà inscrit au tournoi : <strong>${autres}</strong>.<br>
+      Tu dois d'abord te désister pour rejoindre un autre tournoi.
+      <br><a onclick="promptDesistement('${data[0].id}','${escHtml(data[0].tournois_planifies?.titre||'')}')">Me désister</a>`;
+    warningEl.style.display = 'block';
+    btnEl.disabled = true;
+    return false;
+
+  } catch(e){
+    console.error('Erreur vérif inscription:', e);
+    return true;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   VÉRIFICATION UNICITÉ PSEUDO (onglet nouveau)
+═══════════════════════════════════════════════════════════════ */
+document.getElementById('inp-pseudo-new').addEventListener('input', function(){
+  clearTimeout(pseudoNewDebounce);
+  const val = this.value.trim();
+  const hint = document.getElementById('hint-pseudo-new');
+  if(val.length < 2){
+    hint.textContent = 'Minimum 2 caractères';
+    hint.className   = 'form-hint';
+    document.getElementById('btn-inscrire-new').disabled = true;
+    return;
+  }
+  hint.textContent = 'Vérification…';
+  hint.className   = 'form-hint';
+  pseudoNewDebounce = setTimeout(()=>checkPseudoUnique(val), 400);
+});
+
+async function checkPseudoUnique(pseudo){
+  const hint = document.getElementById('hint-pseudo-new');
+  const btn  = document.getElementById('btn-inscrire-new');
+  try {
+    const {data} = await sb.from('joueur_profils').select('id').ilike('pseudo', pseudo).limit(1);
+    if(data && data.length > 0){
+      hint.textContent = 'Ce pseudo est déjà pris';
+      hint.className   = 'form-hint err';
+      btn.disabled = true;
+    } else {
+      hint.textContent = 'Pseudo disponible !';
+      hint.className   = 'form-hint ok';
+      updateNewPlayerBtn();
+    }
+  } catch(e){
+    hint.textContent = 'Erreur de vérification';
+    hint.className   = 'form-hint err';
+  }
+}
+
+/** Active/désactive le bouton créer profil selon les champs */
+function updateNewPlayerBtn(){
+  const pseudo = document.getElementById('inp-pseudo-new').value.trim();
+  const hint   = document.getElementById('hint-pseudo-new');
+  const ok = pseudo.length >= 2
+    && hint.classList.contains('ok')
+    && selectedAvatar !== null
+    && selectedFlag   !== null;
+  document.getElementById('btn-inscrire-new').disabled = !ok;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   GRILLES AVATAR & DRAPEAU
+═══════════════════════════════════════════════════════════════ */
+function buildAvatarGrid(){
+  const grid = document.getElementById('avatar-grid');
+  grid.innerHTML = '';
+  for(const av of AVATARS){
+    const div = document.createElement('div');
+    div.className = 'avatar-opt';
+    div.textContent = av;
+    div.onclick = ()=>{
+      document.querySelectorAll('.avatar-opt').forEach(e=>e.classList.remove('selected'));
+      div.classList.add('selected');
+      selectedAvatar = av;
+      document.getElementById('hint-avatar').textContent = `Avatar : ${av}`;
+      document.getElementById('hint-avatar').className   = 'form-hint ok';
+      updateNewPlayerBtn();
+    };
+    grid.appendChild(div);
+  }
+}
+
+function buildFlagGrid(){
+  const grid = document.getElementById('flag-grid');
+  grid.innerHTML = '';
+  for(const df of DRAPEAUX){
+    const div = document.createElement('div');
+    div.className = 'flag-opt';
+    const iconHtml = FLAG_SPECIAL[df.code]
+      ? `<span class="f-icon">${FLAG_SPECIAL[df.code]}</span>`
+      : `<span class="f-icon fi fi-${df.code}" style="font-size:1.2rem;display:inline-block"></span>`;
+    div.innerHTML = `${iconHtml}<span class="f-lbl">${df.label}</span>`;
+    div.onclick = ()=>{
+      document.querySelectorAll('.flag-opt').forEach(e=>e.classList.remove('selected'));
+      div.classList.add('selected');
+      selectedFlag = df.code;
+      document.getElementById('hint-flag').textContent = `Drapeau : ${df.label}`;
+      document.getElementById('hint-flag').className   = 'form-hint ok';
+      updateNewPlayerBtn();
+    };
+    grid.appendChild(div);
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   INSCRIPTION — JOUEUR EXISTANT
+═══════════════════════════════════════════════════════════════ */
+async function inscrireJoueurExistant(){
+  if(!foundPlayer || !selectedTournoi) return;
+  const btn = document.getElementById('btn-inscrire-exist');
+  btn.disabled = true;
+  btn.textContent = 'Inscription…';
+  try {
+    // Re-vérifie l'inscription (sécurité côté client)
+    const canInscrire = await checkExistingInscription(foundPlayer.id, 'exist');
+    if(!canInscrire){ btn.disabled=false; btn.textContent='S\'inscrire'; return; }
+
+    const inscrits = (selectedTournoi.inscriptions_planifiees||[]).filter(i=>i.statut==='inscrit').length;
+    const places   = Math.max(0,(selectedTournoi.max_joueurs||8)-inscrits);
+    const statut   = places > 0 ? 'inscrit' : 'waitlist';
+
+    // Calcule position waitlist si nécessaire
+    let position_waitlist = null;
+    if(statut === 'waitlist'){
+      const {data: wl} = await sb.from('inscriptions_planifiees')
+        .select('position_waitlist')
+        .eq('tournoi_planifie_id', selectedTournoi.id)
+        .eq('statut','waitlist')
+        .order('position_waitlist',{ascending:false})
+        .limit(1);
+      position_waitlist = wl && wl.length > 0 ? (wl[0].position_waitlist||0)+1 : 1;
+    }
+
+    const email = document.getElementById('inp-email-exist').value.trim();
+    const {error} = await sb.from('inscriptions_planifiees').insert({
+      tournoi_planifie_id: selectedTournoi.id,
+      profil_id:           foundPlayer.id,
+      pseudo:              foundPlayer.pseudo,
+      email:               email || null,
+      statut:              statut,
+      position_waitlist:   position_waitlist,
+    });
+    if(error) throw error;
+
+    showConfirmScreen(foundPlayer.token, statut);
+
+  } catch(e){
+    console.error('Erreur inscription:', e);
+    showToast('Erreur lors de l\'inscription : '+e.message, 'error', 5000);
+    btn.disabled = false;
+    btn.textContent = 'S\'inscrire';
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   INSCRIPTION — NOUVEAU JOUEUR
+═══════════════════════════════════════════════════════════════ */
+async function creerEtInscrire(){
+  if(!selectedTournoi || selectedAvatar===null || selectedFlag===null) return;
+  const pseudo = document.getElementById('inp-pseudo-new').value.trim();
+  if(!pseudo || pseudo.length < 2) return;
+
+  const btn = document.getElementById('btn-inscrire-new');
+  btn.disabled = true;
+  btn.textContent = 'Création…';
+
+  try {
+    // Crée le profil (token généré par Supabase via default)
+    const {data: newProfil, error: errProfil} = await sb
+      .from('joueur_profils')
+      .insert({
+        pseudo:   pseudo,
+        avatar:   selectedAvatar,
+        drapeau:  selectedFlag,
+        victoires:0,
+        grade_cache: getGrade(0),
+      })
+      .select()
+      .single();
+    if(errProfil) throw errProfil;
+
+    // Re-vérifie inscription
+    const canInscrire = await checkExistingInscription(newProfil.id, 'new');
+    if(!canInscrire){ btn.disabled=false; btn.textContent='Créer mon profil et m\'inscrire'; return; }
+
+    const inscrits = (selectedTournoi.inscriptions_planifiees||[]).filter(i=>i.statut==='inscrit').length;
+    const places   = Math.max(0,(selectedTournoi.max_joueurs||8)-inscrits);
+    const statut   = places > 0 ? 'inscrit' : 'waitlist';
+
+    let position_waitlist = null;
+    if(statut === 'waitlist'){
+      const {data: wl} = await sb.from('inscriptions_planifiees')
+        .select('position_waitlist')
+        .eq('tournoi_planifie_id', selectedTournoi.id)
+        .eq('statut','waitlist')
+        .order('position_waitlist',{ascending:false})
+        .limit(1);
+      position_waitlist = wl && wl.length > 0 ? (wl[0].position_waitlist||0)+1 : 1;
+    }
+
+    const email = document.getElementById('inp-email-new').value.trim();
+    const {error: errInsc} = await sb.from('inscriptions_planifiees').insert({
+      tournoi_planifie_id: selectedTournoi.id,
+      profil_id:           newProfil.id,
+      pseudo:              newProfil.pseudo,
+      email:               email || null,
+      statut:              statut,
+      position_waitlist:   position_waitlist,
+    });
+    if(errInsc) throw errInsc;
+
+    showConfirmScreen(newProfil.token, statut);
+
+  } catch(e){
+    console.error('Erreur création profil + inscription:', e);
+    showToast('Erreur : '+e.message, 'error', 5000);
+    btn.disabled = false;
+    btn.textContent = 'Créer mon profil et m\'inscrire';
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   ÉCRAN DE CONFIRMATION
+═══════════════════════════════════════════════════════════════ */
+function showConfirmScreen(token, statut){
+  document.getElementById('modal-form-wrapper').style.display = 'none';
+  const screen = document.getElementById('confirm-screen');
+  screen.style.display = 'block';
+
+  const isWaitlist = statut === 'waitlist';
+  document.getElementById('confirm-icon').textContent      = isWaitlist ? '⏳' : '✓';
+  document.getElementById('confirm-title').textContent     = isWaitlist ? 'Tu es en liste d\'attente !' : 'Tu es sur la liste !';
+  document.getElementById('confirm-title').style.color     = isWaitlist ? 'var(--orange)' : 'var(--green)';
+  document.getElementById('confirm-sub').textContent       = isWaitlist
+    ? 'Tu seras automatiquement promu si une place se libère.'
+    : 'Bienvenue dans le tournoi ' + (selectedTournoi?.titre||'') + ' !';
+
+  const url = playerUrl(token);
+  confirmLinkToCopy = url;
+  document.getElementById('confirm-link-url').textContent  = url;
+}
+
+function copyConfirmLink(){
+  navigator.clipboard.writeText(confirmLinkToCopy)
+    .then(()=> showToast('Lien copié !', 'success'))
+    .catch(()=> showToast('Impossible de copier', 'error'));
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   DÉSISTEMENT
+═══════════════════════════════════════════════════════════════ */
+/** Ouvre le dialog de confirmation de désistement */
+function promptDesistement(inscriptionId, tournoiTitre){
+  desistPendingId = inscriptionId;
+  document.getElementById('dialog-desist-text').textContent =
+    `Confirmer le désistement du tournoi "${tournoiTitre}" ?`;
+  document.getElementById('confirm-dialog').classList.add('open');
+}
+
+function closeDesistDialog(){
+  document.getElementById('confirm-dialog').classList.remove('open');
+  desistPendingId = null;
+}
+
+async function confirmerDesistement(){
+  if(!desistPendingId) return;
+  const btn = document.querySelector('.btn-dialog-confirm');
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  try {
+    // 1. Marque l'inscription comme désistée
+    const {data: insData, error: errDesist} = await sb
+      .from('inscriptions_planifiees')
+      .update({statut:'desiste'})
+      .eq('id', desistPendingId)
+      .select('tournoi_planifie_id')
+      .single();
+    if(errDesist) throw errDesist;
+
+    const tournoiPlanifieId = insData?.tournoi_planifie_id;
+
+    // 2. Promeut le premier de la waitlist si applicable
+    if(tournoiPlanifieId){
+      const {data: wlFirst} = await sb
+        .from('inscriptions_planifiees')
+        .select('id')
+        .eq('tournoi_planifie_id', tournoiPlanifieId)
+        .eq('statut','waitlist')
+        .order('position_waitlist', {ascending:true})
+        .limit(1);
+
+      if(wlFirst && wlFirst.length > 0){
+        await sb.from('inscriptions_planifiees')
+          .update({statut:'inscrit', position_waitlist: null})
+          .eq('id', wlFirst[0].id);
+      }
+    }
+
+    closeDesistDialog();
+    showToast('Désistement enregistré.', 'info');
+
+    // Recharge les données
+    await refreshTournoisData();
+
+  } catch(e){
+    console.error('Erreur désistement:', e);
+    showToast('Erreur lors du désistement : '+e.message, 'error', 5000);
+    btn.disabled = false;
+    btn.textContent = 'Se désister';
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   UTILITAIRES
+═══════════════════════════════════════════════════════════════ */
+/** Échappe le HTML pour éviter les injections */
+function escHtml(str){
+  if(!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   INITIALISATION
+═══════════════════════════════════════════════════════════════ */
+async function init(){
+  // Construit les grilles d'avatars et drapeaux
+  buildAvatarGrid();
+  buildFlagGrid();
+
+  // Charge le joueur connecté (si token dans l'URL)
+  await initPlayerFromUrl();
+
+  // Charge les tournois
+  await loadTournois();
+
+  // Abonnement realtime
+  subscribeRealtime();
+}
+
+// Lancement
+init().catch(e => console.error('Erreur init:', e));
+</script>
+</body>
+</html>

@@ -233,6 +233,25 @@ select option{background:var(--bg2)}
 @media(max-width:500px){main{padding:8px}}
 .spin{display:inline-block;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── PLANIFICATION ── */
+.planif-card{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px}
+.planif-head{padding:12px 14px;background:linear-gradient(90deg,rgba(0,212,255,.05),rgba(0,0,0,0));border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.planif-titre{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--cyan)}
+.planif-meta{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text3);letter-spacing:1px;margin-top:3px;line-height:1.9}
+.planif-body{padding:12px 14px}
+.planif-statut{font-family:'Orbitron',monospace;font-size:.52rem;padding:3px 9px;border-radius:10px;letter-spacing:1px;font-weight:700;display:inline-block;white-space:nowrap}
+.planif-statut.ouvert{background:rgba(0,232,120,.12);border:1px solid var(--green);color:var(--green)}
+.planif-statut.complet{background:rgba(245,200,66,.12);border:1px solid var(--gold);color:var(--gold)}
+.planif-statut.ferme{background:rgba(255,68,85,.1);border:1px solid var(--red);color:var(--red)}
+.planif-statut.lance{background:rgba(0,212,255,.12);border:1px solid var(--cyan);color:var(--cyan)}
+.planif-statut.annule{background:rgba(63,96,128,.1);border:1px solid var(--text3);color:var(--text3)}
+.planif-slot{width:18px;height:18px;border-radius:3px;border:1px solid rgba(255,255,255,.15)}
+.planif-slot.filled{background:rgba(0,212,255,.3);border-color:rgba(0,212,255,.5)}
+.planif-slot.empty{background:rgba(255,255,255,.04)}
+.planif-slot.wait{background:rgba(245,200,66,.25);border-color:rgba(245,200,66,.5)}
+.inscrit-row{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg3);border-radius:5px;margin-bottom:4px}
+.inscrit-row.waitlist{border-left:3px solid var(--gold)}
 </style>
 </head>
 <body>
@@ -362,6 +381,11 @@ let TOURNOI_JOUEURS = [];
 let ROSTER         = []; // joueur_profils — joueurs permanents
 let _nbJoueursSelect  = null;
 let _tournoiModeJeu   = null; // mode de jeu sélectionné avant lancement tournoi
+// Planification
+let TOURNOIS_PLANIFIES  = [];
+let INSCRIPTIONS_PLANIF = [];
+let _planifEditId       = null;  // null = création, string uuid = édition
+let _planifFormVisible  = false;
 
 /* ════════════════════════════════════════════════════════
    HELPERS
@@ -492,6 +516,20 @@ async function loadAllData() {
   // Charger le roster des joueurs permanents
   const { data: rosterData } = await sbT.from('joueur_profils').select('*').order('pseudo');
   ROSTER = rosterData || [];
+
+  // Charger les tournois planifiés
+  const { data: tPlanif } = await sbT.from('tournois_planifies')
+    .select('*').order('date_tournoi', { ascending: true });
+  TOURNOIS_PLANIFIES = tPlanif || [];
+
+  if (TOURNOIS_PLANIFIES.length) {
+    const ids = TOURNOIS_PLANIFIES.map(t => t.id);
+    const { data: inscripData } = await sbT.from('inscriptions_planifiees')
+      .select('*').in('tournoi_planifie_id', ids).order('created_at');
+    INSCRIPTIONS_PLANIF = inscripData || [];
+  } else {
+    INSCRIPTIONS_PLANIF = [];
+  }
 }
 
 async function doRefresh() {
@@ -587,6 +625,7 @@ function setupRealtime() {
         event:'*', schema:'public', table:'tournoi_matchs',
         filter:`tournoi_id=eq.${TOURNOI.id}`
       }, async () => {
+
         updateHeaderStatus();
         if (currentTab === 'tournoi') {
           await renderStatutTournoi(TOURNOI.id);
@@ -595,6 +634,29 @@ function setupRealtime() {
       })
       .subscribe();
   }
+
+  // Planification — temps réel
+  sbT.channel('admin-planif-inscriptions')
+    .on('postgres_changes', { event:'*', schema:'public', table:'inscriptions_planifiees' },
+      async () => {
+        if (!TOURNOIS_PLANIFIES.length) return;
+        const ids = TOURNOIS_PLANIFIES.map(t => t.id);
+        const { data } = await sbT.from('inscriptions_planifiees')
+          .select('*').in('tournoi_planifie_id', ids).order('created_at');
+        INSCRIPTIONS_PLANIF = data || [];
+        if (currentTab === 'planif') renderPlanif();
+      })
+    .subscribe();
+
+  sbT.channel('admin-tournois-planifies')
+    .on('postgres_changes', { event:'*', schema:'public', table:'tournois_planifies' },
+      async () => {
+        const { data } = await sbT.from('tournois_planifies')
+          .select('*').order('date_tournoi', { ascending: true });
+        TOURNOIS_PLANIFIES = data || [];
+        if (currentTab === 'planif') renderPlanif();
+      })
+    .subscribe();
 }
 
 /* ════════════════════════════════════════════════════════
@@ -607,11 +669,13 @@ const TABS_DUEL = [
   { id:'flottes',    label:'⚓ Flottes' },
   { id:'historique', label:'📋 Historique' },
   { id:'roster',     label:'👥 Roster' },
+  { id:'planif',     label:'📅 Planif' },
 ];
 const TABS_TOURNOI = [
   { id:'config',   label:'⚙️ Config' },
   { id:'tournoi',  label:'🏆 Tournoi' },
   { id:'roster',   label:'👥 Roster' },
+  { id:'planif',   label:'📅 Planif' },
 ];
 function getTabs() {
   return TOURNOI ? TABS_TOURNOI : TABS_DUEL;
@@ -648,6 +712,7 @@ function renderTab(t) {
   if (t === 'historique') renderHistorique();
   if (t === 'tournoi')    renderTournoi();
   if (t === 'roster')     renderRoster();
+  if (t === 'planif')     renderPlanif();
 }
 
 function updateHeaderStatus() {
@@ -2677,6 +2742,427 @@ async function adminCopierTousLiensPermanents() {
   a.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:999;min-width:260px;text-align:center';
   document.body.appendChild(a);
   setTimeout(() => a.remove(), 2500);
+}
+
+/* ════════════════════════════════════════════════════════
+   PLANIFICATION — RENDU
+════════════════════════════════════════════════════════ */
+function renderPlanif() {
+  const el = document.getElementById('tab-planif');
+  if (!el) return;
+
+  const inscripUrl = location.href.replace(/[^/]*$/, 'inscription.html');
+  // Ne compter que les tournois encore "actifs" (non lancé, non annulé) pour la limite de 4
+  const activeCount = TOURNOIS_PLANIFIES.filter(t => t.statut !== 'annule' && t.statut !== 'lance').length;
+  const canCreate   = activeCount < 4;
+
+  // Lien + bouton créer
+  let h = `<div class="card">
+    <div class="card-title">📅 Tournois planifiés</div>
+    <div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);letter-spacing:1px;line-height:2;margin-bottom:10px">
+      URL publique d'inscription — à partager aux joueurs :
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+      <div class="url-box" style="flex:1;min-width:0" title="Cliquer pour copier"
+        onclick="navigator.clipboard.writeText('${esc(inscripUrl)}').then(()=>{this.style.borderColor='var(--green)';setTimeout(()=>{this.style.borderColor='';},1300)})"
+      >${esc(inscripUrl)}</div>
+      <button class="btn btn-cyan btn-sm" onclick="window.open('${esc(inscripUrl)}','_blank')">👁 Voir</button>
+    </div>
+    ${canCreate
+      ? `<button class="btn btn-gold btn-sm" onclick="showPlanifForm(null)">+ Nouveau tournoi planifié</button>`
+      : `<div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);letter-spacing:1px">Maximum 4 tournois actifs atteint — lancez ou annulez un tournoi pour en créer un nouveau.</div>`
+    }
+    <div id="planif-form-wrap" style="display:${_planifFormVisible ? 'block' : 'none'};margin-top:12px">
+      ${_planifFormVisible ? _buildPlanifForm(_planifEditId ? TOURNOIS_PLANIFIES.find(t => t.id === _planifEditId) : null) : ''}
+    </div>
+  </div>`;
+
+  if (!TOURNOIS_PLANIFIES.length) {
+    h += `<div class="card" style="text-align:center;padding:28px">
+      <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--text3);letter-spacing:1.5px">Aucun tournoi planifié — créez-en un ci-dessus</div>
+    </div>`;
+  } else {
+    h += TOURNOIS_PLANIFIES.map(tp => _buildPlanifCard(tp)).join('');
+  }
+
+  el.innerHTML = h;
+}
+
+function _buildPlanifForm(editData) {
+  const modes = Object.entries(MODES_ADMIN)
+    .map(([k,v]) => `<option value="${k}" ${editData && editData.mode_jeu === k ? 'selected' : ''}>${v.icon} ${v.label}</option>`)
+    .join('');
+
+  // Formatter les dates ISO pour datetime-local (YYYY-MM-DDTHH:MM)
+  function fmtDt(iso) {
+    if (!iso) return '';
+    return iso.slice(0, 16);
+  }
+
+  return `
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px">
+      <div class="stitle" style="margin-bottom:10px">${editData ? '✏️ Modifier le tournoi' : '+ Nouveau tournoi planifié'}</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <div class="form-label">Titre du tournoi</div>
+        <input type="text" id="planifTitre" placeholder="Ex: Tournoi du vendredi soir" maxlength="40"
+          style="width:100%" value="${editData ? esc(editData.titre) : ''}">
+      </div>
+      <div class="form-row" style="margin-bottom:10px">
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Date du tournoi</div>
+          <input type="datetime-local" id="planifDate" style="width:100%" value="${fmtDt(editData?.date_tournoi)}">
+        </div>
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Fin des inscriptions</div>
+          <input type="datetime-local" id="planifDeadline" style="width:100%" value="${fmtDt(editData?.date_fin_inscription)}">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <div class="form-label">Mode de jeu</div>
+          <select id="planifMode" style="width:100%">${modes}</select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Slots (2–8)</div>
+          <input type="number" id="planifSlots" min="2" max="8" style="width:75px"
+            value="${editData ? editData.max_joueurs : 4}">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-gold btn-sm"
+          onclick="${editData ? `adminSauvegarderTournoiPlanifie('${editData.id}')` : 'adminCreerTournoiPlanifie()'}">
+          ✓ ${editData ? 'Sauvegarder' : 'Créer'}
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="closePlanifForm()">Annuler</button>
+      </div>
+      <div id="planifAlert" class="alert" style="margin-top:8px"></div>
+    </div>`;
+}
+
+function _buildPlanifCard(tp) {
+  const inscrits = INSCRIPTIONS_PLANIF.filter(i => i.tournoi_planifie_id === tp.id && i.statut === 'inscrit');
+  const waitlist = INSCRIPTIONS_PLANIF.filter(i => i.tournoi_planifie_id === tp.id && i.statut === 'waitlist')
+    .sort((a,b) => (a.position_waitlist||99) - (b.position_waitlist||99));
+  const desistes = INSCRIPTIONS_PLANIF.filter(i => i.tournoi_planifie_id === tp.id && i.statut === 'desiste');
+
+  const dateT = tp.date_tournoi     ? new Date(tp.date_tournoi)          : null;
+  const dateD = tp.date_fin_inscription ? new Date(tp.date_fin_inscription) : null;
+  const modeM = MODES_ADMIN[tp.mode_jeu] || { label: tp.mode_jeu || '—', icon:'⚓', color:'var(--text3)' };
+
+  // Slot bar
+  let slotBar = '';
+  for (let i = 0; i < tp.max_joueurs; i++) {
+    const cls = i < inscrits.length ? 'filled' : 'empty';
+    const title = i < inscrits.length ? esc(inscrits[i]?.pseudo || '?') : 'Libre';
+    slotBar += `<div class="planif-slot ${cls}" title="${title}"></div>`;
+  }
+  if (waitlist.length) {
+    for (const w of waitlist.slice(0,4)) {
+      slotBar += `<div class="planif-slot wait" title="${esc(w.pseudo)} — liste d'attente"></div>`;
+    }
+  }
+
+  const statutLabel = {
+    ouvert: '✅ Ouvert', complet: '🔒 Complet', ferme: '⛔ Fermé',
+    lance: '⚔️ Lancé', annule: '✗ Annulé',
+  }[tp.statut] || tp.statut;
+
+  const canLaunch = ['ouvert','complet','ferme'].includes(tp.statut) && inscrits.length >= 2;
+  const canClose  = ['ouvert','complet'].includes(tp.statut);
+  const canOpen   = tp.statut === 'ferme';
+  const canEdit   = tp.statut !== 'lance' && tp.statut !== 'annule';
+  const canDelete = tp.statut !== 'lance';
+
+  function rowInscrit(ins, isWait) {
+    const profil = ROSTER.find(p => p.id === ins.profil_id);
+    const grade  = profil ? _adminGetGrade(profil.victoires || 0) : 'Matelot';
+    const avatar = profil?.avatar || '⚓';
+    const drap   = profil?.drapeau === 'fr' ? '🇫🇷' : profil?.drapeau === 'gb' ? '🇬🇧' : '';
+    const posLabel = isWait
+      ? `<span style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--gold);margin-left:auto;padding-right:4px">#${ins.position_waitlist||'?'}</span>`
+      : '';
+    return `<div class="inscrit-row${isWait?' waitlist':''}">
+      <span style="font-size:1rem;flex-shrink:0">${esc(avatar)}</span>
+      ${drap ? `<span style="flex-shrink:0">${drap}</span>` : ''}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(ins.pseudo||'—')}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.46rem;color:var(--text3);letter-spacing:1px">${esc(grade)}</div>
+      </div>
+      ${posLabel}
+      <button class="btn btn-danger btn-xs" title="Retirer"
+        onclick="adminRetirerInscription('${ins.id}','${esc(ins.pseudo)}','${tp.id}')">✕</button>
+    </div>`;
+  }
+
+  return `<div class="planif-card">
+    <div class="planif-head">
+      <div style="flex:1;min-width:0">
+        <div class="planif-titre">${esc(tp.titre)}</div>
+        <div class="planif-meta">
+          ${dateT ? `📅 ${dateT.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} à ${dateT.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}` : '📅 Date non définie'}<br>
+          ${dateD ? `⏳ Inscriptions jusqu'au ${dateD.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})} à ${dateD.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}` : '⏳ Pas de date limite'}<br>
+          <span style="color:${modeM.color}">${modeM.icon} ${modeM.label}</span>
+          &nbsp;·&nbsp; ${inscrits.length} / ${tp.max_joueurs} joueur${tp.max_joueurs > 1 ? 's' : ''}
+          ${waitlist.length ? `&nbsp;·&nbsp; <span style="color:var(--gold)">${waitlist.length} en attente</span>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+        <span class="planif-statut ${tp.statut || 'ouvert'}">${statutLabel}</span>
+        ${tp.tournoi_id ? `<button class="btn btn-cyan btn-xs" onclick="goTab('tournoi')">Voir tournoi →</button>` : ''}
+      </div>
+    </div>
+    <div class="planif-body">
+
+      <!-- Slot bar -->
+      <div style="display:flex;gap:3px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+        ${slotBar}
+        <span style="font-family:'Orbitron',monospace;font-size:.5rem;color:var(--text3);margin-left:6px">
+          ${inscrits.length}/${tp.max_joueurs}${waitlist.length ? ` <span style="color:var(--gold)">+${waitlist.length} att.</span>` : ''}
+        </span>
+      </div>
+
+      <!-- Inscrits -->
+      ${inscrits.length
+        ? `<div class="stitle" style="margin-bottom:5px">Inscrits</div>${inscrits.map(i => rowInscrit(i, false)).join('')}`
+        : `<div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);letter-spacing:1px;text-align:center;padding:10px 0">Aucun inscrit pour l'instant</div>`
+      }
+
+      <!-- Liste d'attente -->
+      ${waitlist.length
+        ? `<div class="stitle" style="margin-top:10px;margin-bottom:5px;color:var(--gold)">Liste d'attente</div>${waitlist.map(i => rowInscrit(i, true)).join('')}`
+        : ''}
+
+      <!-- Désistements -->
+      ${desistes.length
+        ? `<div class="stitle" style="margin-top:8px;color:var(--text3)">Désistements (${desistes.length})</div>
+           <div style="font-size:.78rem;color:var(--text3);padding:4px 0">${desistes.map(i => esc(i.pseudo)).join(', ')}</div>`
+        : ''}
+
+      <!-- Actions -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--border2)">
+        ${canLaunch ? `<button class="btn btn-gold btn-sm" onclick="adminLancerTournoiPlanifie('${tp.id}')">⚔️ Lancer le tournoi</button>` : ''}
+        ${canClose  ? `<button class="btn btn-outline btn-sm" onclick="adminFermerInscriptions('${tp.id}')">🔒 Fermer inscriptions</button>` : ''}
+        ${canOpen   ? `<button class="btn btn-cyan btn-sm" onclick="adminOuvrirInscriptions('${tp.id}')">✅ Rouvrir inscriptions</button>` : ''}
+        ${canEdit   ? `<button class="btn btn-outline btn-sm" onclick="showPlanifForm('${tp.id}')">✏️ Modifier</button>` : ''}
+        ${canDelete ? `<button class="btn btn-danger btn-sm" onclick="adminSupprimerTournoiPlanifie('${tp.id}','${esc(tp.titre)}')">🗑️ Supprimer</button>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════
+   PLANIFICATION — ACTIONS
+════════════════════════════════════════════════════════ */
+function showPlanifForm(editId) {
+  _planifEditId     = editId || null;
+  _planifFormVisible = true;
+  renderPlanif();
+  // Scroll vers le formulaire
+  setTimeout(() => {
+    document.getElementById('planif-form-wrap')?.scrollIntoView({ behavior:'smooth', block:'center' });
+  }, 50);
+}
+
+function closePlanifForm() {
+  _planifEditId      = null;
+  _planifFormVisible = false;
+  renderPlanif();
+}
+
+function _getPlanifFormValues() {
+  const titre    = (document.getElementById('planifTitre')?.value || '').trim();
+  const date     = document.getElementById('planifDate')?.value || null;
+  const deadline = document.getElementById('planifDeadline')?.value || null;
+  const mode     = document.getElementById('planifMode')?.value || 'classique';
+  const slots    = parseInt(document.getElementById('planifSlots')?.value || '4');
+  return { titre, date, deadline, mode, slots };
+}
+
+function _showPlanifAlert(msg, type) {
+  const el = document.getElementById('planifAlert');
+  if (!el) return;
+  el.className = `alert ${type} show`;
+  el.textContent = msg;
+}
+
+async function adminCreerTournoiPlanifie() {
+  const { titre, date, deadline, mode, slots } = _getPlanifFormValues();
+  if (!titre) { _showPlanifAlert('Le titre est obligatoire.', 'err'); return; }
+  if (slots < 2 || slots > 8) { _showPlanifAlert('Nombre de slots invalide (2 à 8).', 'err'); return; }
+
+  _showPlanifAlert('Création en cours…', 'info');
+  try {
+    const payload = {
+      titre,
+      mode_jeu:             mode,
+      max_joueurs:          slots,
+      statut:               'ouvert',
+      date_tournoi:         date ? new Date(date).toISOString() : null,
+      date_fin_inscription: deadline ? new Date(deadline).toISOString() : null,
+    };
+    const { data, error } = await sbT.from('tournois_planifies').insert(payload).select().single();
+    if (error) throw error;
+    TOURNOIS_PLANIFIES.push(data);
+    TOURNOIS_PLANIFIES.sort((a,b) => (a.date_tournoi||'') > (b.date_tournoi||'') ? 1 : -1);
+    closePlanifForm();
+  } catch(e) {
+    _showPlanifAlert('Erreur : ' + e.message, 'err');
+  }
+}
+
+async function adminSauvegarderTournoiPlanifie(id) {
+  const { titre, date, deadline, mode, slots } = _getPlanifFormValues();
+  if (!titre) { _showPlanifAlert('Le titre est obligatoire.', 'err'); return; }
+  if (slots < 2 || slots > 8) { _showPlanifAlert('Nombre de slots invalide (2 à 8).', 'err'); return; }
+
+  _showPlanifAlert('Sauvegarde…', 'info');
+  try {
+    const payload = {
+      titre,
+      mode_jeu:             mode,
+      max_joueurs:          slots,
+      date_tournoi:         date ? new Date(date).toISOString() : null,
+      date_fin_inscription: deadline ? new Date(deadline).toISOString() : null,
+    };
+    const { data, error } = await sbT.from('tournois_planifies').update(payload).eq('id', id).select().single();
+    if (error) throw error;
+    const idx = TOURNOIS_PLANIFIES.findIndex(t => t.id === id);
+    if (idx >= 0) TOURNOIS_PLANIFIES[idx] = data;
+    closePlanifForm();
+  } catch(e) {
+    _showPlanifAlert('Erreur : ' + e.message, 'err');
+  }
+}
+
+async function adminSupprimerTournoiPlanifie(id, titre) {
+  if (!confirm(`Supprimer le tournoi "${titre}" ?\n\nToutes les inscriptions associées seront également supprimées.`)) return;
+  try {
+    // Les inscriptions sont CASCADE supprimées via FK
+    const { error } = await sbT.from('tournois_planifies').delete().eq('id', id);
+    if (error) throw error;
+    TOURNOIS_PLANIFIES = TOURNOIS_PLANIFIES.filter(t => t.id !== id);
+    INSCRIPTIONS_PLANIF = INSCRIPTIONS_PLANIF.filter(i => i.tournoi_planifie_id !== id);
+    renderPlanif();
+  } catch(e) {
+    alert('Erreur suppression : ' + e.message);
+  }
+}
+
+async function adminFermerInscriptions(id) {
+  if (!confirm('Fermer les inscriptions pour ce tournoi ?')) return;
+  try {
+    const { data, error } = await sbT.from('tournois_planifies').update({ statut:'ferme' }).eq('id', id).select().single();
+    if (error) throw error;
+    const idx = TOURNOIS_PLANIFIES.findIndex(t => t.id === id);
+    if (idx >= 0) TOURNOIS_PLANIFIES[idx] = data;
+    renderPlanif();
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+async function adminOuvrirInscriptions(id) {
+  try {
+    const tp = TOURNOIS_PLANIFIES.find(t => t.id === id);
+    if (!tp) return;
+    const inscrits = INSCRIPTIONS_PLANIF.filter(i => i.tournoi_planifie_id === id && i.statut === 'inscrit');
+    const newStatut = inscrits.length >= tp.max_joueurs ? 'complet' : 'ouvert';
+    const { data, error } = await sbT.from('tournois_planifies').update({ statut: newStatut }).eq('id', id).select().single();
+    if (error) throw error;
+    const idx = TOURNOIS_PLANIFIES.findIndex(t => t.id === id);
+    if (idx >= 0) TOURNOIS_PLANIFIES[idx] = data;
+    renderPlanif();
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+async function adminRetirerInscription(inscriptionId, pseudo, tournoiPlanifId) {
+  if (!confirm(`Retirer "${pseudo}" de ce tournoi ?`)) return;
+  try {
+    const { error } = await sbT.from('inscriptions_planifiees').delete().eq('id', inscriptionId);
+    if (error) throw error;
+
+    INSCRIPTIONS_PLANIF = INSCRIPTIONS_PLANIF.filter(i => i.id !== inscriptionId);
+
+    // Promouvoir le premier de la liste d'attente si le slot libéré était inscrit
+    const waitlist = INSCRIPTIONS_PLANIF
+      .filter(i => i.tournoi_planifie_id === tournoiPlanifId && i.statut === 'waitlist')
+      .sort((a,b) => (a.position_waitlist||99) - (b.position_waitlist||99));
+
+    if (waitlist.length) {
+      const premier = waitlist[0];
+      const { data: promoted, error: eP } = await sbT.from('inscriptions_planifiees')
+        .update({ statut:'inscrit', position_waitlist: null }).eq('id', premier.id).select().single();
+      if (!eP && promoted) {
+        const idx = INSCRIPTIONS_PLANIF.findIndex(i => i.id === premier.id);
+        if (idx >= 0) INSCRIPTIONS_PLANIF[idx] = promoted;
+      }
+    }
+
+    // Recalculer le statut du tournoi planifié
+    const tp = TOURNOIS_PLANIFIES.find(t => t.id === tournoiPlanifId);
+    if (tp && tp.statut === 'complet') {
+      const { data: tpUpd } = await sbT.from('tournois_planifies').update({ statut:'ouvert' }).eq('id', tournoiPlanifId).select().single();
+      if (tpUpd) {
+        const idx = TOURNOIS_PLANIFIES.findIndex(t => t.id === tournoiPlanifId);
+        if (idx >= 0) TOURNOIS_PLANIFIES[idx] = tpUpd;
+      }
+    }
+
+    renderPlanif();
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+async function adminLancerTournoiPlanifie(planifId) {
+  const tp = TOURNOIS_PLANIFIES.find(t => t.id === planifId);
+  if (!tp) return;
+
+  const inscrits = INSCRIPTIONS_PLANIF.filter(i => i.tournoi_planifie_id === planifId && i.statut === 'inscrit');
+
+  if (inscrits.length < 2) {
+    alert('Il faut au moins 2 joueurs inscrits pour lancer un tournoi.'); return;
+  }
+
+  // Avertir si un autre tournoi est déjà actif
+  if (TOURNOI && TOURNOI.statut !== 'terminé') {
+    if (!confirm(`⚠️ Un tournoi est déjà en cours ("${TOURNOI.statut}").\n\nLancer ce tournoi planifié remplacera l'actif dans la navigation.\n\nContinuer ?`)) return;
+  }
+
+  const modeM = MODES_ADMIN[tp.mode_jeu] || { label: tp.mode_jeu || '—', icon:'⚓' };
+  if (!confirm(`Lancer le tournoi "${tp.titre}" avec ${inscrits.length} joueurs ?\n\nMode : ${modeM.icon} ${modeM.label}\n\nCette action est définitive.`)) return;
+
+  try {
+    // 1. Créer le tournoi
+    const { data: newTournoi, error: errT } = await sbT.from('tournois')
+      .insert({ nb_joueurs_cible: inscrits.length, statut: 'inscription', mode_jeu: tp.mode_jeu })
+      .select().single();
+    if (errT) throw errT;
+
+    // 2. Créer les inscriptions joueurs
+    const joueurs = inscrits.map(i => ({
+      tournoi_id: newTournoi.id,
+      nom:        i.pseudo,
+      profil_id:  i.profil_id || null,
+    }));
+    const { error: errJ } = await sbT.from('tournoi_joueurs').insert(joueurs);
+    if (errJ) throw errJ;
+
+    // 3. Marquer le tournoi planifié comme lancé
+    const { data: tpUpd, error: errP } = await sbT.from('tournois_planifies')
+      .update({ statut: 'lance', tournoi_id: newTournoi.id }).eq('id', planifId).select().single();
+    if (errP) throw errP;
+
+    // 4. Mettre à jour le state local
+    const idx = TOURNOIS_PLANIFIES.findIndex(t => t.id === planifId);
+    if (idx >= 0) TOURNOIS_PLANIFIES[idx] = tpUpd;
+    TOURNOI         = newTournoi;
+    TOURNOI_JOUEURS = joueurs.map((j, i_) => ({ ...j, id: null, created_at: new Date().toISOString() }));
+
+    // 5. Recharger proprement et basculer sur l'onglet Tournoi
+    await loadAllData();
+    buildNav();
+    currentTab = 'tournoi';
+    goTab('tournoi');
+  } catch(e) {
+    alert('Erreur lors du lancement : ' + e.message);
+  }
 }
 
 /* ════════════════════════════════════════════════════════
