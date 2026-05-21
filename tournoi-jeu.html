@@ -1933,10 +1933,9 @@ async function resoudreCoups_op_speciales(matchId,tour,role){
           lines:[
             {text:'🔴 OPÉRATION ALERTE ROUGE',cls:'red',delay:0},
             {text:'NAVIRE FURTIF INTROUVABLE !',cls:'gold',delay:700,lockRet:true,lockClass:'locked-green',showStamp:true},
-            {text:'+3 PTS BONUS ACCORDÉS',cls:'green',delay:1400},
           ],
         }),6000);
-        showToastPhase('🔴 ALERTE ROUGE RÉUSSIE — Navire furtif introuvable ! +3 pts bonus','var(--red)');
+        showToastPhase('🔴 ALERTE ROUGE RÉUSSIE — Navire furtif introuvable !','var(--red)');
       }
     }
   }
@@ -2000,12 +1999,8 @@ async function resoudreCoups_op_speciales(matchId,tour,role){
     const vainqueur_id=role===1?match.joueur1_id:match.joueur2_id;
     const pts_j1=role===1?3:0,pts_j2=role===2?3:0;
     const allJ1=role===1?newTheirTirs:myTirsAv,allJ2=role===2?newTheirTirs:myTirsAv;
-    // Alerte Rouge bonus (+3 pts si le navire furtif n'a pas été touché au tour cible)
-    const opsNow=_opState[matchId]||{};
-    const alerteJ1=(opsNow?.j1?.alerte_rouge)?3:0;
-    const alerteJ2=(opsNow?.j2?.alerte_rouge)?3:0;
-    const bonus_j1=allJ1.filter(t=>t.result==='bonus').length*2+alerteJ1,malus_j1=allJ1.filter(t=>t.result==='malus').length*2;
-    const bonus_j2=allJ2.filter(t=>t.result==='bonus').length*2+alerteJ2,malus_j2=allJ2.filter(t=>t.result==='malus').length*2;
+    const bonus_j1=allJ1.filter(t=>t.result==='bonus').length*2,malus_j1=allJ1.filter(t=>t.result==='malus').length*2;
+    const bonus_j2=allJ2.filter(t=>t.result==='bonus').length*2,malus_j2=allJ2.filter(t=>t.result==='malus').length*2;
     await sb.from('tournoi_tours').update({statut:'validé'}).eq('id',tour.id);
     await sb.from('tournoi_matchs').update({statut:'terminé',vainqueur_id,pts_j1,pts_j2,bonus_j1,malus_j1,bonus_j2,malus_j2}).eq('id',matchId);
     const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)Object.assign(MATCHS[idx],{statut:'terminé',vainqueur_id,pts_j1,pts_j2,bonus_j1,malus_j1,bonus_j2,malus_j2});
@@ -2840,7 +2835,7 @@ function renderResultat(match,el){
       const alerteRouge=_opState[match.id]?.[myOpsKey2]?.alerte_rouge;
       return alerteRouge?`<div style="font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:1.5px;text-align:center;padding:10px 14px;margin-bottom:12px;background:rgba(255,68,85,.1);border:1px solid var(--red);border-radius:8px;color:var(--red)">
         🔴 OPÉRATION ALERTE ROUGE RÉUSSIE<br>
-        <span style="font-size:.5rem;color:var(--gold)">Navire furtif introuvable — +3 pts bonus accordés</span>
+        <span style="font-size:.5rem;color:var(--gold)">Navire furtif introuvable</span>
       </div>`:'';
     })()}
 
