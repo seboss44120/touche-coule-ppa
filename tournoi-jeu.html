@@ -5,9 +5,23 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>Touché Coulé — Tournoi</title>
 <!-- PWA -->
-<link rel="manifest" href="./manifest-joueur.json">
+<link rel="manifest" href="./manifest-joueur.json" id="pwa-manifest-link">
 <link rel="apple-touch-icon" href="./icon-joueur.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TC Joueur">
 <meta name="theme-color" content="#00e5ff">
+<script>
+// iOS PWA token fix : quand un token (?p=...) est dans l'URL, on retire le lien manifest.
+// iOS Safari sauvegarde alors l'URL courante exacte (avec ?p=TOKEN) au lieu du start_url
+// du manifest (qui est statique et sans token). Exécuté inline/synchrone avant tout fetch.
+(function(){
+  if(new URLSearchParams(location.search).get('p')){
+    var l=document.getElementById('pwa-manifest-link');
+    if(l) l.parentNode.removeChild(l);
+  }
+})();
+</script>
 <!-- /PWA -->
 <script src="./notifications.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
@@ -653,35 +667,6 @@ function showError(msg){
   </div>`;
 }
 
-/* ══ PWA MANIFEST PATCH — iOS fix ══
-   Quand l'URL contient un token (?p=TOKEN), on remplace dynamiquement
-   le lien manifest par une version en mémoire dont le start_url contient
-   le token. iOS Safari lit ce manifest lors de "Ajouter à l'écran d'accueil"
-   et sauvegarde le bon start_url — le token est ainsi préservé au lancement PWA.
-   Fallback : si Blob URLs non supportées, on retire purement le lien manifest
-   pour qu'iOS conserve l'URL courante (avec token) comme start URL.
-*/
-function _patchManifestToken(token){
-  try{
-    fetch('./manifest-joueur.json')
-      .then(r=>r.json())
-      .then(mf=>{
-        mf.start_url='./tournoi-jeu.html?p='+encodeURIComponent(token);
-        mf.id='touche-coule-joueur-'+token;
-        const blob=new Blob([JSON.stringify(mf)],{type:'application/manifest+json'});
-        const blobUrl=URL.createObjectURL(blob);
-        const link=document.querySelector('link[rel="manifest"]');
-        if(link) link.setAttribute('href',blobUrl);
-      })
-      .catch(()=>{
-        // Si le fetch échoue, retrait du manifest : iOS utilisera l'URL courante
-        document.querySelector('link[rel="manifest"]')?.remove();
-      });
-  }catch(e){
-    document.querySelector('link[rel="manifest"]')?.remove();
-  }
-}
-
 /* ══ INIT ══ */
 async function init(){
   try{
@@ -692,11 +677,6 @@ async function init(){
     // Persistence PWA : sauvegarde le token au 1er accès, le relit si l'app est lancée sans URL
     if(permToken){
       try{localStorage.setItem('tc_joueur_token',permToken);}catch(e){}
-      // ── Fix iOS PWA : patch le manifest start_url pour inclure le token ──
-      // iOS Safari lit le manifest au moment de "Ajouter à l'écran d'accueil" et utilise
-      // son start_url fixe — ce qui écrase le ?p=TOKEN de l'URL courante.
-      // On génère un manifest en mémoire (Blob URL) avec le bon start_url.
-      _patchManifestToken(permToken);
     }else if(!slotToken){
       const saved=localStorage.getItem('tc_joueur_token');
       if(saved){permToken=saved;history.replaceState(null,'',location.pathname+'?p='+saved);}
