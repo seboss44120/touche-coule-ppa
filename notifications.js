@@ -12,32 +12,21 @@
   'use strict';
 
   /* ═══════════════════════════════════════════════════════
-     PRÉFÉRENCES  (localStorage)
-     3 états cycliques :
-       'all'  → 🔔  vibration + OS
-       'vib'  → 📳  vibration uniquement
-       'off'  → 🔕  tout désactivé
+     PRÉFÉRENCES  (localStorage — indépendantes)
   ═══════════════════════════════════════════════════════ */
   const PREFS_KEY = 'tc_notif_prefs';
 
-  const STATES = [
-    { key: 'all', icon: '🔔', label: 'Notifs : tout activé',       vibration: true,  os: true  },
-    { key: 'vib', icon: '📳', label: 'Notifs : vibration seule',   vibration: true,  os: false },
-    { key: 'off', icon: '🔕', label: 'Notifs : tout désactivé',    vibration: false, os: false },
-  ];
-
-  function getStateKey() {
-    try { return localStorage.getItem(PREFS_KEY) || 'all'; } catch (e) { return 'all'; }
+  function getPrefs() {
+    try { return Object.assign({ vibration: true, os: true }, JSON.parse(localStorage.getItem(PREFS_KEY))); }
+    catch (e) { return { vibration: true, os: true }; }
   }
-  function saveStateKey(key) {
-    try { localStorage.setItem(PREFS_KEY, key); } catch (e) {}
+  function savePrefs(p) {
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch (e) {}
   }
-  function getState() {
-    return STATES.find(s => s.key === getStateKey()) || STATES[0];
-  }
-  function nextState() {
-    const idx = STATES.findIndex(s => s.key === getStateKey());
-    return STATES[(idx + 1) % STATES.length];
+  function bellIcon(p) {
+    if (!p.vibration && !p.os) return '🔕';
+    if (p.vibration && !p.os)  return '📳';
+    return '🔔';
   }
 
   /* ═══════════════════════════════════════════════════════
@@ -48,6 +37,120 @@
     const s = document.createElement('style');
     s.id = 'tc-notif-style';
     s.textContent = `
+      /* ── Cloche ── */
+      #tc-bell {
+        cursor: pointer;
+        font-size: 1rem;
+        line-height: 1;
+        padding: 2px 0;
+        user-select: none;
+        display: block;
+        margin-top: 4px;
+        text-align: right;
+        opacity: .85;
+        transition: opacity .15s, transform .15s;
+      }
+      #tc-bell:hover  { opacity: 1; }
+      #tc-bell:active { transform: scale(.88); }
+
+      /* ── Panneau dropdown ── */
+      #tc-notif-panel {
+        position: fixed;
+        top: 58px;
+        right: 12px;
+        z-index: 500;
+        background: #07111e;
+        border: 1px solid #1a3050;
+        border-radius: 10px;
+        padding: 14px 16px 12px;
+        min-width: 210px;
+        box-shadow: 0 8px 32px rgba(0,0,0,.6), 0 0 0 1px rgba(0,229,255,.06);
+        font-family: 'Orbitron', monospace;
+        display: none;
+        animation: tcPanelIn .18s ease forwards;
+      }
+      #tc-notif-panel.open { display: block; }
+
+      @keyframes tcPanelIn {
+        from { opacity:0; transform:translateY(-8px); }
+        to   { opacity:1; transform:translateY(0); }
+      }
+
+      .tc-panel-title {
+        font-size: .52rem;
+        letter-spacing: 2px;
+        color: #3f6080;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #1a2f4a;
+        padding-bottom: 8px;
+      }
+
+      .tc-toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+      .tc-toggle-row:last-child { margin-bottom: 0; }
+
+      .tc-toggle-label {
+        font-size: .6rem;
+        letter-spacing: 1.5px;
+        color: #7aabcc;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .tc-toggle-icon { font-size: .95rem; line-height: 1; }
+
+      /* Switch */
+      .tc-switch {
+        position: relative;
+        width: 38px;
+        height: 22px;
+        flex-shrink: 0;
+      }
+      .tc-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+      .tc-slider {
+        position: absolute;
+        inset: 0;
+        background: #0d1e30;
+        border: 1px solid #1a3050;
+        border-radius: 22px;
+        cursor: pointer;
+        transition: background .2s, border-color .2s;
+      }
+      .tc-slider::before {
+        content: '';
+        position: absolute;
+        width: 14px; height: 14px;
+        left: 3px; top: 3px;
+        background: #3f6080;
+        border-radius: 50%;
+        transition: transform .2s, background .2s;
+      }
+      .tc-switch input:checked + .tc-slider {
+        background: rgba(0,229,255,.12);
+        border-color: #00e5ff88;
+      }
+      .tc-switch input:checked + .tc-slider::before {
+        transform: translateX(16px);
+        background: #00e5ff;
+      }
+
+      /* Message d'état OS bloqué */
+      #tc-os-msg {
+        font-size: .5rem;
+        letter-spacing: 1px;
+        color: #ff6644;
+        margin-top: 8px;
+        line-height: 1.5;
+        display: none;
+      }
+
+      /* ── Toast "ton tour" ── */
       @keyframes tcSlideUp {
         from { opacity:0; transform:translateX(-50%) translateY(16px); }
         to   { opacity:1; transform:translateX(-50%) translateY(0); }
@@ -56,154 +159,126 @@
         from { opacity:1; }
         to   { opacity:0; }
       }
-      #tc-push-toast  { animation: tcSlideUp .3s ease forwards; }
-      #tc-push-toast.hiding { animation: tcFadeOut .4s ease forwards; }
-
-      #tc-notif-btn {
-        background: none;
-        border: 1px solid transparent;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 1.1rem;
-        padding: 4px 7px;
-        line-height: 1;
-        transition: border-color .2s, background .2s;
-        color: inherit;
-      }
-      #tc-notif-btn:hover  { border-color: var(--border, #1a2f4a); background: rgba(255,255,255,.05); }
-      #tc-notif-btn:active { transform: scale(.92); }
-
-      /* Tooltip */
-      #tc-notif-btn::after {
-        content: attr(data-tip);
-        position: absolute;
-        left: 50%;
-        top: calc(100% + 6px);
-        transform: translateX(-50%);
-        background: #050d18;
-        border: 1px solid var(--border, #1a2f4a);
-        color: #7aabcc;
-        font-family: 'Orbitron', monospace;
-        font-size: .5rem;
-        letter-spacing: 1px;
-        padding: 5px 10px;
-        border-radius: 5px;
-        white-space: nowrap;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity .2s;
-        z-index: 200;
-      }
-      #tc-notif-btn:hover::after { opacity: 1; }
-      #tc-notif-btn { position: relative; }
-
-      /* Panneau de confirmation état */
-      #tc-notif-feedback {
-        position: fixed;
-        top: 56px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #050d18;
-        border: 1px solid var(--border, #1a2f4a);
-        color: #7aabcc;
-        font-family: 'Orbitron', monospace;
-        font-size: .55rem;
-        letter-spacing: 1.5px;
-        padding: 7px 16px;
-        border-radius: 6px;
-        z-index: 300;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity .25s;
-        white-space: nowrap;
-      }
-      #tc-notif-feedback.visible { opacity: 1; }
+      #tc-push-toast          { animation: tcSlideUp .3s ease forwards; }
+      #tc-push-toast.hiding   { animation: tcFadeOut  .4s ease forwards; }
     `;
     document.head.appendChild(s);
   }
 
   /* ═══════════════════════════════════════════════════════
-     BOUTON TOGGLE dans le header
+     PANNEAU DROPDOWN + CLOCHE dans hdr-right
   ═══════════════════════════════════════════════════════ */
-  function injectToggleButton() {
-    if (document.getElementById('tc-notif-btn')) return;
+  let _panel = null;
 
-    const header = document.querySelector('.app-header');
-    if (!header) return;
+  function injectUI() {
+    if (document.getElementById('tc-bell')) return;
+    const hdrRight = document.querySelector('.hdr-right');
+    if (!hdrRight) return;
 
-    const st = getState();
+    const prefs = getPrefs();
 
-    // Bouton
-    const btn = document.createElement('button');
-    btn.id = 'tc-notif-btn';
-    btn.textContent = st.icon;
-    btn.setAttribute('data-tip', st.label.toUpperCase());
-    btn.title = st.label;
+    /* Cloche */
+    const bell = document.createElement('div');
+    bell.id = 'tc-bell';
+    bell.textContent = bellIcon(prefs);
+    bell.setAttribute('title', 'Gérer les notifications');
+    hdrRight.appendChild(bell);
 
-    // Feedback label
-    const fb = document.createElement('div');
-    fb.id = 'tc-notif-feedback';
-    document.body.appendChild(fb);
+    /* Panneau */
+    const panel = document.createElement('div');
+    panel.id = 'tc-notif-panel';
+    panel.innerHTML = `
+      <div class="tc-panel-title">🔔 Notifications</div>
 
-    let fbTimer;
-    function showFeedback(text) {
-      clearTimeout(fbTimer);
-      fb.textContent = text;
-      fb.classList.add('visible');
-      fbTimer = setTimeout(() => fb.classList.remove('visible'), 2500);
-    }
+      <div class="tc-toggle-row">
+        <span class="tc-toggle-label">
+          <span class="tc-toggle-icon">📳</span>Vibration
+        </span>
+        <label class="tc-switch">
+          <input type="checkbox" id="tc-chk-vib" ${prefs.vibration ? 'checked' : ''}>
+          <span class="tc-slider"></span>
+        </label>
+      </div>
 
-    btn.addEventListener('click', async () => {
-      const next = nextState();
-      saveStateKey(next.key);
-      btn.textContent = next.icon;
-      btn.setAttribute('data-tip', next.label.toUpperCase());
-      btn.title = next.label;
+      <div class="tc-toggle-row">
+        <span class="tc-toggle-label">
+          <span class="tc-toggle-icon">🔔</span>Alertes OS
+        </span>
+        <label class="tc-switch">
+          <input type="checkbox" id="tc-chk-os" ${prefs.os ? 'checked' : ''}>
+          <span class="tc-slider"></span>
+        </label>
+      </div>
 
-      // Demander permission OS si activation des notifs OS
-      if (next.os) {
+      <div id="tc-os-msg"></div>
+    `;
+    document.body.appendChild(panel);
+    _panel = panel;
+
+    /* Toggle panel */
+    bell.addEventListener('click', (e) => {
+      e.stopPropagation();
+      panel.classList.toggle('open');
+    });
+
+    /* Fermer au clic extérieur */
+    document.addEventListener('click', (e) => {
+      if (panel.classList.contains('open') && !panel.contains(e.target)) {
+        panel.classList.remove('open');
+      }
+    });
+
+    /* Checkbox Vibration */
+    document.getElementById('tc-chk-vib').addEventListener('change', (e) => {
+      const p = getPrefs();
+      p.vibration = e.target.checked;
+      savePrefs(p);
+      bell.textContent = bellIcon(p);
+      if (p.vibration) vibrate([80, 40, 80]);
+    });
+
+    /* Checkbox OS Notifications */
+    document.getElementById('tc-chk-os').addEventListener('change', async (e) => {
+      const chk   = e.target;
+      const osMsg = document.getElementById('tc-os-msg');
+      osMsg.style.display = 'none';
+
+      if (chk.checked) {
         if (!('Notification' in window)) {
-          showFeedback('NOTIFICATIONS OS NON SUPPORTÉES');
+          chk.checked = false;
+          osMsg.textContent = 'Notifications non supportées par ce navigateur.';
+          osMsg.style.display = 'block';
           return;
         }
         if (Notification.permission === 'denied') {
-          showFeedback('AUTORISATION BLOQUÉE — MODIFIEZ DANS CHROME > PARAMÈTRES > NOTIFICATIONS');
-          // Forcer retour à 'vib' si OS bloqué
-          saveStateKey('vib');
-          btn.textContent = '📳';
-          btn.setAttribute('data-tip', 'NOTIFS : VIBRATION SEULE');
+          chk.checked = false;
+          osMsg.textContent = 'Bloquées par Chrome. Pour activer : ⋮ > Paramètres > Notifications du site.';
+          osMsg.style.display = 'block';
           return;
         }
         if (Notification.permission === 'default') {
           const result = await Notification.requestPermission();
           if (result !== 'granted') {
-            // Refus → passer à 'vib'
-            saveStateKey('vib');
-            btn.textContent = '📳';
-            btn.setAttribute('data-tip', 'NOTIFS : VIBRATION SEULE');
-            showFeedback('PERMISSION REFUSÉE — VIBRATION SEULE ACTIVÉE');
+            chk.checked = false;
+            osMsg.textContent = 'Permission refusée. Tu recevras quand même les vibrations.';
+            osMsg.style.display = 'block';
             return;
           }
         }
       }
 
-      showFeedback(next.label.toUpperCase());
+      const p = getPrefs();
+      p.os = chk.checked;
+      savePrefs(p);
+      bell.textContent = bellIcon(p);
     });
-
-    // Insérer entre les deux blocs du header
-    const children = Array.from(header.children);
-    if (children.length >= 2) {
-      header.insertBefore(btn, children[1]); // entre left et right
-    } else {
-      header.appendChild(btn);
-    }
   }
 
   /* ═══════════════════════════════════════════════════════
      NIVEAU 1-A : Vibration tactile
   ═══════════════════════════════════════════════════════ */
   function vibrate(pattern) {
-    if (!getState().vibration) return;
+    if (!getPrefs().vibration) return;
     if (navigator.vibrate) navigator.vibrate(pattern);
   }
 
@@ -225,9 +300,8 @@
     el.id = 'tc-push-toast';
     el.style.cssText = `
       position:fixed;
-      bottom:calc(env(safe-area-inset-bottom,0px) + 72px);
-      left:50%;transform:translateX(-50%);
-      z-index:99997;
+      bottom:calc(env(safe-area-inset-bottom,0px) + 72px);left:50%;
+      transform:translateX(-50%);z-index:99997;
       background:${c.bg};border:1px solid ${c.border};color:${c.text};
       font-family:'Orbitron',monospace;font-size:.72rem;letter-spacing:1.5px;
       padding:13px 22px;border-radius:8px;
@@ -247,7 +321,7 @@
      NIVEAU 2 : Notification API OS
   ═══════════════════════════════════════════════════════ */
   function sendOSNotif(title, body) {
-    if (!getState().os) return;
+    if (!getPrefs().os) return;
     if (!('Notification' in window)) return;
     if (Notification.permission !== 'granted') return;
     if (document.visibilityState === 'visible') return;
@@ -264,8 +338,6 @@
 
   /* ═══════════════════════════════════════════════════════
      WRAPPER showToastPhase existant
-     → Vibration sur tous les toasts
-     → OS notification si tab en arrière-plan
   ═══════════════════════════════════════════════════════ */
   function wrapToastPhase() {
     const orig = window.showToastPhase;
@@ -274,7 +346,6 @@
     window.showToastPhase = function (msg, color) {
       orig.call(this, msg, color);
       vibrate([80]);
-
       const important = /prêt|qualifié|finale|revanche|belle|terminé|annulé|lancé|champion/i.test(msg);
       if (important) {
         const clean = msg.replace(/\p{Emoji}/gu, '').trim();
@@ -284,7 +355,7 @@
   }
 
   /* ═══════════════════════════════════════════════════════
-     SUBSCRIPTION SÉPARÉE — détection "c'est mon tour"
+     SUBSCRIPTION SÉPARÉE — "c'est mon tour"
   ═══════════════════════════════════════════════════════ */
   function setupTourNotif() {
     const sb  = window.sb;
@@ -296,8 +367,7 @@
         event: 'INSERT', schema: 'public', table: 'tournoi_tours',
       }, ({ new: n }) => {
         if (!n || n.statut !== 'en_cours') return;
-        const matchs = window.MATCHS || [];
-        const match  = matchs.find(m => m.id === n.match_id);
+        const match = (window.MATCHS || []).find(m => m.id === n.match_id);
         if (!match) return;
 
         const role     = match.joueur1_id === moi.id ? 1 : 2;
@@ -327,7 +397,7 @@
   window.TCNotify = {
     init() {
       injectCSS();
-      injectToggleButton();
+      injectUI();
       wrapToastPhase();
       setupTourNotif();
     },
