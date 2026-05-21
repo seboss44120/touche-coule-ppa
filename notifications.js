@@ -202,7 +202,7 @@
 
       <div class="tc-toggle-row">
         <span class="tc-toggle-label">
-          <span class="tc-toggle-icon">🔔</span>Alertes OS
+          <span class="tc-toggle-icon">🔔</span>Alertes hors jeu
         </span>
         <label class="tc-switch">
           <input type="checkbox" id="tc-chk-os" ${prefs.os ? 'checked' : ''}>
