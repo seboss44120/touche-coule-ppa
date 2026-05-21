@@ -891,10 +891,12 @@ async function loadTournois(){
     console.error('Erreur chargement tournois:', e);
     document.getElementById('skel-1')?.remove();
     document.getElementById('skel-2')?.remove();
+    const errDetail = e?.message || e?.details || JSON.stringify(e) || 'inconnue';
     document.getElementById('tournois-list').innerHTML =
       `<div class="empty-state">
         <span class="big-icon">💀</span>
-        Erreur de connexion. Rechargez la page.
+        Erreur de connexion. Rechargez la page.<br>
+        <span style="font-size:.6rem;color:var(--text3);font-family:monospace;word-break:break-all;margin-top:8px;display:block">${escHtml(errDetail)}</span>
       </div>`;
   }
 }
