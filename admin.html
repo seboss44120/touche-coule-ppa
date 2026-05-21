@@ -3129,33 +3129,36 @@ async function adminRetirerInscription(inscriptionId, pseudo, tournoiPlanifId) {
  * Silencieux en cas d'erreur (email = best-effort).
  */
 async function _envoyerEmailPromotionWaitlist(inscription, tournoiPlanif) {
-  if (!inscription?.profil_id) return;
+  // L'email est stocké directement dans inscriptions_planifiees
+  const email = inscription?.email;
+  if (!email) return; // pas d'email renseigné → rien à envoyer
 
-  // Récupère l'email et le token depuis joueur_profils
-  const { data: profil } = await sbT
-    .from('joueur_profils')
-    .select('email, token, pseudo')
-    .eq('id', inscription.profil_id)
-    .maybeSingle();
+  // Récupère uniquement le token depuis joueur_profils (pour le lien joueur)
+  let lienJoueur = null;
+  if (inscription?.profil_id) {
+    const { data: profil } = await sbT
+      .from('joueur_profils')
+      .select('token')
+      .eq('id', inscription.profil_id)
+      .maybeSingle();
+    if (profil?.token) {
+      lienJoueur = `https://seboss44120.github.io/touche-coule-ppa/tournoi-jeu.html?p=${encodeURIComponent(profil.token)}`;
+    }
+  }
 
-  if (!profil?.email) return; // pas d'email renseigné → on ne fait rien
-
-  const lienJoueur = profil.token
-    ? `https://seboss44120.github.io/touche-coule-ppa/tournoi-jeu.html?p=${encodeURIComponent(profil.token)}`
-    : null;
-
-  await fetch(`${SUPABASE_URL}/functions/v1/send-waitlist-promotion-email`, {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/send-waitlist-promotion-email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      email:         profil.email,
-      pseudo:        inscription.pseudo || profil.pseudo || 'Commandant',
-      tournoi_titre: tournoiPlanif?.titre   ?? 'Tournoi',
+      email:         email,
+      pseudo:        inscription.pseudo || 'Commandant',
+      tournoi_titre: tournoiPlanif?.titre        ?? 'Tournoi',
       tournoi_date:  tournoiPlanif?.date_tournoi ?? null,
-      tournoi_mode:  tournoiPlanif?.mode_jeu ?? null,
+      tournoi_mode:  tournoiPlanif?.mode_jeu     ?? null,
       lien_joueur:   lienJoueur,
     }),
   });
+  if (!res.ok) console.warn('Email promotion: erreur Edge Function', await res.text());
 }
 
 async function adminLancerTournoiPlanifie(planifId) {
