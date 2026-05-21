@@ -1749,9 +1749,16 @@ async function confirmerDesistement(){
         .limit(1);
 
       if(wlFirst && wlFirst.length > 0){
-        await sb.from('inscriptions_planifiees')
+        const {data: promoted} = await sb.from('inscriptions_planifiees')
           .update({statut:'inscrit', position_waitlist: null})
-          .eq('id', wlFirst[0].id);
+          .eq('id', wlFirst[0].id)
+          .select().single();
+
+        // Notification email au joueur promu (best-effort, silencieux si erreur)
+        if(promoted){
+          const tp = tournoisData.find(t => t.id === tournoiPlanifieId);
+          _envoyerEmailPromotionWaitlist(promoted, tp).catch(e => console.warn('Email non envoyé:', e));
+        }
       }
     }
 
@@ -1784,6 +1791,38 @@ function escHtml(str){
     .replace(/'/g,'&#39;');
 }
 
+
+/* ═══════════════════════════════════════════════════════════════
+   EMAIL — notification promotion liste d'attente
+═══════════════════════════════════════════════════════════════ */
+async function _envoyerEmailPromotionWaitlist(inscription, tournoiPlanif){
+  if(!inscription?.profil_id) return;
+
+  const {data: profil} = await sb
+    .from('joueur_profils')
+    .select('email, token, pseudo')
+    .eq('id', inscription.profil_id)
+    .maybeSingle();
+
+  if(!profil?.email) return;
+
+  const lienJoueur = profil.token
+    ? `${PLAYER_BASE_URL}?p=${encodeURIComponent(profil.token)}`
+    : null;
+
+  await fetch(`${SUPABASE_URL}/functions/v1/send-waitlist-promotion-email`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      email:         profil.email,
+      pseudo:        inscription.pseudo || profil.pseudo || 'Commandant',
+      tournoi_titre: tournoiPlanif?.titre        ?? 'Tournoi',
+      tournoi_date:  tournoiPlanif?.date_tournoi ?? null,
+      tournoi_mode:  tournoiPlanif?.mode_jeu     ?? null,
+      lien_joueur:   lienJoueur,
+    }),
+  });
+}
 
 /* ═══════════════════════════════════════════════════════════════
    INITIALISATION

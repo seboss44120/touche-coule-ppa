@@ -3102,6 +3102,10 @@ async function adminRetirerInscription(inscriptionId, pseudo, tournoiPlanifId) {
       if (!eP && promoted) {
         const idx = INSCRIPTIONS_PLANIF.findIndex(i => i.id === premier.id);
         if (idx >= 0) INSCRIPTIONS_PLANIF[idx] = promoted;
+
+        // ── Notification email au joueur promu ──
+        const tp = TOURNOIS_PLANIFIES.find(t => t.id === tournoiPlanifId);
+        _envoyerEmailPromotionWaitlist(promoted, tp).catch(e => console.warn('Email non envoyé:', e));
       }
     }
 
@@ -3117,6 +3121,41 @@ async function adminRetirerInscription(inscriptionId, pseudo, tournoiPlanifId) {
 
     renderPlanif();
   } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+/**
+ * Envoie un email de notification au joueur promu de la liste d'attente.
+ * Appelle l'Edge Function Supabase send-waitlist-promotion-email.
+ * Silencieux en cas d'erreur (email = best-effort).
+ */
+async function _envoyerEmailPromotionWaitlist(inscription, tournoiPlanif) {
+  if (!inscription?.profil_id) return;
+
+  // Récupère l'email et le token depuis joueur_profils
+  const { data: profil } = await sbT
+    .from('joueur_profils')
+    .select('email, token, pseudo')
+    .eq('id', inscription.profil_id)
+    .maybeSingle();
+
+  if (!profil?.email) return; // pas d'email renseigné → on ne fait rien
+
+  const lienJoueur = profil.token
+    ? `https://seboss44120.github.io/touche-coule-ppa/tournoi-jeu.html?p=${encodeURIComponent(profil.token)}`
+    : null;
+
+  await fetch(`${SUPABASE_URL}/functions/v1/send-waitlist-promotion-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email:         profil.email,
+      pseudo:        inscription.pseudo || profil.pseudo || 'Commandant',
+      tournoi_titre: tournoiPlanif?.titre   ?? 'Tournoi',
+      tournoi_date:  tournoiPlanif?.date_tournoi ?? null,
+      tournoi_mode:  tournoiPlanif?.mode_jeu ?? null,
+      lien_joueur:   lienJoueur,
+    }),
+  });
 }
 
 async function adminLancerTournoiPlanifie(planifId) {
