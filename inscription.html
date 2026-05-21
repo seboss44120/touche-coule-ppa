@@ -845,23 +845,36 @@ function formatDeadline(deadlineStr){
 ═══════════════════════════════════════════════════════════════ */
 async function loadTournois(){
   try {
-    // Récupère les tournois planifiés avec statut visible
-    const {data, error} = await sb
+    // Requête 1 — tournois planifiés (sans join pour éviter PGRST200 si FK non reconnue)
+    const {data: tournoiList, error: errT} = await sb
       .from('tournois_planifies')
-      .select(`
-        *,
-        inscriptions_planifiees(id, profil_id, pseudo, statut, position_waitlist)
-      `)
+      .select('*')
       .in('statut', ['ouvert','complet','ferme','lance'])
       .order('date_tournoi', {ascending:true});
 
-    if(error) throw error;
+    if(errT) throw errT;
+    const tList = tournoiList || [];
+
+    // Requête 2 — inscriptions liées (chargement séparé, merge côté client)
+    let insList = [];
+    if(tList.length > 0){
+      const ids = tList.map(t => t.id);
+      const {data: inscData} = await sb
+        .from('inscriptions_planifiees')
+        .select('id, profil_id, pseudo, statut, position_waitlist, tournoi_planifie_id')
+        .in('tournoi_planifie_id', ids);
+      insList = inscData || [];
+    }
+
+    // Merge : on reconstitue la structure attendue par le reste du code
+    tournoisData = tList.map(t => ({
+      ...t,
+      inscriptions_planifiees: insList.filter(i => i.tournoi_planifie_id === t.id)
+    }));
 
     // Retire les squelettes
     document.getElementById('skel-1')?.remove();
     document.getElementById('skel-2')?.remove();
-
-    tournoisData = data || [];
 
     if(tournoisData.length === 0){
       document.getElementById('tournois-list').innerHTML =
@@ -935,7 +948,20 @@ function buildTournoiCard(t){
   let ctaBtn = '';
   const deadlinePast = deadline.past;
   if(t.statut === 'lance'){
-    ctaBtn = `<button class="btn-cta btn-cta-disabled" disabled>En cours</button>`;
+    // Si le joueur connecté est inscrit dans ce tournoi lancé → lien direct vers le jeu
+    const isMyLanceTournoi = currentPlayer
+      && t.tournoi_id
+      && inscrits.some(i => i.profil_id === currentPlayer.id);
+    if(isMyLanceTournoi){
+      const jeuUrl = location.href.replace(/[^/]*(\?.*)?$/, 'tournoi-jeu.html')
+                   + '?p=' + encodeURIComponent(currentPlayer.token);
+      ctaBtn = `<a href="${escHtml(jeuUrl)}" class="btn-cta btn-cta-ouvert"
+                  style="display:block;text-align:center;text-decoration:none;line-height:1.4">
+                  ⚔️ Rejoindre la partie
+                </a>`;
+    } else {
+      ctaBtn = `<button class="btn-cta btn-cta-disabled" disabled>En cours</button>`;
+    }
   } else if(t.statut === 'ferme' || deadlinePast){
     ctaBtn = `<button class="btn-cta btn-cta-disabled" disabled>Inscriptions closes</button>`;
   } else if(places > 0){
@@ -1012,31 +1038,125 @@ function startCountdownTimers(){
 
 
 /* ═══════════════════════════════════════════════════════════════
-   RÉALTIME — mise à jour live des inscriptions
+   RÉALTIME — mise à jour live des inscriptions + statut tournoi
 ═══════════════════════════════════════════════════════════════ */
 function subscribeRealtime(){
+  // Canal 1 : changements dans les inscriptions (s'inscrire, se désister…)
   sb.channel('inscriptions-live')
     .on('postgres_changes', {
       event: '*',
       schema: 'public',
       table:  'inscriptions_planifiees'
     }, async () => {
-      // Recharge les données et re-render
       await refreshTournoisData();
     })
     .subscribe();
+
+  // Canal 2 : changements de statut des tournois planifiés (fermer, ouvrir, lancer…)
+  sb.channel('tournois-planif-live')
+    .on('postgres_changes', {
+      event:  'UPDATE',
+      schema: 'public',
+      table:  'tournois_planifies'
+    }, async (payload) => {
+      await refreshTournoisData();
+      // Si le tournoi vient de passer à "lance" et qu'un joueur est connecté →
+      // chercher son lien de jeu et proposer la redirection
+      if(payload.new?.statut === 'lance' && currentPlayer && payload.new?.tournoi_id){
+        await _proposerLienJeu(payload.new);
+      }
+    })
+    .subscribe();
+}
+
+/**
+ * Quand un tournoi planifié est lancé, redirige automatiquement le joueur connecté
+ * vers tournoi-jeu.html?p=TOKEN (le token permanent suffit — la page trouve seule
+ * le tournoi actif via tournoi_joueurs.profil_id).
+ *
+ * On vérifie d'abord que ce joueur est bien inscrit dans ce tournoi planifié
+ * (il ne faut pas rediriger quelqu'un qui regardait juste la page sans être inscrit).
+ */
+async function _proposerLienJeu(tp){
+  if(!currentPlayer) return;
+  try {
+    // Vérifier que le joueur connecté est inscrit à CE tournoi planifié
+    const {data: myInsc} = await sb
+      .from('inscriptions_planifiees')
+      .select('id, statut')
+      .eq('tournoi_planifie_id', tp.id)
+      .eq('profil_id', currentPlayer.id)
+      .maybeSingle();
+
+    // Ne rediriger que s'il était vraiment inscrit (pas en waitlist, pas désisté)
+    if(!myInsc || myInsc.statut !== 'inscrit') return;
+
+    // Le lien permanent suffit : tournoi-jeu.html?p=TOKEN trouve seul le tournoi actif
+    const jeuUrl = location.href.replace(/[^/]*(\?.*)?$/, 'tournoi-jeu.html')
+                 + '?p=' + encodeURIComponent(currentPlayer.token);
+
+    // Afficher un bandeau de redirection avec compte à rebours
+    const banner = document.createElement('div');
+    banner.id = 'launch-banner';
+    banner.style.cssText = [
+      'position:fixed;inset:0;z-index:9999',
+      'background:rgba(4,11,20,.97)',
+      'display:flex;flex-direction:column;align-items:center;justify-content:center',
+      'padding:24px;text-align:center;font-family:\'Orbitron\',monospace',
+    ].join(';');
+    banner.innerHTML = `
+      <div style="font-size:2.5rem;margin-bottom:12px">⚔️</div>
+      <div style="font-size:1rem;color:var(--green);letter-spacing:3px;margin-bottom:6px">LE TOURNOI A DÉMARRÉ !</div>
+      <div style="font-size:.65rem;color:var(--text2);letter-spacing:2px;margin-bottom:20px">${escHtml(tp.titre||'Tournoi')}</div>
+      <div style="font-size:.58rem;color:var(--text3);letter-spacing:1px;margin-bottom:16px">
+        Redirection dans <span id="launch-countdown">5</span>s…
+      </div>
+      <a href="${escHtml(jeuUrl)}"
+         style="font-family:'Orbitron',monospace;font-size:.65rem;letter-spacing:2px;
+                background:var(--green);color:#001a0d;padding:12px 28px;border-radius:8px;
+                text-decoration:none;display:inline-block">
+        → REJOINDRE LE TOURNOI MAINTENANT
+      </a>
+    `;
+    document.body.appendChild(banner);
+
+    let n = 5;
+    const tick = setInterval(()=>{
+      n--;
+      const el = document.getElementById('launch-countdown');
+      if(el) el.textContent = n;
+      if(n <= 0){ clearInterval(tick); location.href = jeuUrl; }
+    }, 1000);
+
+  } catch(e){ console.error('Erreur _proposerLienJeu:', e); }
 }
 
 /** Recharge les données tournois depuis Supabase et re-render */
 async function refreshTournoisData(){
   try {
-    const {data, error} = await sb
+    const {data: tournoiList, error: errT} = await sb
       .from('tournois_planifies')
-      .select(`*, inscriptions_planifiees(id, profil_id, pseudo, statut, position_waitlist)`)
+      .select('*')
       .in('statut', ['ouvert','complet','ferme','lance'])
       .order('date_tournoi', {ascending:true});
-    if(error) throw error;
-    tournoisData = data || [];
+    if(errT) throw errT;
+    const tList = tournoiList || [];
+
+    let insList = [];
+    if(tList.length > 0){
+      const ids = tList.map(t => t.id);
+      const {data: inscData} = await sb
+        .from('inscriptions_planifiees')
+        .select('id, profil_id, pseudo, statut, position_waitlist, tournoi_planifie_id')
+        .in('tournoi_planifie_id', ids);
+      insList = inscData || [];
+    }
+
+    tournoisData = tList.map(t => ({
+      ...t,
+      inscriptions_planifiees: insList.filter(i => i.tournoi_planifie_id === t.id)
+    }));
+
     renderTournois();
     // Si un joueur connecté → recharge son bandeau
     if(currentPlayer) await loadPlayerInscriptions(currentPlayer.id);
@@ -1679,6 +1799,24 @@ async function init(){
 
   // Abonnement realtime
   subscribeRealtime();
+
+  // Si le joueur est connecté et qu'un tournoi est DÉJÀ lancé au chargement
+  // (il a raté l'événement Realtime) → proposer la redirection via le bandeau
+  // (seulement si la clé de session n'a pas déjà été vue pour ce tournoi)
+  if(currentPlayer){
+    const lanceTournoi = tournoisData.find(t =>
+      t.statut === 'lance' &&
+      t.tournoi_id &&
+      (t.inscriptions_planifiees || []).some(i => i.profil_id === currentPlayer.id && i.statut === 'inscrit')
+    );
+    if(lanceTournoi){
+      const seenKey = 'tc_launch_banner_' + lanceTournoi.id;
+      if(!sessionStorage.getItem(seenKey)){
+        sessionStorage.setItem(seenKey, '1');
+        await _proposerLienJeu(lanceTournoi);
+      }
+    }
+  }
 }
 
 // Lancement

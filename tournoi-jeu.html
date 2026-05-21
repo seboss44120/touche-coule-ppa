@@ -17,7 +17,7 @@
 :root{
   --bg:#080e1a;--bg2:#0d1624;--bg3:#111e30;
   --text:#d4e8ff;--text2:#7aabcc;--text3:#3f6080;
-  --gold:#f5c842;--cyan:#00d4ff;--green:#00e878;
+  --gold:#f5c842;--cyan:#00d4ff;--green:#00e878;--teal:#00c8a0;
   --red:#ff4455;--orange:#ff8844;--purple:#cc88ff;
   --border:#1a2f4a;--border2:#234;--card:#0f1c2e;
 }
@@ -86,6 +86,12 @@ main{padding:12px}
 .rgc.sunk{background:rgba(255,68,85,.55);border-color:var(--red)}
 .gc.preview-ok{background:rgba(0,212,255,.18)!important;border-color:rgba(0,212,255,.5)!important}
 .gc.preview-bad{background:rgba(255,68,85,.18)!important;border-color:rgba(255,68,85,.5)!important}
+/* ── Mode Furtif ── */
+.gc.furtif-ship{background:rgba(0,200,160,.3)!important;border-color:var(--teal)!important;animation:furtifPulse 1.3s ease-in-out infinite}
+.gc.furtif-preview-ok{background:rgba(0,200,160,.4)!important;border-color:var(--teal)!important;box-shadow:0 0 6px rgba(0,200,160,.5)!important}
+.gc.furtif-preview-bad{background:rgba(255,68,85,.25)!important;border-color:var(--red)!important}
+@keyframes furtifPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,200,160,.6)}50%{box-shadow:0 0 0 5px rgba(0,200,160,0)}}
+.btn-teal{background:rgba(0,200,160,.15);border:1px solid var(--teal);color:var(--teal)}
 .grid-wrap{overflow-x:auto;margin:8px 0}
 .ship-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
 .ship-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:border-color .15s;user-select:none}
@@ -360,6 +366,7 @@ let _opState={};     // matchId → op_state objet (Opérations Spéciales)
 let _espionMode={};  // matchId → bool (sélection zone espion active)
 let _kamikazeState={}; // matchId → {tracking:true} (activation en cours)
 let _sonarAlerted={}; // matchId → bool (alerte sonar déjà affichée ce tour)
+let _furtifMode={}; // matchId → {active,ship,orient,previewCells,validCells}
 
 const GRADES=[
   {label:'Matelot',min:0},{label:'Matelot 1ère classe',min:5},
@@ -1163,6 +1170,19 @@ function buildGrid(matchId,mode,highlight){
       if(myPl?.malus_cells?.includes(coord)){cls.push('malus-cell');sym='💣';}
       const t=myTirs.find(t=>t.coord===coord);
       if(t){cls.push({miss:'miss',hit:'hit',sunk:'sunk',bonus:'hit',malus:'miss'}[t.result]||'miss');sym={miss:'🌊',hit:'💥',sunk:'💀',bonus:'⭐',malus:'💣'}[t.result]||'';}
+      // Mode Furtif : surbrillance du navire sélectionné + preview de la nouvelle position
+      const fm=_furtifMode[matchId];
+      if(fm?.active&&fm?.ship){
+        const isCurrentShip=myPl?.grid_data?.[coord]===fm.ship;
+        const isPreview=fm.previewCells?.includes(coord);
+        const isValid=fm.validCells?.length>0;
+        if(isPreview){
+          cls.push(isValid?'furtif-preview-ok':'furtif-preview-bad');
+          if(isValid)sym='🕵️';
+        }else if(isCurrentShip){
+          cls.push('furtif-ship'); // position actuelle, clignotante
+        }
+      }
     }
     return{cls:cls.join(' '),sym};
   }
@@ -1392,6 +1412,18 @@ function renderBataille(match,el){
   const defGrid=document.getElementById(`grid-${match.id}-defense`);
   if(defGrid){
     attachCoordTooltip(defGrid);
+    // Mode Furtif : clic + survol sur grille défense pour repositionner un navire
+    const fm=_furtifMode[match.id];
+    if(fm?.active&&fm?.ship&&myTurn){
+      defGrid.querySelectorAll('.gc').forEach(c=>{
+        c.addEventListener('click',()=>onFurtifClick(match.id,c.dataset.coord));
+        c.addEventListener('mouseenter',()=>onFurtifHover(match.id,c.dataset.coord));
+      });
+      defGrid.addEventListener('mouseleave',()=>{
+        if(_furtifMode[match.id])_furtifMode[match.id].previewCells=[];
+        defGrid.querySelectorAll('.gc').forEach(c=>c.classList.remove('furtif-preview-ok','furtif-preview-bad'));
+      });
+    }
   }
   checkNewAnimEvents(match.id);
 }
@@ -1411,6 +1443,7 @@ function renderOpPanel(matchId,myOps,myTurn){
     sonar:'Aveugle ton adversaire 1 tour — il tire sans voir ses résultats.',
     espion:'Scanne une zone 3×3 — révèle la présence (ou non) de navires ennemis.',
     kamikaze:'Chaque touché ce tour = 1 tir bonus au tour suivant.',
+    furtif:'Déplace un navire intact vers une position secrète. Si l\'ennemi le rate au prochain tour → +3 pts (Alerte Rouge).',
   };
 
   const btn=(icon,label,used,desc,onclick)=>`
@@ -1434,14 +1467,72 @@ function renderOpPanel(matchId,myOps,myTurn){
       </div>
     </div>`:'';
 
+  // Navires intacts pour le Mode Furtif
+  const myTirsMine=GRILLES[matchId]?.mine?.tirs_recus||[];
+  const myPlFurtif=GRILLES[matchId]?.mine?.grille_placement;
+  const untouchedShips=SHIP_KEYS.filter(sk=>{
+    const cells=myPlFurtif?.ship_cells?.[sk]||[];
+    if(!cells.length)return false;
+    return!cells.some(c=>myTirsMine.some(t=>t.coord===c&&['hit','sunk'].includes(t.result)));
+  });
+  const fm=_furtifMode[matchId];
+  const furtifAlerte=myOps?.alerte_rouge;
+
+  // Panneau furtif actif
+  let furtifPanel='';
+  if(fm?.active&&myTurn){
+    if(!fm.ship){
+      // Sélection du navire
+      const navButtons=untouchedShips.map(sk=>
+        `<button class="btn btn-teal btn-sm" onclick="selectFurtifShip('${mid}','${sk}')" style="margin:2px">
+          ${SHIPS[sk].icon} ${SHIPS[sk].name}
+        </button>`).join('');
+      furtifPanel=`<div style="margin-top:12px;padding:12px;background:rgba(0,200,160,.08);border:1px solid var(--teal);border-radius:8px">
+        <div style="font-family:'Orbitron',monospace;font-size:.54rem;color:var(--teal);letter-spacing:1.5px;margin-bottom:10px">🕵️ MODE FURTIF — SÉLECTIONNE UN NAVIRE INTACT</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${navButtons.length?navButtons:'<span style="color:var(--text3);font-size:.8rem">Aucun navire intact disponible.</span>'}</div>
+        <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="annulerFurtif('${mid}')">✗ Annuler</button>
+      </div>`;
+    }else{
+      // Navire sélectionné : afficher orient + confirm + instructions
+      const hasValidPos=fm.validCells&&fm.validCells.length>0;
+      furtifPanel=`<div style="margin-top:12px;padding:12px;background:rgba(0,200,160,.08);border:1px solid var(--teal);border-radius:8px">
+        <div style="font-family:'Orbitron',monospace;font-size:.54rem;color:var(--teal);letter-spacing:1.5px;margin-bottom:8px">
+          🕵️ ${SHIPS[fm.ship].icon} ${SHIPS[fm.ship].name.toUpperCase()} — REPOSITIONNEMENT
+        </div>
+        <div style="font-size:.75rem;color:var(--text2);margin-bottom:10px">
+          Clique sur ta grille de défense 🛡️ pour choisir la nouvelle position.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-teal btn-sm" onclick="toggleFurtifOrient('${mid}')">
+            🔄 ${fm.orient==='H'?'Horizontal →':'Vertical ↓'}
+          </button>
+          ${hasValidPos?`<button class="btn btn-teal" onclick="confirmerFurtif('${mid}')">✓ CONFIRMER LE DÉPLACEMENT</button>`:''}
+          <button class="btn btn-outline btn-sm" onclick="selectFurtifShip('${mid}',null)">← Autre navire</button>
+        </div>
+        ${hasValidPos?'':`<div style="font-size:.68rem;color:var(--text3);margin-top:6px">Position non valide ou non sélectionnée — clique sur une case libre de ta grille.</div>`}
+        <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="annulerFurtif('${mid}')">✗ Annuler</button>
+      </div>`;
+    }
+  }
+
+  // Badge Alerte Rouge si obtenu
+  const alerteRougeBadge=furtifAlerte?`<div style="margin-top:8px;padding:8px 10px;background:rgba(255,68,85,.12);border:1px solid var(--red);border-radius:6px;display:flex;align-items:center;gap:8px">
+    <span style="font-size:1.2rem">🔴</span>
+    <div><div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--red);letter-spacing:1.5px">OPÉRATION ALERTE ROUGE RÉUSSIE</div>
+    <div style="font-size:.72rem;color:var(--text2);margin-top:1px">Navire furtif introuvable ! +3 pts bonus</div></div>
+  </div>`:'';
+
   return`<div class="card">
     <div class="card-title" style="color:var(--purple)">🎖️ POUVOIRS SPÉCIAUX</div>
     <div style="display:flex;flex-wrap:wrap;gap:10px">
       ${btn('📡','Sonar',myOps.sonar_used,POWER_DESCS.sonar,`activerSonar('${mid}')`)}
       ${btn('🔭','Espion',myOps.espion_used,POWER_DESCS.espion,`activerEspion('${mid}')`)}
       ${btn('💥','Kamikaze',myOps.kamikaze_used,POWER_DESCS.kamikaze,`activerKamikaze('${mid}')`)}
+      ${btn('🕵️','Furtif',myOps.furtif_used||false,POWER_DESCS.furtif,`activerFurtif('${mid}')`)}
     </div>
     ${kamikazeBonusBanner}
+    ${furtifPanel}
+    ${alerteRougeBadge}
     <div style="font-size:.66rem;color:var(--text3);margin-top:8px;border-top:1px solid var(--border2);padding-top:6px">Chaque pouvoir est utilisable <strong>une seule fois</strong> par match.</div>
   </div>`;
 }
@@ -1806,6 +1897,36 @@ async function resoudreCoups_op_speciales(matchId,tour,role){
   // Pouvoirs op_speciales
   const ops=_opState[matchId]||{};
   const myOpsKey=role===1?'j1':'j2';
+
+  // ─── Alerte Rouge check (Mode Furtif) ───
+  // Si j'ai activé le furtif et que le tour cible est passé → vérifier si mon navire furtif a été touché
+  const myOpsCheck=ops[myOpsKey]||{};
+  if(myOpsCheck.furtif_ship&&myOpsCheck.furtif_turn!==null&&!myOpsCheck.alerte_rouge){
+    const furtifCheckTurn=myOpsCheck.furtif_turn;
+    // Les tirs adverses sur MA grille sont dans myGrille.tirs_recus
+    const mineCheckTirs=myGrille.tirs_recus||[];
+    const opponentShotsInCheckTurn=mineCheckTirs.filter(t=>t.turn===furtifCheckTurn);
+    if(opponentShotsInCheckTurn.length>0){
+      const wasHit=opponentShotsInCheckTurn.some(t=>t.shipKey===myOpsCheck.furtif_ship);
+      if(!wasHit){
+        const newOpsAR={...ops,[myOpsKey]:{...myOpsCheck,alerte_rouge:true},
+          log:[...(ops.log||[]),{tour:Date.now(),joueur:role,pouvoir:'alerte_rouge'}]};
+        _opState[matchId]=newOpsAR;
+        await sb.from('tournoi_matchs').update({op_state:newOpsAR}).eq('id',matchId);
+        _enqueueAnim(()=>buildTacScreen({
+          mode:'victory',compact:true,duration:6000,matchId,
+          stampText:'ALERTE ROUGE',stampClass:'stamp-victory',
+          lines:[
+            {text:'🔴 OPÉRATION ALERTE ROUGE',cls:'red',delay:0},
+            {text:'NAVIRE FURTIF INTROUVABLE !',cls:'gold',delay:700,lockRet:true,lockClass:'locked-green',showStamp:true},
+            {text:'+3 PTS BONUS ACCORDÉS',cls:'green',delay:1400},
+          ],
+        }),6000);
+        showToastPhase('🔴 ALERTE ROUGE RÉUSSIE — Navire furtif introuvable ! +3 pts bonus','var(--red)');
+      }
+    }
+  }
+
   const mineAdversaire=role===1?ops?.j2?.mine_pos:ops?.j1?.mine_pos;
   const kState=_kamikazeState[matchId];
   const kamikazeBonusShots=(ops[myOpsKey]?.kamikaze_bonus_shots)||0;
@@ -1865,11 +1986,18 @@ async function resoudreCoups_op_speciales(matchId,tour,role){
     const vainqueur_id=role===1?match.joueur1_id:match.joueur2_id;
     const pts_j1=role===1?3:0,pts_j2=role===2?3:0;
     const allJ1=role===1?newTheirTirs:myTirsAv,allJ2=role===2?newTheirTirs:myTirsAv;
-    const bonus_j1=allJ1.filter(t=>t.result==='bonus').length*2,malus_j1=allJ1.filter(t=>t.result==='malus').length*2;
-    const bonus_j2=allJ2.filter(t=>t.result==='bonus').length*2,malus_j2=allJ2.filter(t=>t.result==='malus').length*2;
+    // Alerte Rouge bonus (+3 pts si le navire furtif n'a pas été touché au tour cible)
+    const opsNow=_opState[matchId]||{};
+    const alerteJ1=(opsNow?.j1?.alerte_rouge)?3:0;
+    const alerteJ2=(opsNow?.j2?.alerte_rouge)?3:0;
+    const bonus_j1=allJ1.filter(t=>t.result==='bonus').length*2+alerteJ1,malus_j1=allJ1.filter(t=>t.result==='malus').length*2;
+    const bonus_j2=allJ2.filter(t=>t.result==='bonus').length*2+alerteJ2,malus_j2=allJ2.filter(t=>t.result==='malus').length*2;
     await sb.from('tournoi_tours').update({statut:'validé'}).eq('id',tour.id);
     await sb.from('tournoi_matchs').update({statut:'terminé',vainqueur_id,pts_j1,pts_j2,bonus_j1,malus_j1,bonus_j2,malus_j2}).eq('id',matchId);
-    const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)Object.assign(MATCHS[idx],{statut:'terminé',vainqueur_id,pts_j1,pts_j2});
+    const idx=MATCHS.findIndex(m=>m.id===matchId);if(idx>=0)Object.assign(MATCHS[idx],{statut:'terminé',vainqueur_id,pts_j1,pts_j2,bonus_j1,malus_j1,bonus_j2,malus_j2});
+    // Afficher immédiatement le récapitulatif avant que les callbacks Realtime intermédiaires
+    // (op_state sonar/kamikaze) ne puissent remettre MATCHS en statut 'en_cours'
+    buildNav();renderNav();renderTab(currentTab);
     await updateProfils({match,vainqueur_id,draw:false,tirs_j1:allJ1,tirs_j2:allJ2,nb_tours:turnNum});
     await checkProgressTournoi();
   }else{
@@ -2314,7 +2442,11 @@ async function creerMatchRevanche(match){
 /* ══ OPÉRATIONS SPÉCIALES — POUVOIRS ══ */
 
 async function initOpState(matchId){
-  const def={sonar_used:false,espion_used:false,kamikaze_used:false,sonar_active:false,kamikaze_bonus_shots:0};
+  const def={
+    sonar_used:false,espion_used:false,kamikaze_used:false,
+    furtif_used:false,furtif_ship:null,furtif_turn:null,alerte_rouge:false,
+    sonar_active:false,kamikaze_bonus_shots:0,kamikaze_tracking:false,mine_pos:null
+  };
   const ops={j1:{...def},j2:{...def},log:[]};
   await sb.from('tournoi_matchs').update({op_state:ops}).eq('id',matchId);
   _opState[matchId]=ops;
@@ -2447,6 +2579,156 @@ async function activerKamikaze(matchId){
   renderTab(currentTab);
 }
 
+/* ══ MODE FURTIF ══ */
+
+function activerFurtif(matchId){
+  const match=MATCHS.find(m=>m.id===matchId);
+  if(!match||!isItMyTurn(match))return;
+  const role=getMyRole(match);
+  const ops=_opState[matchId]||{j1:{},j2:{},log:[]};
+  const myOps=role===1?ops.j1:ops.j2;
+  if(myOps?.furtif_used){showAlert(`alertB-${matchId}`,'err','Mode Furtif déjà utilisé ce match !');return;}
+  // Vérifier navires intacts
+  const myTirs=GRILLES[matchId]?.mine?.tirs_recus||[];
+  const myPl=GRILLES[matchId]?.mine?.grille_placement;
+  if(!myPl){showAlert(`alertB-${matchId}`,'err','Données de grille indisponibles.');return;}
+  const untouched=SHIP_KEYS.filter(sk=>{
+    const cells=myPl.ship_cells?.[sk]||[];
+    if(!cells.length)return false;
+    return!cells.some(c=>myTirs.some(t=>t.coord===c&&['hit','sunk'].includes(t.result)));
+  });
+  if(!untouched.length){showAlert(`alertB-${matchId}`,'err','Aucun navire intact — Mode Furtif impossible !');return;}
+  _furtifMode[matchId]={active:true,ship:null,orient:'H',previewCells:[],validCells:[]};
+  showToastPhase('🕵️ Mode Furtif activé — sélectionne un navire intact à déplacer','var(--teal)');
+  renderTab(currentTab);
+}
+
+function selectFurtifShip(matchId,shipKey){
+  if(!_furtifMode[matchId])return;
+  _furtifMode[matchId].ship=shipKey;
+  _furtifMode[matchId].previewCells=[];
+  _furtifMode[matchId].validCells=[];
+  if(shipKey){
+    const ship=SHIPS[shipKey];
+    showToastPhase(`🕵️ ${ship.icon} ${ship.name} sélectionné — clique sur ta grille pour repositionner`,'var(--teal)');
+  }
+  renderTab(currentTab);
+}
+
+function toggleFurtifOrient(matchId){
+  const fm=_furtifMode[matchId];if(!fm)return;
+  fm.orient=fm.orient==='H'?'V':'H';
+  fm.previewCells=[];fm.validCells=[];
+  renderTab(currentTab);
+}
+
+function _computeFurtifCells(matchId,coord){
+  const fm=_furtifMode[matchId];if(!fm?.ship)return{cells:null,valid:false};
+  const myPl=GRILLES[matchId]?.mine?.grille_placement;
+  const cells=getShipCoords(coord,SHIPS[fm.ship].size,fm.orient);
+  if(!cells)return{cells:null,valid:false};
+  // Cases occupées par les AUTRES navires (pas celui qu'on déplace)
+  const occupied=new Set(Object.entries(myPl?.grid_data||{}).filter(([,sk])=>sk!==fm.ship).map(([c])=>c));
+  const valid=cells.every(c=>!occupied.has(c));
+  return{cells,valid};
+}
+
+function onFurtifClick(matchId,coord){
+  const fm=_furtifMode[matchId];if(!fm?.active||!fm?.ship)return;
+  const{cells,valid}=_computeFurtifCells(matchId,coord);
+  if(!cells)return;
+  fm.previewCells=cells;
+  fm.validCells=valid?cells:[];
+  renderTab(currentTab);
+}
+
+function onFurtifHover(matchId,coord){
+  const fm=_furtifMode[matchId];if(!fm?.active||!fm?.ship)return;
+  const{cells,valid}=_computeFurtifCells(matchId,coord);
+  fm.previewCells=cells||[];
+  fm.validCells=valid&&cells?cells:[];
+  // Mise à jour CSS directe (sans re-render complet) pour fluidité
+  const defGrid=document.getElementById(`grid-${matchId}-defense`);if(!defGrid)return;
+  defGrid.querySelectorAll('.gc').forEach(c=>{
+    const coord2=c.dataset.coord;
+    c.classList.remove('furtif-preview-ok','furtif-preview-bad');
+    if(fm.previewCells.includes(coord2)){
+      c.classList.add(valid?'furtif-preview-ok':'furtif-preview-bad');
+    }
+  });
+}
+
+async function confirmerFurtif(matchId){
+  const fm=_furtifMode[matchId];
+  if(!fm?.active||!fm?.ship||!fm.validCells?.length){
+    showAlert(`alertB-${matchId}`,'err','Position invalide — clique sur une case libre.');return;
+  }
+  const match=MATCHS.find(m=>m.id===matchId);
+  if(!match){return;}
+  const role=getMyRole(match);
+  const ops=_opState[matchId]||{j1:{},j2:{},log:[]};
+  const myOps=role===1?ops.j1:ops.j2;
+  const rk=role===1?'j1':'j2';
+  const grille=GRILLES[matchId]?.mine;
+  if(!grille?.grille_placement){showAlert(`alertB-${matchId}`,'err','Grille introuvable — réessaie.');return;}
+
+  // Deep copy de grille_placement
+  const pl=JSON.parse(JSON.stringify(grille.grille_placement));
+
+  // Supprimer ancienne position du navire dans grid_data
+  (pl.ship_cells[fm.ship]||[]).forEach(c=>{if(pl.grid_data[c]===fm.ship)delete pl.grid_data[c];});
+  // Écrire nouvelle position
+  fm.validCells.forEach(c=>{pl.grid_data[c]=fm.ship;});
+  pl.ship_cells[fm.ship]=[...fm.validCells];
+
+  // Calculer le tour à surveiller pour l'Alerte Rouge :
+  //   Si l'adversaire a déjà tiré CE tour → l'Alerte Rouge se vérifie au tour N+1
+  //   Sinon (je tire en premier) → l'adversaire tire dans ce même tour N → vérification au tour N
+  const tourEnCours=TOURS[matchId];
+  const advAlreadyFired=tourEnCours?(role===1?tourEnCours.soumis_j2:tourEnCours.soumis_j1):false;
+  const furtifTurn=advAlreadyFired?((tourEnCours.numero_tour||1)+1):(tourEnCours?.numero_tour||1);
+
+  try{
+    // 1. Sauvegarder le nouveau placement en DB
+    const{error:errG}=await sb.from('tournoi_grilles').update({grille_placement:pl}).eq('id',grille.id);
+    if(errG)throw errG;
+    GRILLES[matchId].mine.grille_placement=pl;
+
+    // 2. Mettre à jour op_state
+    const newOps={...ops,
+      [rk]:{...myOps,furtif_used:true,furtif_ship:fm.ship,furtif_turn:furtifTurn},
+      log:[...(ops.log||[]),{tour:Date.now(),joueur:role,pouvoir:'furtif',navire:fm.ship}]
+    };
+    _opState[matchId]=newOps;
+    const{error:errO}=await sb.from('tournoi_matchs').update({op_state:newOps}).eq('id',matchId);
+    if(errO)throw errO;
+
+    // 3. Quitter le mode furtif
+    const shipMoved=fm.ship;
+    _furtifMode[matchId]={active:false,ship:null};
+
+    // 4. Animation
+    _enqueueAnim(()=>buildTacScreen({
+      mode:'victory',compact:true,duration:5000,matchId,
+      stampText:'FURTIF',stampClass:'stamp-victory',
+      lines:[
+        {text:'🕵️ REPOSITIONNEMENT FURTIF',cls:'green',delay:0},
+        {text:`${SHIPS[shipMoved].icon} ${SHIPS[shipMoved].name.toUpperCase()} DÉPLACÉ`,cls:'gold',delay:700,lockRet:true,lockClass:'locked-green',showStamp:true},
+        {text:'L\'ADVERSAIRE NE SAIT PAS OÙ IL EST !',cls:'green',delay:1400},
+      ],
+    }),5000);
+    showToastPhase(`🕵️ ${SHIPS[shipMoved].icon} ${SHIPS[shipMoved].name} repositionné ! Position secrète.`,'var(--teal)');
+    renderTab(currentTab);
+  }catch(e){
+    showAlert(`alertB-${matchId}`,'err','Erreur réseau lors du déplacement — réessaie.');
+  }
+}
+
+function annulerFurtif(matchId){
+  _furtifMode[matchId]={active:false,ship:null,orient:'H',previewCells:[],validCells:[]};
+  renderTab(currentTab);
+}
+
 /* ══ GRILLES RAPPORT DE BATAILLE ══ */
 function buildResultGrid(matchId,mode,revealed){
   const gr=GRILLES[matchId];
@@ -2538,6 +2820,15 @@ function renderResultat(match,el){
       ${myBonus?`<span style="color:var(--purple)">+${myBonus} bonus</span>`:''}
       ${myMalus?`<span style="color:var(--orange);margin-left:8px">−${myMalus} malus</span>`:''}
     </div>`:''}
+
+    ${(()=>{
+      const myOpsKey2=role===1?'j1':'j2';
+      const alerteRouge=_opState[match.id]?.[myOpsKey2]?.alerte_rouge;
+      return alerteRouge?`<div style="font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:1.5px;text-align:center;padding:10px 14px;margin-bottom:12px;background:rgba(255,68,85,.1);border:1px solid var(--red);border-radius:8px;color:var(--red)">
+        🔴 OPÉRATION ALERTE ROUGE RÉUSSIE<br>
+        <span style="font-size:.5rem;color:var(--gold)">Navire furtif introuvable — +3 pts bonus accordés</span>
+      </div>`:'';
+    })()}
 
     ${renderVoteRevanche(match,role)}
 
@@ -3294,8 +3585,12 @@ function abonnerRealtime(){
   sb.channel('jeu-matchs').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_matchs',filter:`tournoi_id=eq.${MOI.tournoi_id}`},async({new:n,eventType})=>{
     if(!n)return;
     const idx=MATCHS.findIndex(m=>m.id===n.id);
-    if(idx>=0)MATCHS[idx]=n;
-    else{
+    if(idx>=0){
+      // Guard anti-régression : ne pas écraser un match déjà terminé localement avec un
+      // événement Realtime intermédiaire (ex. op_state sonar/kamikaze statut='en_cours').
+      // Un match terminé ne peut redevenir en_cours → seul un event 'terminé' est accepté.
+      if(MATCHS[idx].statut!=='terminé'||n.statut==='terminé') MATCHS[idx]=n;
+    }else{
       const concerne=n.joueur1_id===MOI.id||n.joueur2_id===MOI.id;
       if(concerne){
         MATCHS.push(n);
