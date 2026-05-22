@@ -21,6 +21,47 @@ Backend : **Supabase** (DB + auth par token `?p=`). Emails : **EmailJS**.
 
 ---
 
+## 0. Méthodologie obligatoire avant tout changement
+
+Ces règles s'appliquent **sans exception**, quelle que soit l'urgence ou la simplicité apparente du sujet.
+
+### 0a. Lire avant d'écrire
+
+Avant de modifier quoi que ce soit :
+1. **Lire l'intégralité du code concerné** — pas seulement la zone visible du symptôme.
+2. **Lire les fichiers connexes** — un fix dans `tournoi-jeu.html` peut casser `capitaine.html` ; un script inline peut neutraliser une balise HTML plus haut.
+3. **Tracer le chemin complet** de la fonctionnalité touchée, de bout en bout (ex : token → URL → script inline → manifest → installation PWA).
+
+> Ce projet a subi des régressions parce que du code existant (ex : retrait du manifest pour iOS) n'avait pas été lu avant d'apporter des corrections adjacentes. Ne jamais supposer — lire.
+
+### 0b. Diagnostiquer avant d'implémenter
+
+- Identifier la **root cause** (cause racine) avant de proposer ou d'écrire la moindre correction.
+- Ne jamais corriger un symptôme sans comprendre pourquoi il apparaît.
+- Si la root cause n'est pas certaine, le dire explicitement : *"Je vois X, j'étudie Y avant de conclure."*
+- Ne pas implémenter plusieurs hypothèses en cascade — chaque hypothèse non confirmée crée du bruit et potentiellement de nouvelles régressions.
+
+### 0c. Vérifier l'impact croisé
+
+Avant tout commit, se poser systématiquement ces questions :
+- **Ce changement affecte-t-il un autre navigateur ou OS ?** (ex : fix iOS → impact Android ?)
+- **Ce changement affecte-t-il une autre page ?** (ex : modification `tournoi-jeu.html` → `capitaine.html` ?)
+- **Ce changement affecte-t-il le comportement hors-ligne ou en cache ?** (PWA, localStorage, manifest)
+- **Ce changement interagit-il avec du code déjà en place ?** (scripts inline, meta tags, ordre de chargement)
+
+### 0d. Tester avant de pousser
+
+- Toute correction doit être vérifiée **avant** le commit, pas après.
+- Pour les sujets PWA/mobile : si le test sur device physique n'est pas possible, le signaler **explicitement** avec les risques résiduels identifiés.
+- Ne jamais pousser en production en espérant que ça fonctionne.
+
+### 0e. Un problème = un commit
+
+- Isoler chaque correction dans son propre commit avec un message décrivant la root cause, pas le symptôme.
+- Ne pas grouper une correction fonctionnelle avec une correction PWA dans le même commit.
+
+---
+
 ## 1. Invariants PWA — vérifier AVANT tout commit sur un fichier HTML
 
 Toute modification d'un fichier HTML lié à une PWA peut déclencher une re-vérification
