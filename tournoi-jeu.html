@@ -13,13 +13,15 @@
 <meta name="apple-mobile-web-app-title" content="TC Joueur">
 <meta name="theme-color" content="#00e5ff">
 <script>
-// iOS PWA token fix : quand un token (?p=...) est dans l'URL, on retire le lien manifest.
-// iOS Safari sauvegarde alors l'URL courante exacte (avec ?p=TOKEN) au lieu du start_url
-// du manifest (qui est statique et sans token). Exécuté inline/synchrone avant tout fetch.
+// iOS Safari uniquement : retire le manifest quand un token est présent,
+// pour que Safari sauvegarde l'URL courante (avec ?p=TOKEN) comme raccourci
+// plutôt que le start_url statique du manifest (sans token).
+// Android Chrome conserve le manifest pour installer la PWA en mode standalone.
 (function(){
-  if(new URLSearchParams(location.search).get('p')){
+  var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+  if(isIOS&&new URLSearchParams(location.search).get('p')){
     var l=document.getElementById('pwa-manifest-link');
-    if(l) l.parentNode.removeChild(l);
+    if(l)l.parentNode.removeChild(l);
   }
 })();
 </script>
