@@ -668,6 +668,58 @@ function showError(msg){
   </div>`;
 }
 
+function showTokenManquant(){
+  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  if(isStandalone){
+    document.getElementById('mainContent').innerHTML=`<div class="center-screen" style="gap:16px;padding:28px 20px">
+      <div style="font-size:42px">🔑</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--gold);letter-spacing:2px">Reconnexion requise</div>
+      <div style="color:var(--text2);font-size:.9rem;max-width:300px;text-align:center;line-height:1.6">
+        Le cache de l'application a été vidé.<br>Ton lien personnel doit être rechargé.
+      </div>
+      <div style="color:var(--text3);font-size:.72rem;font-family:'Orbitron',monospace;text-align:center;max-width:300px">
+        Retrouve l'email d'invitation et clique sur le lien,<br>ou saisis ton adresse email ci-dessous :
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px">
+        <input id="recoveryEmail" type="email" placeholder="ton@email.com"
+          style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:10px 14px;border-radius:8px;font-family:'Rajdhani',sans-serif;font-size:1rem;width:100%;outline:none"
+          onkeydown="if(event.key==='Enter')recoverToken()">
+        <button onclick="recoverToken()" class="btn btn-gold btn-block">Retrouver mon accès</button>
+      </div>
+      <div id="recoveryMsg" style="font-size:.78rem;color:var(--text2);min-height:18px;text-align:center;max-width:300px"></div>
+    </div>`;
+  }else{
+    showError('Token manquant. Utilise ton lien personnel reçu par email.');
+  }
+}
+
+async function recoverToken(){
+  const emailEl=document.getElementById('recoveryEmail');
+  const msgEl=document.getElementById('recoveryMsg');
+  if(!emailEl||!msgEl)return;
+  const email=emailEl.value.trim().toLowerCase();
+  if(!email){msgEl.style.color='var(--orange)';msgEl.textContent='Saisis ton adresse email.';return;}
+  msgEl.style.color='var(--text2)';msgEl.textContent='Recherche en cours…';
+  emailEl.disabled=true;
+  try{
+    const{data}=await sb.from('joueur_profils').select('token,pseudo').eq('email',email).maybeSingle();
+    if(data?.token){
+      msgEl.style.color='var(--green)';
+      msgEl.textContent='Lien retrouvé ! Chargement…';
+      try{localStorage.setItem('tc_joueur_token',data.token);}catch(e){}
+      setTimeout(()=>{ location.href=location.pathname+'?p='+encodeURIComponent(data.token); },600);
+    }else{
+      msgEl.style.color='var(--red)';
+      msgEl.textContent='Email non trouvé. Retrouve l\'email d\'invitation et clique sur le lien qu\'il contient.';
+      emailEl.disabled=false;
+    }
+  }catch(e){
+    msgEl.style.color='var(--red)';
+    msgEl.textContent='Erreur réseau. Vérifie ta connexion et réessaie.';
+    emailEl.disabled=false;
+  }
+}
+
 /* ══ INIT ══ */
 async function init(){
   try{
@@ -730,7 +782,7 @@ async function init(){
       TOURNOI=t;
 
     }else{
-      showError('Token manquant.');return;
+      showTokenManquant();return;
     }
 
   // ── Suite commune : chargement matchs, grilles, poule ──

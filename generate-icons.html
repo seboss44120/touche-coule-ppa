@@ -22,13 +22,13 @@ Les téléchargements démarrent automatiquement dans quelques secondes.</p>
 
 <script>
 const icons = [
-  { svg: './icon-admin.svg',          sizes: [192, 512], prefix: 'icon-admin'          },
-  { svg: './icon-joueur.svg',         sizes: [192, 512], prefix: 'icon-joueur'         },
-  { svg: './icon-admin-maskable.svg', sizes: [192, 512], prefix: 'icon-admin-maskable' },
-  { svg: './icon-joueur-maskable.svg',sizes: [192, 512], prefix: 'icon-joueur-maskable'}
+  { svg: './icon-admin.svg',          sizes: [192, 512], prefix: 'icon-admin',          bg: null        },
+  { svg: './icon-joueur.svg',         sizes: [192, 512], prefix: 'icon-joueur',         bg: null        },
+  { svg: './icon-admin-maskable.svg', sizes: [192, 512], prefix: 'icon-admin-maskable', bg: '#060e04'   },
+  { svg: './icon-joueur-maskable.svg',sizes: [192, 512], prefix: 'icon-joueur-maskable',bg: '#020810'   }
 ];
 
-function svgToPng(svgUrl, size){
+function svgToPng(svgUrl, size, bg){
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -37,6 +37,9 @@ function svgToPng(svgUrl, size){
       c.width = size; c.height = size;
       const ctx = c.getContext('2d');
       ctx.clearRect(0,0,size,size);
+      // Pour les icônes maskable : remplir d'abord avec la couleur de fond solide.
+      // Garantit l'absence de transparence aux coins même si le gradient SVG ne couvre pas parfaitement.
+      if(bg){ ctx.fillStyle = bg; ctx.fillRect(0,0,size,size); }
       ctx.drawImage(img,0,0,size,size);
       resolve(c.toDataURL('image/png'));
     };
@@ -63,7 +66,7 @@ async function genAll(){
     for(const icon of icons){
       for(const size of icon.sizes){
         st.textContent = `Génération ${icon.prefix}-${size}.png…`;
-        const png = await svgToPng(icon.svg, size);
+        const png = await svgToPng(icon.svg, size, icon.bg);
         download(png, `${icon.prefix}-${size}.png`);
         count++;
         await new Promise(r => setTimeout(r, 600)); // petit délai entre chaque DL
