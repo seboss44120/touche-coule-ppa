@@ -60,6 +60,24 @@ Avant tout commit, se poser systématiquement ces questions :
 - Isoler chaque correction dans son propre commit avec un message décrivant la root cause, pas le symptôme.
 - Ne pas grouper une correction fonctionnelle avec une correction PWA dans le même commit.
 
+### 0f. Vérifier le déploiement avant de déboguer — règle absolue
+
+**Avant tout test sur mobile ou signalement de régression**, vérifier que le code déployé correspond bien aux derniers commits locaux :
+
+```powershell
+git log --oneline origin/main..HEAD
+# → doit retourner VIDE (aucun commit local non poussé)
+# Si non vide : git push origin main AVANT de tester quoi que ce soit
+```
+
+> Cette règle existe parce qu'une journée entière de debug a été passée sur un "problème" qui n'en était pas un : les corrections étaient correctes mais n'avaient pas été poussées. GitHub Pages servait l'ancien code. Tout test sur du code non déployé est un faux problème par définition.
+
+**Séquence obligatoire à chaque fin de session :**
+1. `git log --oneline origin/main..HEAD` → vide ?
+2. Si non : `git push origin main`
+3. Attendre 1-2 min (délai GitHub Pages)
+4. Alors seulement : tester sur mobile
+
 ---
 
 ## 1. Invariants PWA — vérifier AVANT tout commit sur un fichier HTML
