@@ -1100,6 +1100,10 @@ function renderTour() {
   const el = document.getElementById('tab-tour');
   if (!el) return;
 
+  if (!TOURNOI) {
+    el.innerHTML = `<div class="card"><p style="color:var(--text3)">Aucune partie en cours.</p></div>`;
+    return;
+  }
   if (!PARTIE?.started) {
     el.innerHTML = `<div class="card"><p style="color:var(--text3)">La partie n'est pas encore démarrée.</p></div>`;
     return;
@@ -1374,6 +1378,10 @@ function allSunk(grille) {
 function renderClassement() {
   const el = document.getElementById('tab-classement');
   if (!el) return;
+  if (!TOURNOI) {
+    el.innerHTML = `<div class="card"><p style="color:var(--text3)">Aucune partie en cours.</p></div>`;
+    return;
+  }
 
   let duelsHtml = `<div class="duel-status-grid">`;
   getDuelDefs().forEach(def => {
@@ -1430,6 +1438,10 @@ function renderClassement() {
 function renderFlottes() {
   const el = document.getElementById('tab-flottes');
   if (!el) return;
+  if (!TOURNOI) {
+    el.innerHTML = `<div class="card"><p style="color:var(--text3)">Aucune partie en cours.</p></div>`;
+    return;
+  }
 
   let h = '';
   getDuelDefs().forEach(def => {
@@ -2037,6 +2049,13 @@ async function adminAnnulerTournoi(){
   }
   await sbT.from('tournoi_joueurs').delete().eq('tournoi_id',tid);
   await sbT.from('tournois').delete().eq('id',tid);
+  // Marquer le tournoi planifié associé comme annulé (sinon il reste affiché "lancé")
+  const planifAssocie = TOURNOIS_PLANIFIES.find(tp => tp.tournoi_id === tid);
+  if (planifAssocie) {
+    await sbT.from('tournois_planifies').update({ statut: 'annule', tournoi_id: null }).eq('id', planifAssocie.id);
+    const pIdx = TOURNOIS_PLANIFIES.findIndex(tp => tp.id === planifAssocie.id);
+    if (pIdx >= 0) TOURNOIS_PLANIFIES[pIdx] = { ...TOURNOIS_PLANIFIES[pIdx], statut: 'annule', tournoi_id: null };
+  }
   TOURNOI=null;TOURNOI_JOUEURS=[];
   currentTab='config';buildNav();renderTab('config');
 }
