@@ -12,7 +12,8 @@
       <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#f5c842" flood-opacity=".6"/>
     </filter>
   </defs>
-  <!-- Fond plein carré — pas de transparence pour maskable -->
+  <!-- Fond plein carré — couche solide + gradient par-dessus, garantit 0 transparence -->
+  <rect width="192" height="192" fill="#060e04"/>
   <rect width="192" height="192" fill="url(#bg)"/>
   <!-- Halo central -->
   <circle cx="96" cy="96" r="55" fill="url(#glow)"/>

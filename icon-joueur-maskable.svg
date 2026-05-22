@@ -17,7 +17,8 @@
       <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#00e5ff" flood-opacity=".7"/>
     </filter>
   </defs>
-  <!-- Fond plein carré — pas de transparence pour maskable -->
+  <!-- Fond plein carré — couche solide + gradient par-dessus, garantit 0 transparence -->
+  <rect width="192" height="192" fill="#020810"/>
   <rect width="192" height="192" fill="url(#bg)"/>
   <!-- Grille légère -->
   <g stroke="#1a3a5c" stroke-width=".5" stroke-opacity=".35">
