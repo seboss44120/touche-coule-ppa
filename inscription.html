@@ -599,8 +599,9 @@ main{padding:16px;max-width:700px;margin:0 auto;position:relative;z-index:1}
 
           <!-- Email optionnel -->
           <div class="form-group">
-            <label class="form-label" for="inp-email-exist">Email (optionnel)</label>
-            <input type="email" id="inp-email-exist" class="form-input" placeholder="pour te prévenir du début">
+            <label class="form-label" for="inp-email-exist">Email <span style="color:var(--red)">*</span></label>
+            <input type="email" id="inp-email-exist" class="form-input" placeholder="ton@email.com" oninput="updateExistBtn()">
+            <div class="form-hint" id="hint-email-exist"></div>
           </div>
 
           <!-- Bouton CTA -->
@@ -635,8 +636,9 @@ main{padding:16px;max-width:700px;margin:0 auto;position:relative;z-index:1}
 
           <!-- Email optionnel -->
           <div class="form-group">
-            <label class="form-label" for="inp-email-new">Email (optionnel)</label>
-            <input type="email" id="inp-email-new" class="form-input" placeholder="pour te prévenir du début">
+            <label class="form-label" for="inp-email-new">Email <span style="color:var(--red)">*</span></label>
+            <input type="email" id="inp-email-new" class="form-input" placeholder="ton@email.com" oninput="updateNewPlayerBtn()">
+            <div class="form-hint" id="hint-email-new"></div>
           </div>
 
           <!-- Alerte inscription existante -->
@@ -1427,7 +1429,8 @@ async function checkExistingInscription(profilId, tab){
 
     if(!data || data.length === 0){
       warningEl.style.display = 'none';
-      btnEl.disabled = false;
+      // Ne pas activer directement — passer par updateExistBtn pour vérifier l'email
+      if(tab === 'exist') updateExistBtn(); else btnEl.disabled = false;
       return true; // OK pour s'inscrire
     }
 
@@ -1496,15 +1499,38 @@ async function checkPseudoUnique(pseudo){
   }
 }
 
+function emailValid(email){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+
 /** Active/désactive le bouton créer profil selon les champs */
 function updateNewPlayerBtn(){
   const pseudo = document.getElementById('inp-pseudo-new').value.trim();
   const hint   = document.getElementById('hint-pseudo-new');
+  const email  = document.getElementById('inp-email-new').value.trim();
+  const hintE  = document.getElementById('hint-email-new');
+  if(email && !emailValid(email)){
+    hintE.textContent = 'Email invalide'; hintE.className = 'form-hint err';
+  } else {
+    hintE.textContent = email ? '' : 'Obligatoire pour les notifications'; hintE.className = 'form-hint';
+  }
   const ok = pseudo.length >= 2
     && hint.classList.contains('ok')
     && selectedAvatar !== null
-    && selectedFlag   !== null;
+    && selectedFlag   !== null
+    && emailValid(email);
   document.getElementById('btn-inscrire-new').disabled = !ok;
+}
+
+/** Active/désactive le bouton s'inscrire (joueur existant) */
+function updateExistBtn(){
+  const email = document.getElementById('inp-email-exist').value.trim();
+  const hintE = document.getElementById('hint-email-exist');
+  if(email && !emailValid(email)){
+    hintE.textContent = 'Email invalide'; hintE.className = 'form-hint err';
+  } else {
+    hintE.textContent = email ? '' : 'Obligatoire pour les notifications'; hintE.className = 'form-hint';
+  }
+  // Le bouton n'est actif que si un joueur est trouvé ET email valide
+  if(foundPlayer) document.getElementById('btn-inscrire-exist').disabled = !emailValid(email);
 }
 
 
@@ -1582,12 +1608,17 @@ async function inscrireJoueurExistant(){
       position_waitlist = wl && wl.length > 0 ? (wl[0].position_waitlist||0)+1 : 1;
     }
 
-    const email = document.getElementById('inp-email-exist').value.trim();
+    const email = document.getElementById('inp-email-exist').value.trim().toLowerCase();
+    if(!emailValid(email)){ showToast('Email obligatoire.', 'error', 4000); btn.disabled=false; btn.textContent='S\'inscrire'; return; }
+
+    // Persiste l'email sur le profil si non renseigné
+    if(!foundPlayer.email) await sb.from('joueur_profils').update({email}).eq('id', foundPlayer.id);
+
     const {error} = await sb.from('inscriptions_planifiees').insert({
       tournoi_planifie_id: selectedTournoi.id,
       profil_id:           foundPlayer.id,
       pseudo:              foundPlayer.pseudo,
-      email:               email || null,
+      email:               email,
       statut:              statut,
       position_waitlist:   position_waitlist,
     });
@@ -1617,6 +1648,9 @@ async function creerEtInscrire(){
   btn.textContent = 'Création…';
 
   try {
+    const email = document.getElementById('inp-email-new').value.trim().toLowerCase();
+    if(!emailValid(email)){ showToast('Email obligatoire.', 'error', 4000); btn.disabled=false; btn.textContent='Créer mon profil et m\'inscrire'; return; }
+
     // Crée le profil (token généré par Supabase via default)
     const {data: newProfil, error: errProfil} = await sb
       .from('joueur_profils')
@@ -1624,6 +1658,7 @@ async function creerEtInscrire(){
         pseudo:   pseudo,
         avatar:   selectedAvatar,
         drapeau:  selectedFlag,
+        email:    email,
         victoires:0,
         grade_cache: getGrade(0),
       })
@@ -1650,12 +1685,11 @@ async function creerEtInscrire(){
       position_waitlist = wl && wl.length > 0 ? (wl[0].position_waitlist||0)+1 : 1;
     }
 
-    const email = document.getElementById('inp-email-new').value.trim();
     const {error: errInsc} = await sb.from('inscriptions_planifiees').insert({
       tournoi_planifie_id: selectedTournoi.id,
       profil_id:           newProfil.id,
       pseudo:              newProfil.pseudo,
-      email:               email || null,
+      email:               email,
       statut:              statut,
       position_waitlist:   position_waitlist,
     });

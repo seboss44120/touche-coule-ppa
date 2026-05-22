@@ -3220,6 +3220,13 @@ async function renderProfil(profilId){
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         ${DRAPEAUX.map(d=>`<button onclick="setDrapeau('${d.code}')" title="${d.label||d.code}" style="font-size:24px;padding:6px 8px;border-radius:6px;border:1px solid ${p.drapeau===d.code?'var(--gold)':'var(--border)'};background:${p.drapeau===d.code?'rgba(245,158,11,.12)':'var(--bg3)'};cursor:pointer">${renderFlag(d.code,'24px')}</button>`).join('')}
       </div>
+      <div class="stitle" style="margin-top:16px">Email de notification ${p.email?'<span style="color:var(--green);font-size:.55rem">✓ renseigné</span>':'<span style="color:var(--red);font-size:.55rem">non renseigné</span>'}</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="inpEmail" type="email" value="${esc(p.email||'')}" placeholder="ton@email.com"
+          style="flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:.95rem;outline:none;min-width:0">
+        <button onclick="saveEmail()" class="btn btn-cyan btn-sm">Enregistrer</button>
+      </div>
+      <div style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text3);margin-top:5px;letter-spacing:.5px">Utilisé pour les notifications de liste d'attente et la récupération d'accès</div>
       <div id="alertProfil" class="alert" style="margin-top:10px"></div>
     </div>
   </div>`;
@@ -3254,6 +3261,20 @@ async function setDrapeau(code){
   await sb.from('joueur_profils').update({drapeau:code}).eq('id',MON_PROFIL.id);
   MON_PROFIL.drapeau=code;
   showAlert('alertProfil','ok','✓ Drapeau mis à jour');
+  renderProfil();
+}
+
+async function saveEmail(){
+  if(!MON_PROFIL)return;
+  const email=document.getElementById('inpEmail')?.value.trim().toLowerCase();
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    showAlert('alertProfil','err','Email invalide');return;
+  }
+  const{error}=await sb.from('joueur_profils').update({email}).eq('id',MON_PROFIL.id);
+  if(error){showAlert('alertProfil','err','Erreur lors de la sauvegarde');return;}
+  MON_PROFIL.email=email;
+  try{localStorage.setItem('tc_joueur_token',MON_PROFIL.token);}catch(e){}
+  showAlert('alertProfil','ok','✓ Email enregistré');
   renderProfil();
 }
 
