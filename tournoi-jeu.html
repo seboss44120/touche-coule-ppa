@@ -3304,6 +3304,9 @@ async function checkProgressTournoi(){
   if(!allMatchs)return;
 
   const pouleMatchs=allMatchs.filter(m=>m.phase==='poule');
+  // Revanche/belle (partie_numero>1) : replays optionnels qui ne doivent jamais
+  // bloquer la progression du tournoi ni fausser le classement de poule.
+  const pouleMatchsOfficiels=pouleMatchs.filter(m=>(m.partie_numero||1)===1);
   const demiMatchs =allMatchs.filter(m=>m.phase==='demi');
   const finaleMatch=allMatchs.find(m=>m.phase==='finale');
 
@@ -3346,7 +3349,7 @@ async function checkProgressTournoi(){
   }
 
   // ── Poules terminées → générer les demis ──
-  if(pouleMatchs.length>0&&pouleMatchs.every(m=>m.statut==='terminé')&&demiMatchs.length===0){
+  if(pouleMatchsOfficiels.length>0&&pouleMatchsOfficiels.every(m=>m.statut==='terminé')&&demiMatchs.length===0){
     const{data:existD}=await sb.from('tournoi_matchs').select('id').eq('tournoi_id',tournoiId).in('phase',['demi','finale']);
     if(existD?.length)return; // déjà généré
 
@@ -3367,7 +3370,7 @@ async function checkProgressTournoi(){
     // Calculer classements
     const standings={};
     for(const pid of pouleIds){
-      standings[pid]=await calcStandingsPoule(pid,pouleMatchs,allJoueurs);
+      standings[pid]=await calcStandingsPoule(pid,pouleMatchsOfficiels,allJoueurs);
     }
 
     // Générer les matchs de demi-finale
@@ -3499,7 +3502,8 @@ async function renderTournoi(){
 
     for(const pouleId of pouleIds){
       const pm=pouleMatchs.filter(m=>m.poule_id===pouleId);
-      const totalM=pm.length,doneM=pm.filter(m=>m.statut==='terminé').length;
+      const pmOfficiels=pm.filter(m=>(m.partie_numero||1)===1);
+      const totalM=pmOfficiels.length,doneM=pmOfficiels.filter(m=>m.statut==='terminé').length;
       const ltr=letters[(pouleId-1)]||pouleId;
       const jids=[...new Set(pm.flatMap(m=>[m.joueur1_id,m.joueur2_id]))];
 
@@ -3531,7 +3535,7 @@ async function renderTournoi(){
       // ── Classement ──
       const standings=jids.map(jid=>{
         let wins=0,pp=0,pc=0,bonus=0,malus=0;
-        for(const m of pm){
+        for(const m of pmOfficiels){
           if(m.statut!=='terminé')continue;
           if(m.joueur1_id!==jid&&m.joueur2_id!==jid)continue;
           if(m.vainqueur_id===jid)wins++;

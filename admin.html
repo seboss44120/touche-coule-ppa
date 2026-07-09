@@ -2146,6 +2146,7 @@ async function renderStatutTournoi(tournoiId) {
     html += `<div class="poules-grid">`;
     for (const pid of pouleIds) {
       const pm  = pouleMatchs.filter(m => m.poule_id === pid);
+      const pmOfficiels = pm.filter(m => (m.partie_numero||1) === 1);
       const ltr = letters[(pid - 1)] || pid;
       const jids = [...new Set(pm.flatMap(m => [m.joueur1_id, m.joueur2_id]))];
 
@@ -2164,19 +2165,25 @@ async function renderStatutTournoi(tournoiId) {
         const live = m.statut === 'en_cours';
         const j1w  = done && m.vainqueur_id === m.joueur1_id;
         const j2w  = done && m.vainqueur_id === m.joueur2_id;
-        // Statut série revanche
+        // Statut série revanche — l'existence d'une partie N+1 pour cette paire est le
+        // signal fiable d'acceptation (les votes v1/v2 seuls ne suffisent pas à distinguer
+        // "en attente" de "accepté" une fois la partie suivante déjà créée/jouée).
         const pNum = m.partie_numero||1;
         const v1 = m.vote_revanche_j1, v2 = m.vote_revanche_j2;
-        const revancheAsked = done && (v1===true||v2===true) && v1!==false && v2!==false;
-        const revancheRefused = done && (v1===false||v2===false);
+        const nextPartieExists = done && matchs.some(mm =>
+          mm.joueur1_id===m.joueur1_id && mm.joueur2_id===m.joueur2_id && (mm.partie_numero||1)===pNum+1);
+        const revancheRefused = done && (v1===false||v2===false) && !nextPartieExists;
+        const revanchePending = done && (v1===true||v2===true) && v1!==false && v2!==false && !nextPartieExists;
         let scCls = done ? 'done' : live ? 'live' : '';
         let scTxt = done ? `${m.pts_j1??0}–${m.pts_j2??0}` : live ? 'en cours' : '–';
         if(pNum>1) scTxt += ` <span style="font-family:'Orbitron',monospace;font-size:.42rem;opacity:.7">P${pNum}</span>`;
         // Sous-label statut série
+        const label=pNum===1?'Revanche':'Belle';
         let serieLabel = '';
-        if(done&&pNum===1&&revancheAsked&&!revancheRefused) serieLabel=`<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--gold);letter-spacing:1px;margin-top:1px">Revanche demandée</div>`;
-        else if(done&&pNum===2&&revancheAsked&&!revancheRefused) serieLabel=`<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--orange);letter-spacing:1px;margin-top:1px">Belle demandée</div>`;
-        else if(done&&pNum>=3) serieLabel=`<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--text3);letter-spacing:1px;margin-top:1px">Terminé définitivement</div>`;
+        if(pNum>=3) serieLabel=`<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--text3);letter-spacing:1px;margin-top:1px">Terminé définitivement</div>`;
+        else if(nextPartieExists) serieLabel=`<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--green);letter-spacing:1px;margin-top:1px">✓ ${label} acceptée</div>`;
+        else if(revancheRefused) serieLabel=`<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--red);letter-spacing:1px;margin-top:1px">✗ ${label} refusée</div>`;
+        else if(revanchePending) serieLabel=`<div style="font-family:'Orbitron',monospace;font-size:.4rem;color:var(--gold);letter-spacing:1px;margin-top:1px">${label} demandée</div>`;
         html += `<div class="ts-mrow">
           <span class="ts-mp left ${j1w?'win':done?'lose':''}">${n1}</span>
           <span class="ts-sc ${scCls}" style="text-align:center">${scTxt}${serieLabel}</span>
@@ -2188,7 +2195,7 @@ async function renderStatutTournoi(tournoiId) {
       // ── Classement ──
       const standings = jids.map(jid => {
         let wins = 0, pp = 0, pc = 0;
-        for (const m of pm) {
+        for (const m of pmOfficiels) {
           if (m.statut !== 'terminé') continue;
           if (m.joueur1_id !== jid && m.joueur2_id !== jid) continue;
           if (m.vainqueur_id === jid) wins++;
