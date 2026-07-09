@@ -364,8 +364,10 @@ function duelStatusInfo(duelId) {
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
   db: { schema: 'touche_coule' }
 });
-// Client pour les tables tournoi (schéma public)
-const sbT = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+// Client pour les tables tournoi (schéma bataille_navale)
+const sbT = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+  db: { schema: 'bataille_navale' }
+});
 const BASE_URL_TOURNOI = location.href.replace(/[^/]*$/, 'tournoi-capitaine-inscription.html');
 const BASE_URL_JEU     = location.href.replace(/[^/]*$/, 'tournoi-jeu.html');
 
