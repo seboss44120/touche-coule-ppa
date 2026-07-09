@@ -857,7 +857,20 @@ async function loadTournois(){
       .order('date_tournoi', {ascending:true});
 
     if(errT) throw errT;
-    const tList = tournoiList || [];
+    let tList = tournoiList || [];
+
+    // Requête 1bis — pour les tournois lancés, vérifier si le tournoi réel est terminé
+    // (tournois_planifies.statut n'a pas de valeur 'terminé' : la source de vérité
+    // de la fin de tournoi est tournois.statut)
+    const lanceIds = tList.filter(t => t.statut === 'lance' && t.tournoi_id).map(t => t.tournoi_id);
+    if(lanceIds.length > 0){
+      const {data: tournoisReels} = await sb
+        .from('tournois')
+        .select('id, statut')
+        .in('id', lanceIds);
+      const termines = new Set((tournoisReels || []).filter(t => t.statut === 'terminé').map(t => t.id));
+      tList = tList.filter(t => !(t.statut === 'lance' && termines.has(t.tournoi_id)));
+    }
 
     // Requête 2 — inscriptions liées (chargement séparé, merge côté client)
     let insList = [];
