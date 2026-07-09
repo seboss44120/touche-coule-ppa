@@ -248,6 +248,7 @@ select option{background:var(--bg2)}
 .planif-statut.ferme{background:rgba(255,68,85,.1);border:1px solid var(--red);color:var(--red)}
 .planif-statut.lance{background:rgba(0,212,255,.12);border:1px solid var(--cyan);color:var(--cyan)}
 .planif-statut.annule{background:rgba(63,96,128,.1);border:1px solid var(--text3);color:var(--text3)}
+.planif-statut.termine{background:rgba(245,200,66,.12);border:1px solid var(--gold);color:var(--gold)}
 .planif-slot{width:18px;height:18px;border-radius:3px;border:1px solid rgba(255,255,255,.15)}
 .planif-slot.filled{background:rgba(0,212,255,.3);border-color:rgba(0,212,255,.5)}
 .planif-slot.empty{background:rgba(255,255,255,.04)}
@@ -388,6 +389,7 @@ let _tournoiModeJeu   = null; // mode de jeu sélectionné avant lancement tourn
 // Planification
 let TOURNOIS_PLANIFIES  = [];
 let INSCRIPTIONS_PLANIF = [];
+let TOURNOIS_REELS_STATUT = {}; // tournoi_id -> statut reel (table tournois), pour detecter un planifie 'lance' dont le tournoi est en fait termine
 let _planifEditId       = null;  // null = création, string uuid = édition
 let _planifFormVisible  = false;
 
@@ -522,9 +524,7 @@ async function loadAllData() {
   ROSTER = rosterData || [];
 
   // Charger les tournois planifiés
-  const { data: tPlanif } = await sbT.from('tournois_planifies')
-    .select('*').order('date_tournoi', { ascending: true });
-  TOURNOIS_PLANIFIES = tPlanif || [];
+  await _chargerTournoisPlanifies();
 
   if (TOURNOIS_PLANIFIES.length) {
     const ids = TOURNOIS_PLANIFIES.map(t => t.id);
@@ -539,6 +539,23 @@ async function loadAllData() {
 async function doRefresh() {
   await loadAllData();
   renderTab(currentTab);
+}
+
+// Charge TOURNOIS_PLANIFIES + le statut reel (table tournois) des planifies 'lance',
+// car tournois_planifies.statut n'a pas de valeur 'termine' et resterait bloque
+// sur "Lance" indefiniment apres la fin reelle du tournoi.
+async function _chargerTournoisPlanifies() {
+  const { data: tPlanif } = await sbT.from('tournois_planifies')
+    .select('*').order('date_tournoi', { ascending: true });
+  TOURNOIS_PLANIFIES = tPlanif || [];
+
+  const lanceIds = TOURNOIS_PLANIFIES.filter(t => t.statut === 'lance' && t.tournoi_id).map(t => t.tournoi_id);
+  if (lanceIds.length) {
+    const { data: tournoisReels } = await sbT.from('tournois').select('id,statut').in('id', lanceIds);
+    TOURNOIS_REELS_STATUT = Object.fromEntries((tournoisReels || []).map(t => [t.id, t.statut]));
+  } else {
+    TOURNOIS_REELS_STATUT = {};
+  }
 }
 
 /* Polling grilles toutes les 10s
@@ -655,9 +672,7 @@ function setupRealtime() {
   sbT.channel('admin-tournois-planifies')
     .on('postgres_changes', { event:'*', schema:'bataille_navale', table:'tournois_planifies' },
       async () => {
-        const { data } = await sbT.from('tournois_planifies')
-          .select('*').order('date_tournoi', { ascending: true });
-        TOURNOIS_PLANIFIES = data || [];
+        await _chargerTournoisPlanifies();
         if (currentTab === 'planif') renderPlanif();
       })
     .subscribe();
@@ -2892,10 +2907,14 @@ function _buildPlanifCard(tp) {
     }
   }
 
-  const statutLabel = {
+  // tournois_planifies.statut n'a pas de valeur 'termine' : le tournoi lie peut etre
+  // reellement termine alors que tp.statut reste bloque a 'lance'.
+  const tournoiReellementTermine = tp.statut === 'lance' && tp.tournoi_id && TOURNOIS_REELS_STATUT[tp.tournoi_id] === 'terminé';
+
+  const statutLabel = tournoiReellementTermine ? '🏆 Terminé' : ({
     ouvert: '✅ Ouvert', complet: '🔒 Complet', ferme: '⛔ Fermé',
     lance: '⚔️ Lancé', annule: '✗ Annulé',
-  }[tp.statut] || tp.statut;
+  }[tp.statut] || tp.statut);
 
   const canLaunch = ['ouvert','complet','ferme'].includes(tp.statut) && inscrits.length >= 2;
   const canClose  = ['ouvert','complet'].includes(tp.statut);
@@ -2937,7 +2956,7 @@ function _buildPlanifCard(tp) {
         </div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-        <span class="planif-statut ${tp.statut || 'ouvert'}">${statutLabel}</span>
+        <span class="planif-statut ${tournoiReellementTermine ? 'termine' : (tp.statut || 'ouvert')}">${statutLabel}</span>
         ${tp.tournoi_id ? `<button class="btn btn-cyan btn-xs" onclick="goTab('tournoi')">Voir tournoi →</button>` : ''}
       </div>
     </div>
