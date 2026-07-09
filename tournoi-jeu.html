@@ -859,7 +859,99 @@ function renderAttenteProchain(profil){
         <div style="text-align:center"><div style="color:var(--cyan);font-size:1.3rem;font-weight:900;line-height:1">${profil.matchs_joues||0}</div><div style="color:var(--text3);margin-top:3px">MATCHS</div></div>
         <div style="text-align:center"><div style="color:var(--text2);font-size:1.3rem;font-weight:900;line-height:1">${ratio}</div><div style="color:var(--text3);margin-top:3px">RATIO</div></div>
       </div>
+      <div id="historiqueMesTournois" style="width:100%;max-width:320px"></div>
     </div>`;
+  _renderHistoriqueMesTournois(profil.id);
+}
+
+/* ══ HISTORIQUE — mes 3 derniers tournois termines ══ */
+async function _deriverResultatTournoi(tournoiId, monTjId){
+  const[{data:matchs},{data:joueurs},{data:planif}]=await Promise.all([
+    sb.from('tournoi_matchs').select('*').eq('tournoi_id',tournoiId).order('created_at'),
+    sb.from('tournoi_joueurs').select('id,poule_id').eq('tournoi_id',tournoiId),
+    sb.from('tournois_planifies').select('titre').eq('tournoi_id',tournoiId).maybeSingle(),
+  ]);
+  const finale=(matchs||[]).find(m=>m.phase==='finale');
+  const demis =(matchs||[]).filter(m=>m.phase==='demi');
+  const poules=(matchs||[]).filter(m=>m.phase==='poule'&&(m.partie_numero||1)===1);
+  const modeJeu=matchs?.[0]?.mode_jeu||null;
+
+  let resultat='—';
+  if(finale&&(finale.joueur1_id===monTjId||finale.joueur2_id===monTjId)){
+    resultat=finale.vainqueur_id===monTjId?'🏆 Champion':'🥈 Finaliste';
+  }else if(demis.some(m=>m.joueur1_id===monTjId||m.joueur2_id===monTjId)){
+    resultat='🥉 Demi-finaliste';
+  }else{
+    // Non qualifie en phases finales (ou format poule unique) : rang dans sa poule
+    const moi=(joueurs||[]).find(j=>j.id===monTjId);
+    const pouleMoi=poules.filter(m=>m.poule_id===moi?.poule_id);
+    const jids=[...new Set(pouleMoi.flatMap(m=>[m.joueur1_id,m.joueur2_id]))];
+    const standings=jids.map(jid=>{
+      let wins=0,pp=0,pc=0;
+      for(const m of pouleMoi){
+        if(m.statut!=='terminé')continue;
+        if(m.joueur1_id!==jid&&m.joueur2_id!==jid)continue;
+        if(m.vainqueur_id===jid)wins++;
+        if(m.joueur1_id===jid){pp+=m.pts_j1??0;pc+=m.pts_j2??0;}
+        else{pp+=m.pts_j2??0;pc+=m.pts_j1??0;}
+      }
+      return{jid,wins,diff:pp-pc};
+    }).sort((a,b)=>b.wins-a.wins||b.diff-a.diff);
+    const rang=standings.findIndex(s=>s.jid===monTjId);
+    if(rang===0&&demis.length===0&&!finale) resultat='🏆 Champion'; // format poule unique
+    else if(rang>=0) resultat=`${rang+1}${rang===0?'er':'ème'} de poule`;
+  }
+
+  return{titre:planif?.titre||'Tournoi',modeJeu,resultat};
+}
+
+async function chargerHistoriqueMesTournois(profilId){
+  const{data:participations}=await sb.from('tournoi_joueurs')
+    .select('id,tournoi_id').eq('profil_id',profilId);
+  if(!participations?.length)return[];
+  const tournoiIds=[...new Set(participations.map(p=>p.tournoi_id))];
+  const{data:tournoisTermines}=await sb.from('tournois')
+    .select('id,date_fin,created_at')
+    .in('id',tournoiIds).eq('statut','terminé')
+    .order('date_fin',{ascending:false,nullsFirst:false})
+    .order('created_at',{ascending:false})
+    .limit(3);
+  if(!tournoisTermines?.length)return[];
+
+  const out=[];
+  for(const t of tournoisTermines){
+    const part=participations.find(p=>p.tournoi_id===t.id);
+    if(!part)continue;
+    const r=await _deriverResultatTournoi(t.id,part.id);
+    out.push({...r,dateFin:t.date_fin||t.created_at});
+  }
+  return out;
+}
+
+async function _renderHistoriqueMesTournois(profilId){
+  const el=document.getElementById('historiqueMesTournois');
+  if(!el)return;
+  let historique=[];
+  try{ historique=await chargerHistoriqueMesTournois(profilId); }catch(e){ return; }
+  if(!historique.length)return;
+
+  el.innerHTML=`
+    <div style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--text3);letter-spacing:2px;text-align:center;margin:6px 0 10px">MES DERNIERS TOURNOIS</div>
+    ${historique.map(h=>{
+      const mode=MODES[h.modeJeu]||null;
+      const dateTxt=h.dateFin?new Date(h.dateFin).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
+      return`<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:8px;text-align:left">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+          <span style="font-weight:700;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(h.titre)}</span>
+          <span style="font-family:'Orbitron',monospace;font-size:.48rem;color:var(--text3);flex-shrink:0">${dateTxt}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+          <span style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--gold);letter-spacing:.5px">${h.resultat}</span>
+          ${mode?`<span style="font-size:.7rem;color:${mode.color}">${mode.icon} ${mode.label}</span>`:''}
+        </div>
+      </div>`;
+    }).join('')}
+  `;
 }
 
 async function chargerOuCreerProfil(){
@@ -3313,7 +3405,7 @@ async function checkProgressTournoi(){
   // ── Finale terminée → tournoi terminé ──
   if(finaleMatch?.statut==='terminé'){
     if(TOURNOI.statut!=='terminé'){
-      await sb.from('tournois').update({statut:'terminé'}).eq('id',tournoiId);
+      await sb.from('tournois').update({statut:'terminé',date_fin:new Date().toISOString()}).eq('id',tournoiId);
       TOURNOI.statut='terminé';
       showToastPhase('🏆 Tournoi terminé !','var(--gold)');
     }
@@ -3361,7 +3453,7 @@ async function checkProgressTournoi(){
 
     if(pouleIds.length===1){
       // Tournoi à poule unique → vainqueur = champion
-      await sb.from('tournois').update({statut:'terminé'}).eq('id',tournoiId);
+      await sb.from('tournois').update({statut:'terminé',date_fin:new Date().toISOString()}).eq('id',tournoiId);
       TOURNOI.statut='terminé';
       showToastPhase('🏆 Tournoi terminé !','var(--gold)');
       return;
