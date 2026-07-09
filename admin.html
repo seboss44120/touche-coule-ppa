@@ -2118,8 +2118,11 @@ function renderBracketMatch(m, nomById) {
   </div>`;
 }
 
-/* ── renderStatutTournoi : cœur de la visualisation ── */
-async function renderStatutTournoi(tournoiId) {
+/* ── renderStatutTournoi : cœur de la visualisation ──
+   statutOverride/joueursOverride : permet d'afficher un tournoi qui n'est plus le
+   tournoi "actif" courant (ex: consultation d'un tournoi termine depuis l'onglet PLANIF),
+   sans dependre des globales TOURNOI/TOURNOI_JOUEURS. */
+async function renderStatutTournoi(tournoiId, statutOverride, joueursOverride) {
   const container = document.getElementById('ts-container');
   if (!container) return;
 
@@ -2133,8 +2136,8 @@ async function renderStatutTournoi(tournoiId) {
     return;
   }
 
-  const statut      = TOURNOI.statut;
-  const nomById     = Object.fromEntries(TOURNOI_JOUEURS.map(j => [j.id, j.nom || '?']));
+  const statut      = statutOverride || TOURNOI.statut;
+  const nomById     = Object.fromEntries((joueursOverride || TOURNOI_JOUEURS).map(j => [j.id, j.nom || '?']));
   const hasPoules   = matchs.some(m => m.phase === 'poule');
   const hasFinales  = matchs.some(m => m.phase === 'demi' || m.phase === 'finale');
   const showTabs    = hasPoules && hasFinales;
@@ -2303,6 +2306,43 @@ async function renderStatutTournoi(tournoiId) {
   }
 
   container.innerHTML = html;
+}
+
+// Consultation d'un tournoi termine depuis l'onglet PLANIF : la globale TOURNOI
+// n'est chargee que pour le tournoi actif (statut != 'termine'), donc renderTournoi()
+// n'affiche rien pour un tournoi deja termine. Cette vue charge le tournoi demande
+// par son id et affiche son classement/bracket final en lecture seule, sans toucher
+// aux globales TOURNOI/TOURNOI_JOUEURS (qui restent celles du tournoi actif en cours).
+async function adminVoirTournoiPlanifieTermine(tournoiId) {
+  goTab('tournoi');
+  const el = document.getElementById('tab-tournoi');
+  if (!el) return;
+  el.innerHTML = `<div class="card" style="text-align:center;padding:20px">
+    <span class="spin" style="font-size:.9rem">⚓</span>
+  </div>`;
+
+  const [{ data: tournoiRow }, { data: joueursRows }] = await Promise.all([
+    sbT.from('tournois').select('*').eq('id', tournoiId).maybeSingle(),
+    sbT.from('tournoi_joueurs').select('*').eq('tournoi_id', tournoiId).order('created_at'),
+  ]);
+  if (!tournoiRow) {
+    el.innerHTML = `<div class="card"><p style="color:var(--text3)">Tournoi introuvable.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="card-title" style="margin:0">📡 Résultats du tournoi</div>
+      <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--gold);letter-spacing:1.5px;background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.3);padding:3px 9px;border-radius:12px">✅ TERMINÉ</span>
+    </div>
+    <div id="ts-container">
+      <div style="text-align:center;padding:20px;font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);letter-spacing:2px">
+        <span class="spin" style="font-size:.9rem">⚓</span> &nbsp;CHARGEMENT…
+      </div>
+    </div>
+  </div>`;
+
+  await renderStatutTournoi(tournoiId, tournoiRow.statut, joueursRows || []);
 }
 
 async function adminChargerMatchsUrgence(){
@@ -2957,7 +2997,9 @@ function _buildPlanifCard(tp) {
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
         <span class="planif-statut ${tournoiReellementTermine ? 'termine' : (tp.statut || 'ouvert')}">${statutLabel}</span>
-        ${tp.tournoi_id ? `<button class="btn btn-cyan btn-xs" onclick="goTab('tournoi')">Voir tournoi →</button>` : ''}
+        ${tp.tournoi_id ? (tournoiReellementTermine
+          ? `<button class="btn btn-cyan btn-xs" onclick="adminVoirTournoiPlanifieTermine('${tp.tournoi_id}')">Voir résultats →</button>`
+          : `<button class="btn btn-cyan btn-xs" onclick="goTab('tournoi')">Voir tournoi →</button>`) : ''}
       </div>
     </div>
     <div class="planif-body">
