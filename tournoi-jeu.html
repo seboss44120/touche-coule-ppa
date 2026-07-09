@@ -3667,7 +3667,7 @@ function tsTipTap(el){
 
 /* ══ REALTIME ══ */
 function abonnerRealtime(){
-  sb.channel('jeu-matchs').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_matchs',filter:`tournoi_id=eq.${MOI.tournoi_id}`},async({new:n,eventType})=>{
+  sb.channel('jeu-matchs').on('postgres_changes',{event:'*',schema:'bataille_navale',table:'tournoi_matchs',filter:`tournoi_id=eq.${MOI.tournoi_id}`},async({new:n,eventType})=>{
     if(!n)return;
     const idx=MATCHS.findIndex(m=>m.id===n.id);
     if(idx>=0){
@@ -3719,13 +3719,13 @@ function abonnerRealtime(){
     if(currentTab==='match-'+n.id||currentTab==='poule'||currentTab==='tournoi')renderTab(currentTab);
   }).subscribe();
 
-  sb.channel('jeu-grilles').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_grilles'},async({new:n})=>{
+  sb.channel('jeu-grilles').on('postgres_changes',{event:'*',schema:'bataille_navale',table:'tournoi_grilles'},async({new:n})=>{
     if(!MATCHS.find(m=>m.id===n.match_id))return;
     await loadGrilles(n.match_id);
     if(currentTab==='match-'+n.match_id)renderTab(currentTab);
   }).subscribe();
 
-  sb.channel('jeu-tours').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_tours'},async({new:n,old:o,eventType})=>{
+  sb.channel('jeu-tours').on('postgres_changes',{event:'*',schema:'bataille_navale',table:'tournoi_tours'},async({new:n,old:o,eventType})=>{
     if(!MATCHS.find(m=>m.id===n?.match_id||m.id===o?.match_id))return;
     const matchId=n?.match_id||o?.match_id;
 
@@ -3756,7 +3756,7 @@ function abonnerRealtime(){
   }).subscribe();
 
   // Détection suppression/annulation du tournoi par l'admin
-  sb.channel('jeu-tournoi').on('postgres_changes',{event:'DELETE',schema:'public',table:'tournois',filter:`id=eq.${MOI.tournoi_id}`},()=>{
+  sb.channel('jeu-tournoi').on('postgres_changes',{event:'DELETE',schema:'bataille_navale',table:'tournois',filter:`id=eq.${MOI.tournoi_id}`},()=>{
     TOURNOI=null;MATCHS=[];GRILLES={};TOURS={};
     const profil=MON_PROFIL||{pseudo:MOI?.nom||'?',victoires:0,matchs_joues:0,avatar:'⚓'};
     showToastPhase('🏳️ Le tournoi a été annulé','var(--red)');

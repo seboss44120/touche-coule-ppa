@@ -1064,7 +1064,7 @@ function subscribeRealtime(){
   sb.channel('inscriptions-live')
     .on('postgres_changes', {
       event: '*',
-      schema: 'public',
+      schema: 'bataille_navale',
       table:  'inscriptions_planifiees'
     }, async () => {
       await refreshTournoisData();
@@ -1075,7 +1075,7 @@ function subscribeRealtime(){
   sb.channel('tournois-planif-live')
     .on('postgres_changes', {
       event:  'UPDATE',
-      schema: 'public',
+      schema: 'bataille_navale',
       table:  'tournois_planifies'
     }, async (payload) => {
       await refreshTournoisData();

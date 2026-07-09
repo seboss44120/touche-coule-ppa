@@ -292,8 +292,8 @@ function renderJoueurs(){
 }
 
 function abonnerRealtime(){
-  const s1=sb.channel('insc-j').on('postgres_changes',{event:'*',schema:'public',table:'tournoi_joueurs',filter:'tournoi_id=eq.'+monJoueur.tournoi_id},async()=>{await refreshJoueurs();}).subscribe();
-  const s2=sb.channel('insc-t').on('postgres_changes',{event:'UPDATE',schema:'public',table:'tournois',filter:'id=eq.'+monJoueur.tournoi_id},({new:n})=>{tournoi=n;if(n.statut!=='inscription')handleTournoiLance();}).subscribe();
+  const s1=sb.channel('insc-j').on('postgres_changes',{event:'*',schema:'bataille_navale',table:'tournoi_joueurs',filter:'tournoi_id=eq.'+monJoueur.tournoi_id},async()=>{await refreshJoueurs();}).subscribe();
+  const s2=sb.channel('insc-t').on('postgres_changes',{event:'UPDATE',schema:'bataille_navale',table:'tournois',filter:'id=eq.'+monJoueur.tournoi_id},({new:n})=>{tournoi=n;if(n.statut!=='inscription')handleTournoiLance();}).subscribe();
   realtimeSubs.push(s1,s2);
 
   // Polling de secours — vérifie toutes les 5s si le tournoi a démarré

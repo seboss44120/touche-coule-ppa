@@ -364,7 +364,7 @@
 
     sb.channel('notif-tours-joueur')
       .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'tournoi_tours',
+        event: 'INSERT', schema: 'bataille_navale', table: 'tournoi_tours',
       }, ({ new: n }) => {
         if (!n || n.statut !== 'en_cours') return;
         const match = (window.MATCHS || []).find(m => m.id === n.match_id);

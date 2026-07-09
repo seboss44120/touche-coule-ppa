@@ -603,7 +603,7 @@ function setupRealtime() {
   if (TOURNOI) {
     sbT.channel('admin-tournoi-joueurs')
       .on('postgres_changes', {
-        event:'*', schema:'public', table:'tournoi_joueurs',
+        event:'*', schema:'bataille_navale', table:'tournoi_joueurs',
         filter:`tournoi_id=eq.${TOURNOI.id}`
       }, async () => {
         const { data } = await sbT.from('tournoi_joueurs')
@@ -615,7 +615,7 @@ function setupRealtime() {
 
     sbT.channel('admin-tournoi-statut')
       .on('postgres_changes', {
-        event:'UPDATE', schema:'public', table:'tournois',
+        event:'UPDATE', schema:'bataille_navale', table:'tournois',
         filter:`id=eq.${TOURNOI.id}`
       }, ({ new:n }) => {
         TOURNOI = n;
@@ -626,7 +626,7 @@ function setupRealtime() {
     // Matchs — mise à jour temps réel (statut, score, votes revanche, création revanche)
     sbT.channel('admin-tournoi-matchs')
       .on('postgres_changes', {
-        event:'*', schema:'public', table:'tournoi_matchs',
+        event:'*', schema:'bataille_navale', table:'tournoi_matchs',
         filter:`tournoi_id=eq.${TOURNOI.id}`
       }, async () => {
 
@@ -641,7 +641,7 @@ function setupRealtime() {
 
   // Planification — temps réel
   sbT.channel('admin-planif-inscriptions')
-    .on('postgres_changes', { event:'*', schema:'public', table:'inscriptions_planifiees' },
+    .on('postgres_changes', { event:'*', schema:'bataille_navale', table:'inscriptions_planifiees' },
       async () => {
         if (!TOURNOIS_PLANIFIES.length) return;
         const ids = TOURNOIS_PLANIFIES.map(t => t.id);
@@ -653,7 +653,7 @@ function setupRealtime() {
     .subscribe();
 
   sbT.channel('admin-tournois-planifies')
-    .on('postgres_changes', { event:'*', schema:'public', table:'tournois_planifies' },
+    .on('postgres_changes', { event:'*', schema:'bataille_navale', table:'tournois_planifies' },
       async () => {
         const { data } = await sbT.from('tournois_planifies')
           .select('*').order('date_tournoi', { ascending: true });
