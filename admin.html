@@ -2121,9 +2121,12 @@ function renderBracketMatch(m, nomById) {
 /* ── renderStatutTournoi : cœur de la visualisation ──
    statutOverride/joueursOverride : permet d'afficher un tournoi qui n'est plus le
    tournoi "actif" courant (ex: consultation d'un tournoi termine depuis l'onglet PLANIF),
-   sans dependre des globales TOURNOI/TOURNOI_JOUEURS. */
-async function renderStatutTournoi(tournoiId, statutOverride, joueursOverride) {
-  const container = document.getElementById('ts-container');
+   sans dependre des globales TOURNOI/TOURNOI_JOUEURS.
+   containerId : id du conteneur cible ('ts-container' par defaut). Necessaire pour
+   la consultation via modale (adminVoirTournoiPlanifieTermine), qui utilise un id
+   distinct pour ne jamais entrer en collision avec le #ts-container de l'onglet Tournoi. */
+async function renderStatutTournoi(tournoiId, statutOverride, joueursOverride, containerId='ts-container') {
+  const container = document.getElementById(containerId);
   if (!container) return;
 
   const { data: matchs } = await sbT.from('tournoi_matchs')
@@ -2308,41 +2311,46 @@ async function renderStatutTournoi(tournoiId, statutOverride, joueursOverride) {
   container.innerHTML = html;
 }
 
-// Consultation d'un tournoi termine depuis l'onglet PLANIF : la globale TOURNOI
-// n'est chargee que pour le tournoi actif (statut != 'termine'), donc renderTournoi()
-// n'affiche rien pour un tournoi deja termine. Cette vue charge le tournoi demande
-// par son id et affiche son classement/bracket final en lecture seule, sans toucher
-// aux globales TOURNOI/TOURNOI_JOUEURS (qui restent celles du tournoi actif en cours).
+// Consultation d'un tournoi termine depuis l'onglet PLANIF.
+// L'onglet "🏆 Tournoi" n'existe meme pas dans le DOM quand aucun tournoi n'est actif
+// (getTabs() bascule sur TABS_DUEL, qui ne contient pas 'tournoi') — c'est toujours
+// le cas pour un tournoi termine, puisque TOURNOI n'est charge que pour le tournoi
+// actif (statut != 'termine'). goTab('tournoi') est donc inoperant ici : on affiche
+// le resultat dans une modale autonome, independante du systeme d'onglets, sans
+// toucher aux globales TOURNOI/TOURNOI_JOUEURS du tournoi actif en cours.
 async function adminVoirTournoiPlanifieTermine(tournoiId) {
-  goTab('tournoi');
-  const el = document.getElementById('tab-tournoi');
-  if (!el) return;
-  el.innerHTML = `<div class="card" style="text-align:center;padding:20px">
-    <span class="spin" style="font-size:.9rem">⚓</span>
-  </div>`;
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 12px';
+  overlay.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;max-width:560px;width:100%;padding:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="card-title" style="margin:0">📡 Résultats du tournoi</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--gold);letter-spacing:1.5px;background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.3);padding:3px 9px;border-radius:12px">✅ TERMINÉ</span>
+          <button class="btn btn-outline btn-xs" id="btnCloseResultatsModal">✕</button>
+        </div>
+      </div>
+      <div id="ts-container-modal">
+        <div style="text-align:center;padding:20px;font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);letter-spacing:2px">
+          <span class="spin" style="font-size:.9rem">⚓</span> &nbsp;CHARGEMENT…
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#btnCloseResultatsModal').onclick = () => overlay.remove();
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
 
   const [{ data: tournoiRow }, { data: joueursRows }] = await Promise.all([
     sbT.from('tournois').select('*').eq('id', tournoiId).maybeSingle(),
     sbT.from('tournoi_joueurs').select('*').eq('tournoi_id', tournoiId).order('created_at'),
   ]);
+  const container = overlay.querySelector('#ts-container-modal');
   if (!tournoiRow) {
-    el.innerHTML = `<div class="card"><p style="color:var(--text3)">Tournoi introuvable.</p></div>`;
+    container.innerHTML = `<p style="color:var(--text3)">Tournoi introuvable.</p>`;
     return;
   }
 
-  el.innerHTML = `<div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div class="card-title" style="margin:0">📡 Résultats du tournoi</div>
-      <span style="font-family:'Orbitron',monospace;font-size:.52rem;color:var(--gold);letter-spacing:1.5px;background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.3);padding:3px 9px;border-radius:12px">✅ TERMINÉ</span>
-    </div>
-    <div id="ts-container">
-      <div style="text-align:center;padding:20px;font-family:'Orbitron',monospace;font-size:.55rem;color:var(--text3);letter-spacing:2px">
-        <span class="spin" style="font-size:.9rem">⚓</span> &nbsp;CHARGEMENT…
-      </div>
-    </div>
-  </div>`;
-
-  await renderStatutTournoi(tournoiId, tournoiRow.statut, joueursRows || []);
+  await renderStatutTournoi(tournoiId, tournoiRow.statut, joueursRows || [], 'ts-container-modal');
 }
 
 async function adminChargerMatchsUrgence(){
