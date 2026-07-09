@@ -3493,6 +3493,11 @@ async function renderTournoi(){
     </div>`;
   }
 
+  // Format "poule unique" (≤4 joueurs) : pas de demi/finale, le vainqueur de la poule
+  // est directement le champion. Calcule pendant la VUE POULES, reutilise dans la VUE
+  // BRACKET pour ne pas laisser le champion invisible sur ce format.
+  let championPouleUnique=null;
+
   // ══ VUE POULES ══
   if(pouleIds.length>0){
     h+=`<div id="ts-v-poules" class="ts-view ${(!showTabs||initView==='poules')?'active':''}">
@@ -3545,6 +3550,8 @@ async function renderTournoi(){
         return{jid,nom:nomById[jid]||'?',wins,diff:pp-pc,bonus,malus};
       }).sort((a,b)=>b.wins-a.wins||b.diff-a.diff||(b.bonus-b.malus)-(a.bonus-a.malus)||a.nom.localeCompare(b.nom));
 
+      if(pouleIds.length===1&&standings.length)championPouleUnique=standings[0];
+
       h+=`<div class="ts-sec" style="margin-top:2px">Classement</div>
         <table class="ts-tbl"><thead><tr>
           <th>Joueur</th>
@@ -3577,7 +3584,10 @@ async function renderTournoi(){
   }
 
   // ══ VUE BRACKET ══
-  if(hasFinales){
+  // Format "poule unique" termine : pas de demi/finale par design, mais on affiche
+  // quand meme le champion (vainqueur de la poule) au lieu de ne rien montrer.
+  const pouleUnique=pouleIds.length===1&&!!championPouleUnique&&tData?.statut==='terminé';
+  if(hasFinales||pouleUnique){
     h+=`<div id="ts-v-finales" class="ts-view ${(!showTabs||initView==='finales')?'active':''}">
       <div class="bk-wrap">`;
 
@@ -3594,13 +3604,15 @@ async function renderTournoi(){
     h+=`<div class="bk-round"><div class="bk-rhead">Finale</div><div class="bk-rmatches" style="justify-content:center">`;
     if(finaleMatch){
       h+=tsBracketRow(finaleMatch,nomById);
+    }else if(pouleUnique){
+      h+=`<div class="bk-match"><div class="bk-row tbd"><span class="bk-nm">Format poule unique — pas de finale</span></div></div>`;
     }else{
       h+=`<div class="bk-match"><div class="bk-row tbd"><span class="bk-nm">En attente…</span></div><div class="bk-row tbd"><span class="bk-nm">En attente…</span></div></div>`;
     }
     h+=`</div></div>`;
 
     // Connecteur + Champion
-    const champId=finaleMatch?.vainqueur_id;
+    const champId=finaleMatch?.vainqueur_id||(pouleUnique?championPouleUnique.jid:null);
     const champNom=champId?nomById[champId]:null;
     h+=`<div class="bk-conn"><div class="bk-cl" style="flex:none;height:50%;margin-top:auto"></div></div>
       <div class="bk-round"><div class="bk-rhead">Champion</div><div class="bk-rmatches" style="justify-content:center">`;

@@ -2155,6 +2155,11 @@ async function renderStatutTournoi(tournoiId, statutOverride, joueursOverride, c
     </div>`;
   }
 
+  // Format "poule unique" (≤4 joueurs, cf. tirerPoules) : pas de demi/finale, le
+  // vainqueur de la poule est directement le champion. Calcule pendant la VUE POULES,
+  // reutilise dans la VUE BRACKET pour ne pas laisser "Champion : en attente" indefiniment.
+  let championPouleUnique = null;
+
   // ══════════════════ VUE POULES ══════════════════
   if (hasPoules) {
     html += `<div id="ts-v-poules" class="ts-view ${(!showTabs || initView==='poules') ? 'active' : ''}">`;
@@ -2226,6 +2231,8 @@ async function renderStatutTournoi(tournoiId, statutOverride, joueursOverride, c
         return { jid, nom: nomById[jid] || '?', wins, diff: pp - pc };
       }).sort((a, b) => b.wins - a.wins || b.diff - a.diff || a.nom.localeCompare(b.nom));
 
+      if (nbPoules === 1 && standings.length) championPouleUnique = standings[0];
+
       html += `<div class="ts-sec" style="margin-top:2px">Classement</div>
         <table class="ts-tbl"><thead><tr>
           <th>Joueur</th><th>V</th><th>Diff</th><th>Rang</th>
@@ -2272,12 +2279,18 @@ async function renderStatutTournoi(tournoiId, statutOverride, joueursOverride, c
       html += `</div>`;
     }
 
-    // Finale
+    // Finale — absente par design pour un format poule unique (≤4 joueurs, round-robin
+    // seul : cf. tirerPoules), qui ne genere jamais de demi/finale.
+    const pouleUnique = matchs.some(m => m.phase === 'poule') && championPouleUnique && demis.length === 0;
     html += `<div class="bk-round">
       <div class="bk-rhead">Finale</div>
       <div class="bk-rmatches" style="justify-content:center">`;
     if (finales.length > 0) {
       finales.forEach(m => { html += renderBracketMatch(m, nomById); });
+    } else if (pouleUnique) {
+      html += `<div class="bk-match">
+        <div class="bk-row tbd"><span class="bk-nm">Format poule unique — pas de finale</span></div>
+      </div>`;
     } else {
       html += `<div class="bk-match">
         <div class="bk-row tbd"><span class="bk-nm">En attente…</span></div>
@@ -2288,7 +2301,7 @@ async function renderStatutTournoi(tournoiId, statutOverride, joueursOverride, c
 
     // Connecteur + Champion
     const champId  = finales[0]?.vainqueur_id;
-    const champNom = champId ? nomById[champId] : null;
+    const champNom = champId ? nomById[champId] : (pouleUnique ? championPouleUnique.nom : null);
     html += `<div class="bk-conn"><div class="bk-cl" style="flex:none;height:50%;margin-top:auto"></div></div>
       <div class="bk-round">
         <div class="bk-rhead">Champion</div>
