@@ -1117,7 +1117,7 @@ function renderTour() {
   const el = document.getElementById('tab-tour');
   if (!el) return;
 
-  if (!TOURNOI) {
+  if (!PARTIE) {
     el.innerHTML = `<div class="card"><p style="color:var(--text3)">Aucune partie en cours.</p></div>`;
     return;
   }
@@ -1395,7 +1395,7 @@ function allSunk(grille) {
 function renderClassement() {
   const el = document.getElementById('tab-classement');
   if (!el) return;
-  if (!TOURNOI) {
+  if (!PARTIE) {
     el.innerHTML = `<div class="card"><p style="color:var(--text3)">Aucune partie en cours.</p></div>`;
     return;
   }
@@ -1455,7 +1455,7 @@ function renderClassement() {
 function renderFlottes() {
   const el = document.getElementById('tab-flottes');
   if (!el) return;
-  if (!TOURNOI) {
+  if (!PARTIE) {
     el.innerHTML = `<div class="card"><p style="color:var(--text3)">Aucune partie en cours.</p></div>`;
     return;
   }
